@@ -1,0 +1,38 @@
+<!-- <hlm-toaster /> -->
+<div class="flex justify-center items-center h-screen">
+	<section class="w-full max-w-sm" hlmCard>
+		<div hlmCardHeader>
+			<h3 hlmCardTitle class="text-center text-xl">Cadastro</h3>
+			<p hlmCardDescription>Digite seus dados abaixo para fazer o seu cadastro!</p>
+		</div>
+
+		<div hlmCardContent>
+			<form [formGroup]="mainForm">
+				<div class="flex flex-col gap-6">
+					<div class="grid gap-2">
+						<label hlmLabel for="name">Nome</label>
+						<input type="text" id="name" formControlName="name" placeholder="Seu nome" required hlmInput />
+					</div>
+
+					<div class="grid gap-2">
+						<label hlmLabel for="email">Email</label>
+						<input type="email" id="email" formControlName="email" placeholder="m@exemplo.com" required hlmInput />
+					</div>
+
+					<div class="grid gap-2">
+						<div class="flex items-center">
+							<label hlmLabel for="password">Senha</label>
+						</div>
+						<input type="password" id="password" formControlName="password" hlmInput />
+					</div>
+				</div>
+			</form>
+		</div>
+
+		<div hlmCardFooter class="flex-col gap-2">
+			<button hlmBtn type="button" class="w-full" (click)="signUp()">Cadastrar-se</button>
+            <p>ou</p>
+			<button [routerLink]="['']" hlmBtn class="bg-amber-700 w-full hover:bg-amber-900">Faça seu login</button>
+		</div>
+	</section>
+</div>
