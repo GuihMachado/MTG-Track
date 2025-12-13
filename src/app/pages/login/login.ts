@@ -57,7 +57,10 @@ export class Login {
             }
         });
         localStorage.setItem('auth-token', data.token);
-        // this.router.navigate(['/dashboard']);
+        localStorage.setItem('user-name', data.user.name);
+        localStorage.setItem('user-id', data.user.id);
+
+        this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         toast(error.error.message);

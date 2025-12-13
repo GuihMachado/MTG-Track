@@ -6,6 +6,11 @@
     "analytics": "483d7c95-bd88-4a9d-a38b-c9d11777dd89"
   },
   "newProjectRoot": "projects",
+  "schematics": {
+    "@schematics/angular:component": {
+      "skipTests": true
+    }
+  },
   "projects": {
     "teste": {
       "projectType": "application",
@@ -28,11 +33,8 @@
             "styles": [
               "src/styles.css"
             ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "ssr": false,        
+            "prerender": false   
           },
           "configurations": {
             "production": {

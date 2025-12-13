@@ -1,0 +1,12 @@
+<div class="relative h-40 w-full flex justify-center items-center">
+      <canvas baseChart
+        [data]="doughnutChartData"
+        [options]="doughnutChartOptions"
+        [type]="doughnutChartType">
+      </canvas>
+      
+      <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <span class="text-3xl font-bold text-black">{{ winRate }}%</span>
+        <span class="text-xs text-gray-400">Win Rate</span>
+      </div>
+    </div>

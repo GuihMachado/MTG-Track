@@ -1,0 +1,26 @@
+<div class="flex justify-center">
+  <section hlmCard class="w-[90%] mt-4 py-2">
+    <div hlmCardHeader class="px-3">
+      <h3 hlmCardTitle class="">Season 1</h3>
+    </div>
+    <div hlmCardContent>
+      <div>
+        <app-win-rate-chart 
+          [wins]="stats.wins" 
+          [losses]="stats.losses">
+        </app-win-rate-chart>
+      </div>
+    </div>
+    <div hlmCardFooter class="flex justify-between">
+      <p>Wins: {{ stats.wins }}</p>
+      <p>Losses: {{ stats.losses }}</p>
+      <p>Matches: 10</p>
+    </div>
+  </section>
+</div>
+<div>
+  Ultimos decks:
+</div>
+<div>
+  Ultimas partidas:
+</div>
