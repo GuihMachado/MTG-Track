@@ -27,8 +27,8 @@ export class WinRateChart {
       datasets: [
         {
           data: [this.wins, this.losses],
-          backgroundColor: ['#00ffc3', '#171717'], 
-          hoverBackgroundColor: ['#00ffc3', '#171717'],
+          backgroundColor: ['#00A63E', '#171717'], 
+          hoverBackgroundColor: ['#00A63E', '#171717'],
           borderWidth: 0,
         },
       ],

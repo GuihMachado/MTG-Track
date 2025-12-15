@@ -1,0 +1,22 @@
+<section hlmCard class="relative w-44 h-44 shrink-0 snap-center mr-2 last:mr-0 overflow-hidden rounded-xl border border-gray-600 group">
+  
+  <img 
+    src="https://cards.scryfall.io/art_crop/front/e/8/e82d3f71-8404-40e7-b7fa-35713d1b384e.jpg?1757377948" 
+    class="absolute inset-0 w-full h-full object-cover z-0 transition-transform group-hover:scale-110"
+  />
+  
+  <div class="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-black/60 z-10"></div>
+
+  <div class="absolute z-20 p-4 top-0">
+    <h3 hlmCardTitle class="text-white font-bold text-shadow leading-tight">
+      {{ deck }}
+    </h3>
+  </div>
+  
+  <div class="absolute bottom-0 left-0 w-full px-4 pb-4 z-20">
+    <div class="flex justify-center border-t border-white/30 pt-4">
+       <p class="text-white font-medium text-sm">Wins: {{ wins }}</p>
+    </div>
+  </div>
+
+</section>

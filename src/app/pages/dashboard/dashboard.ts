@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { WinRateChart } from '../../shared/win-rate-chart/win-rate-chart';
+import { DeckCardComponent } from './components/deck-card/deck-card.component';
+import { MatchCardComponent } from './components/match-card/match-card.component';
 
 
 @Component({
   selector: 'app-dashboard',
-  imports: [HlmCardImports, WinRateChart],
+  imports: [HlmCardImports, WinRateChart, DeckCardComponent, MatchCardComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

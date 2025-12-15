@@ -1,5 +1,5 @@
 <div class="flex justify-center">
-  <section hlmCard class="w-[90%] mt-4 py-2">
+  <section hlmCard class="w-[90%] h-64 mt-4 py-2">
     <div hlmCardHeader class="px-3">
       <h3 hlmCardTitle class="">Season 1</h3>
     </div>
@@ -21,20 +21,13 @@
 
 <div class="flex justify-center">
   <div class="w-[90%]">
-    <h1 class="my-2 font-bold text-xl">Últimos decks:</h1>
-    <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar">
+    <h1 class="my-2 font-bold text-xl text-white">Últimos decks:</h1>
+    <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar gap-2">
       @for(deck of decks; track deck.id) {
-        <section hlmCard class="w-44 flex-shrink-0 snap-center mr-4 last:mr-0">
-          <div hlmCardHeader class="px-3">
-            <h3 hlmCardTitle class="">{{ deck.name }}</h3>
-          </div>
-          <div hlmCardContent>
-            teste
-          </div>
-          <div hlmCardFooter class="flex justify-between">
-            <p>Wins: {{ stats.wins }}</p>
-          </div>
-        </section>
+        <app-deck-card 
+          [deck]="deck.name" 
+          [wins]="stats.wins"
+        />
       }
     </div>
   </div>
@@ -42,30 +35,11 @@
 
 <div class="flex justify-center">
   <div class="w-[90%] flex flex-col">
-    <h1 class="font-bold my-2 text-xl">Últimas partidas:</h1>
-    @for(deck of decks; track deck.id) {
-        <div class="flex w-full mb-1 bg-gray-800 rounded-lg overflow-hidden shadow-md">
-          <div class="flex items-center justify-center w-10 bg-green-600 text-white font-bold text-lg shrink-0">
-            V
-          </div>
-      
-          <div class="flex-1 p-3 flex flex-col justify-center">
-            
-            <div class="flex justify-between items-start mb-1">
-              <h3 class="font-bold text-white text-sm leading-tight">
-                vs. Mono-Green Devotion
-              </h3>
-              <span class="text-gray-400 text-xs shrink-0 ml-2">
-                Há 2h
-              </span>
-            </div>
-      
-            <p class="text-gray-400 text-xs">
-              Usando: Izzet Phoenix | Pioneer
-            </p>
-            
-          </div>
-        </div>
+    <h1 class="font-bold my-2 text-xl text-white">Últimas partidas:</h1>
+    <div class="h-40 overflow-y-auto no-scrollbar">
+      @for(deck of decks; track deck.id) {
+        <app-match-card />
       }
+    </div>
   </div>
 </div>

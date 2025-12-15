@@ -15,7 +15,7 @@ color-scheme: light;
 --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
 --radius: 0.625rem;
---background: red;
+--background: rgb(41, 41, 41);
 --foreground: oklch(0.129 0.042 264.695);
 --card: oklch(1 0 0);
 --card-foreground: oklch(0.129 0.042 264.695);
