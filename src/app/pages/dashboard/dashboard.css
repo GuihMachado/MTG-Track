@@ -8,3 +8,45 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
+
+.fab-btn {
+  /* Posicionamento "Suspenso" */
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000; /* Garante que fique acima dos cards */
+
+  /* Estilo e Formato */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%; /* Faz ficar redondo */
+  background-color: #22c55e; /* Verde estilo Magic/Win */
+  color: white;
+  
+  /* Centralizar o ícone */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Perfumaria (Sombra e Transição) */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+  transition: transform 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+/* Efeito ao passar o mouse */
+.fab-btn:hover {
+  background-color: #16a34a; /* Um verde um pouco mais escuro */
+  transform: scale(1.1); /* Aumenta um pouquinho */
+}
+
+/* Ajuste para telas pequenas (Celular) */
+@media (max-width: 768px) {
+  .fab-btn {
+    bottom: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+  }
+}

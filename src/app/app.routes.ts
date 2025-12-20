@@ -4,6 +4,7 @@ import { Register } from './pages/register/register';
 import { inject, PLATFORM_ID } from '@angular/core'; // <--- Importe PLATFORM_ID
 import { isPlatformBrowser } from '@angular/common'; // <--- Importe isPlatformBrowser
 import { Dashboard } from './pages/dashboard/dashboard';
+import { Cards } from './pages/cards/cards';
 
 const authGuard: CanActivateFn = () => {
     const router = inject(Router);
@@ -34,4 +35,24 @@ export const routes: Routes = [
         component: Dashboard,
         canActivate: [authGuard]
     },
+    {
+        path: 'play',
+        component: Dashboard,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'matchs',
+        component: Dashboard,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'ranking',
+        component: Dashboard,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'cards',
+        component: Cards,
+        canActivate: [authGuard]
+    }
 ];

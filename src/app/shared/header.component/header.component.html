@@ -1,7 +1,10 @@
 <div class="bg-gray-900 w-full h-14 text-white fixed top-0 z-50">
     <div class="flex justify-between items-center px-2 h-full">
         <div class="flex items-center">
+        <button id="edit-profile" hlmBtn (click)="menu_sheet.open()">
             <img src="/mtg-icon.png" class="h-12 pr-2">
+        </button>
+
             <p>Ola, {{ userName }}</p>
         </div>
         
@@ -10,3 +13,31 @@
         </div>
     </div>
 </div>
+
+<hlm-sheet side="left" #menu_sheet>
+    <hlm-sheet-content *brnSheetContent="let ctx">
+        <hlm-sheet-header class="pb-0">
+            <h3 hlmSheetTitle class="text-white">Menu</h3>
+            <p hlmSheetDescription>Selecione para onde quer ir.</p>
+            <hlm-separator class="my-4" />
+        </hlm-sheet-header>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+            <a [routerLink]="['dashboard']" class="text-white">
+                <ng-icon hlm size="sm" class="pr-6" name="lucideHome" />
+                Home
+            </a>
+            <a [routerLink]="['play']" class="text-white">
+                <ng-icon hlm size="sm" class="pr-6" name="lucideJoystick" />
+                Jogar
+            </a>
+            <a [routerLink]="['matchs']" class="text-white">
+                <ng-icon hlm size="sm" class="pr-6" name="lucideSwords" />
+                Partidas
+            </a>
+            <a [routerLink]="['ranking']" class="text-white">
+                <ng-icon hlm size="sm" class="pr-6" name="lucideCrown" />
+                Ranking
+            </a>
+        </div>
+    </hlm-sheet-content>
+</hlm-sheet>
