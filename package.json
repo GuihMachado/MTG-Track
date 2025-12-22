@@ -41,6 +41,7 @@
     "clsx": "^2.1.1",
     "embla-carousel-angular": "^20.0.0",
     "express": "^5.1.0",
+    "mana-font": "^1.18.0",
     "ng2-charts": "^8.0.0",
     "ngx-sonner": ">=3.0.0",
     "rxjs": "~7.8.0",

@@ -7,6 +7,7 @@ import { CardService } from '../../services/card-service';
 import { catchError, debounceTime, distinctUntilChanged, EMPTY, filter, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
+import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
 
 @Component({
   selector: 'app-cards',
@@ -15,8 +16,9 @@ import { AsyncPipe } from '@angular/common';
     HlmInputGroupImports,
     NgIcon,
     ReactiveFormsModule,
-    AsyncPipe
-  ],
+    AsyncPipe,
+    ManaSymbolPipe
+],
   providers: [provideIcons({ lucideSearch })],
   templateUrl: './cards.html',
   styleUrl: './cards.css',
