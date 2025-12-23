@@ -4,8 +4,6 @@ import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 import { HeaderComponent } from './shared/header.component/header.component';
 import { filter } from 'rxjs';
-import { FooterComponent } from './shared/footer.component/footer.component';
-
 
 @Component({
   selector: 'app-root',
@@ -13,8 +11,7 @@ import { FooterComponent } from './shared/footer.component/footer.component';
     RouterOutlet,
     HlmButtonImports,
     HlmToasterImports,
-    HeaderComponent,
-    FooterComponent
+    HeaderComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
