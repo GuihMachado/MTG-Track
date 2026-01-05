@@ -23,6 +23,21 @@ const authGuard: CanActivateFn = () => {
     return true; 
 };
 
+const matchGuard: CanActivateFn = () => {
+    const router = inject(Router);
+    const platformId = inject(PLATFORM_ID);
+
+    if (isPlatformBrowser(platformId)) {
+        if (localStorage.getItem('matchId')) {
+            return true;
+        }
+
+        router.navigate(['./play']);
+        return false;
+    }
+    return true; 
+};
+
 export const routes: Routes = [
     {
         path: '',
@@ -45,7 +60,7 @@ export const routes: Routes = [
     {
         path: 'match',
         component: Match,
-        canActivate: [authGuard]
+        canActivate: [authGuard, matchGuard]
     },
     {
         path: 'matchs',

@@ -138,6 +138,7 @@ export class NewMatch {
               }
           });
           localStorage.setItem('matchId', data.matchId.id);
+          localStorage.setItem('players', this.playersArray.value.length.toString());
           this.router.navigate(['/match']);
         },
         error: (error) => {

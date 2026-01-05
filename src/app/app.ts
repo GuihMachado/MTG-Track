@@ -21,7 +21,7 @@ export class App {
 
   private router = inject(Router);
   
-  private hiddenRoutes = ['/', '/register'];
+  private hiddenRoutes = ['/', '/register', '/match'];
   
   showHeader = signal(true);
 
