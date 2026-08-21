@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 import { HeaderComponent } from './shared/header.component/header.component';
+import { ThemeService } from './shared/theme/theme.service';
 import { filter } from 'rxjs';
 
 @Component({
@@ -20,6 +21,9 @@ export class App {
   protected readonly title = signal('MTG-ui');
 
   private router = inject(Router);
+
+  // O toast usa a paleta clara ou escura junto com o resto do app.
+  protected theme = inject(ThemeService);
   
   private hiddenRoutes = ['/', '/register', '/match'];
   

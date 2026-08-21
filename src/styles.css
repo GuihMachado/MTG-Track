@@ -3,136 +3,373 @@
 @import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css';
 
-@import "@angular/cdk/overlay-prebuilt.css";
-
+/* Já importa: @angular/cdk/overlay-prebuilt.css, tw-animate-css,
+   @custom-variant dark (.dark) e o mapeamento @theme inline dos tokens shadcn. */
 @import "@spartan-ng/brain/hlm-tailwind-preset.css";
 
 @import 'mana-font/css/mana.min.css';
 
-:root {
-color-scheme: light;
+/* Fontes self-hosted (Grimório §03: Grenze Gotisch + Inter + JetBrains Mono) */
+@import '@fontsource/grenze-gotisch/400.css';
+@import '@fontsource/grenze-gotisch/500.css';
+@import '@fontsource/grenze-gotisch/600.css';
+@import '@fontsource/grenze-gotisch/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
 
---font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+/* ═══════════════════════════════════════════════════════════════
+   GRIMÓRIO · CAMADA 1 — PRIMITIVOS (invariantes de tema)
+   Geram utilitários: bg-arcane-600, text-gold-300, bg-mana-u, font-display…
+   ═══════════════════════════════════════════════════════════════ */
+@theme {
+  /* Arcane — violeta arcano (primária, base 600) */
+  --color-arcane-50: #F3F0FF;
+  --color-arcane-100: #E5DEFF;
+  --color-arcane-200: #CBBEFF;
+  --color-arcane-300: #AC9BFF;
+  --color-arcane-400: #9078FF;
+  --color-arcane-500: #7C5CFF;
+  --color-arcane-600: #6E4FF0;
+  --color-arcane-700: #5B3AD1;
+  --color-arcane-800: #45299E;
+  --color-arcane-900: #2C1966;
 
---radius: 0.625rem;
---background: rgb(41, 41, 41);
---foreground: oklch(0.129 0.042 264.695);
---card: oklch(1 0 0);
---card-foreground: oklch(0.129 0.042 264.695);
---popover: oklch(1 0 0);
---popover-foreground: oklch(0.129 0.042 264.695);
---primary: oklch(0.208 0.042 265.755);
---primary-foreground: oklch(0.984 0.003 247.858);
---secondary: oklch(0.968 0.007 247.896);
---secondary-foreground: oklch(0.208 0.042 265.755);
---muted: oklch(0.968 0.007 247.896);
---muted-foreground: oklch(0.554 0.046 257.417);
---accent: oklch(0.968 0.007 247.896);
---accent-foreground: oklch(0.208 0.042 265.755);
---destructive: oklch(0.577 0.245 27.325);
---border: oklch(0.929 0.013 255.508);
---input: oklch(0.929 0.013 255.508);
---ring: oklch(0.704 0.04 256.788);
---sidebar: oklch(0.984 0.003 247.858);
---sidebar-foreground: oklch(0.129 0.042 264.695);
---sidebar-primary: oklch(0.208 0.042 265.755);
---sidebar-primary-foreground: oklch(0.984 0.003 247.858);
---sidebar-accent: oklch(0.968 0.007 247.896);
---sidebar-accent-foreground: oklch(0.208 0.042 265.755);
---sidebar-border: oklch(0.929 0.013 255.508);
---sidebar-ring: oklch(0.704 0.04 256.788);
+  /* Gold — ouro pergaminho (secundária, base 300 no dark / 700 no light) */
+  --color-gold-50: #FBF6E9;
+  --color-gold-100: #F6EBCE;
+  --color-gold-200: #EED9A6;
+  --color-gold-300: #E6C77F;
+  --color-gold-400: #E0B872;
+  --color-gold-500: #C9A05B;
+  --color-gold-600: #A8814A;
+  --color-gold-700: #8A6A2E;
+  --color-gold-800: #5E472A;
+  --color-gold-900: #3B2C1B;
+
+  /* Ink — neutros com viés violeta (matiz ~265) */
+  --color-ink-50: #F1EEF9;
+  --color-ink-100: #E4E0EE;
+  --color-ink-200: #C7C1D6;
+  --color-ink-300: #9A93AE;
+  --color-ink-400: #6B6483;
+  --color-ink-500: #3A3350;
+  --color-ink-600: #2A2438;
+  --color-ink-700: #1E1A2A;
+  --color-ink-800: #16131F;
+  --color-ink-850: #12101B;
+  --color-ink-900: #0D0B14;
+  --color-ink-950: #0A0810;
+  --color-ink-paper: #FAF8FF;
+
+  /* Mana — camada de dados do domínio; nunca em ação/estado de UI.
+     -seat: variante para área grande (verde reprova AA com rótulo branco). */
+  --color-mana-w: #F3EAD3;
+  --color-mana-u: #2E6FD1;
+  --color-mana-b: #4B3B57;
+  --color-mana-r: #D63B2F;
+  --color-mana-g: #2F9E5E;
+  --color-mana-c: #9AA3AE;
+  --color-mana-g-seat: #27824C;
+  --color-mana-w-ink: #4A3F27;
+
+  /* Tipografia — display e dados são invariantes */
+  --font-display: 'Grenze Gotisch', 'Iowan Old Style', Georgia, serif;
+
+  /* Escala tipográfica (Grimório §03) */
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.06;
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.12;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.25;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.3;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.6;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.2;
+  --text-data: 0.875rem;
+  --text-data--line-height: 1.45;
+  --text-data-lg: 1.5rem;
+  --text-data-lg--line-height: 1.1;
+
+  /* Raios (md preserva o 0.625rem histórico do projeto) */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --radius-card-art: 4.75%;
 }
 
-:root.dark {
-color-scheme: dark;
+/* Semânticos que variam com o tema, expostos como utilitários
+   (bg-surface, text-foreground-muted, shadow-elev-1…) */
+@theme inline {
+  --color-background-deep: var(--background-deep);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border-strong: var(--border-strong);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-text: var(--primary-text);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+  --shadow-glow: var(--glow);
+  --font-data: var(--font-data);
+  --font-numeral: var(--font-numeral);
+}
 
---background: oklch(0.129 0.042 264.695);
---foreground: oklch(0.984 0.003 247.858);
---card: oklch(0.208 0.042 265.755);
---card-foreground: oklch(0.984 0.003 247.858);
---popover: oklch(0.208 0.042 265.755);
---popover-foreground: oklch(0.984 0.003 247.858);
---primary: oklch(0.929 0.013 255.508);
---primary-foreground: oklch(0.208 0.042 265.755);
---secondary: oklch(0.279 0.041 260.031);
---secondary-foreground: oklch(0.984 0.003 247.858);
---muted: oklch(0.279 0.041 260.031);
---muted-foreground: oklch(0.704 0.04 256.788);
---accent: oklch(0.279 0.041 260.031);
---accent-foreground: oklch(0.984 0.003 247.858);
---destructive: oklch(0.704 0.191 22.216);
---border: oklch(1 0 0 / 10%);
---input: oklch(1 0 0 / 15%);
---ring: oklch(0.551 0.027 264.364);
---sidebar: oklch(0.208 0.042 265.755);
---sidebar-foreground: oklch(0.984 0.003 247.858);
---sidebar-primary: oklch(0.984 0.003 247.858);
---sidebar-primary-foreground: oklch(0.208 0.042 265.755);
---sidebar-accent: oklch(0.279 0.041 260.031);
---sidebar-accent-foreground: oklch(0.984 0.003 247.858);
---sidebar-border: oklch(1 0 0 / 10%);
---sidebar-ring: oklch(0.551 0.027 264.364);
+/* ═══════════════════════════════════════════════════════════════
+   GRIMÓRIO · CAMADA 2 — SEMÂNTICOS · TEMA DARK (padrão)
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: dark;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', monospace;
+  --font-data: var(--font-mono);
+  --font-numeral: var(--font-display);
+
+  --radius: 0.625rem;
+
+  --background: var(--color-ink-900);
+  --background-deep: var(--color-ink-950);
+  --foreground: #EDEAF5;
+  --foreground-muted: var(--color-ink-300);
+  --foreground-subtle: var(--color-ink-400);
+
+  --surface: var(--color-ink-800);
+  --surface-2: var(--color-ink-700);
+  --surface-3: var(--color-ink-600);
+  --card: var(--color-ink-800);
+  --card-foreground: #EDEAF5;
+  --popover: var(--color-ink-700);
+  --popover-foreground: #EDEAF5;
+
+  --primary: var(--color-arcane-600);
+  --primary-hover: var(--color-arcane-500);
+  --primary-foreground: #FFFFFF;
+  --primary-text: var(--color-arcane-300);
+  --secondary: var(--color-ink-700);
+  --secondary-foreground: #EDEAF5;
+  --muted: var(--color-ink-700);
+  --muted-foreground: var(--color-ink-300);
+  --accent: var(--color-gold-300);
+  --accent-foreground: var(--color-ink-950);
+  --accent-line: rgba(230, 199, 127, 0.34);
+
+  --border: #2A2438;
+  --border-strong: #3A3350;
+  --input: var(--color-ink-700);
+  --ring: var(--color-arcane-500);
+  --destructive: #FF6B85;
+
+  --success: #34D39E;
+  --warning: #F5B454;
+  --danger: #FF6B85;
+  --info: #5FC8F5;
+  --success-bg: color-mix(in oklab, var(--success) 12%, transparent);
+  --warning-bg: color-mix(in oklab, var(--warning) 12%, transparent);
+  --danger-bg: color-mix(in oklab, var(--danger) 12%, transparent);
+  --info-bg: color-mix(in oklab, var(--info) 13%, transparent);
+
+  --sidebar: var(--color-ink-850);
+  --sidebar-foreground: #EDEAF5;
+  --sidebar-primary: var(--color-arcane-600);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: var(--color-ink-700);
+  --sidebar-accent-foreground: #EDEAF5;
+  --sidebar-border: #2A2438;
+  --sidebar-ring: var(--color-arcane-500);
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --elev-3: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --glow: 0 0 0 1px rgba(124, 92, 255, 0.25), 0 8px 32px rgba(110, 79, 240, 0.2);
+
+  /* Consumidos fora do CSS (chart.js) — cores planas, sem color-mix */
+  --chart-win: #34D39E;
+  --chart-loss: #2A2438;
+  --chart-track: #2A2438;
+  --chart-tooltip-bg: #1E1A2A;
+  --chart-tooltip-fg: #EDEAF5;
+  --chart-tooltip-border: #3A3350;
+
+  /* Escada de z */
+  --z-raised: 10;
+  --z-overlay: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+  --z-fab: 50;
+}
+
+/* ═══════════════ TEMA LIGHT (override explícito) ═══════════════ */
+:root.light {
+  color-scheme: light;
+
+  --background: var(--color-ink-paper);
+  --background-deep: var(--color-ink-50);
+  --foreground: #16131F;
+  --foreground-muted: #5C5570;
+  --foreground-subtle: var(--color-ink-400);
+
+  --surface: #FFFFFF;
+  --surface-2: var(--color-ink-50);
+  --surface-3: var(--color-ink-100);
+  --card: #FFFFFF;
+  --card-foreground: #16131F;
+  --popover: #FFFFFF;
+  --popover-foreground: #16131F;
+
+  --primary: var(--color-arcane-700);
+  --primary-hover: var(--color-arcane-800);
+  --primary-foreground: #FFFFFF;
+  --primary-text: var(--color-arcane-700);
+  --secondary: var(--color-ink-50);
+  --secondary-foreground: #16131F;
+  --muted: var(--color-ink-50);
+  --muted-foreground: #5C5570;
+  --accent: var(--color-gold-700);
+  --accent-foreground: #FFFFFF;
+  --accent-line: rgba(138, 106, 46, 0.3);
+
+  --border: var(--color-ink-100);
+  --border-strong: var(--color-ink-200);
+  --input: #FFFFFF;
+  --ring: var(--color-arcane-700);
+  --destructive: #C4123B;
+
+  --success: #0E7454;
+  --warning: #9A6413;
+  --danger: #C4123B;
+  --info: #0E6F98;
+  --success-bg: color-mix(in oklab, var(--success) 9%, transparent);
+  --warning-bg: color-mix(in oklab, var(--warning) 10%, transparent);
+  --danger-bg: color-mix(in oklab, var(--danger) 8%, transparent);
+  --info-bg: color-mix(in oklab, var(--info) 9%, transparent);
+
+  --sidebar: var(--color-ink-50);
+  --sidebar-foreground: #16131F;
+  --sidebar-primary: var(--color-arcane-700);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: var(--color-ink-100);
+  --sidebar-accent-foreground: #16131F;
+  --sidebar-border: var(--color-ink-100);
+  --sidebar-ring: var(--color-arcane-700);
+
+  --elev-1: 0 1px 2px rgba(23, 19, 31, 0.07);
+  --elev-2: 0 4px 14px rgba(23, 19, 31, 0.09);
+  --elev-3: 0 14px 36px rgba(23, 19, 31, 0.12);
+  --glow: 0 0 0 1px rgba(91, 58, 209, 0.18), 0 8px 28px rgba(91, 58, 209, 0.1);
+
+  --chart-win: #0E7454;
+  --chart-loss: #E4E0EE;
+  --chart-track: #E4E0EE;
+  --chart-tooltip-bg: #FFFFFF;
+  --chart-tooltip-fg: #16131F;
+  --chart-tooltip-border: #C7C1D6;
 }
 
 @layer base {
-* {
-@apply border-border outline-ring/50;
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Guardas da display gótica (Grimório §03): nunca tracking, nunca caixa alta,
+     numerais sempre tabulares. */
+  .font-display {
+    letter-spacing: 0;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .font-data {
+    font-variant-numeric: tabular-nums;
+  }
 }
-body {
-@apply bg-background text-foreground;
+
+/* Gutter único do app (substitui w-[90%]/w-[95%]/w-[85%]):
+   16px até 767px, 24px até 1023px, 32px acima; conteúdo em 1120px. */
+@utility container-page {
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+
+  @media (min-width: 768px) {
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    padding-inline: 2rem;
+  }
 }
+
+/* Numeral de vidas (rosca) — o corpo é definido pelo componente conforme N */
+@utility text-life {
+  font-family: var(--font-numeral);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none; 
-    scrollbar-width: none;  
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .fab-btn {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000; 
+  bottom: 16px;
+  right: 16px;
+  z-index: var(--z-fab);
 
-  width: 60px;
-  height: 60px;
-  border-radius: 50%; 
-  background-color: #22c55e; 
-  color: white;
-  
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+
+  box-shadow: var(--elev-3);
   text-decoration: none;
   transition: transform 0.2s, background-color 0.2s;
   cursor: pointer;
 }
 
 .fab-btn:hover {
-  background-color: #16a34a; 
-  transform: scale(1.1); 
-}
-
-@media (max-width: 768px) {
-  .fab-btn {
-    bottom: 15px;
-    right: 15px;
-    width: 50px;
-    height: 50px;
-  }
+  background-color: var(--primary-hover);
+  transform: scale(1.06);
 }
 
 /* O ngx-sonner fixa top:20px em telas de até 600px e ignora o offset, o que joga
-   o toast por cima do header fixo (56px). O seletor extra sobe a especificidade
+   o toast por cima do header fixo (h-14). O seletor extra sobe a especificidade
    para vencer o estilo que o próprio componente injeta. */
 @media (max-width: 600px) {
   body [data-sonner-toaster][data-y-position="top"] {
     top: 4.5rem;
   }
 }
+

@@ -1,13 +1,21 @@
-import { Component, OnInit, afterNextRender, inject, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, afterNextRender, inject, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
+import { BrnSheetImports } from '@spartan-ng/brain/sheet';
+import { HlmSheetImports } from '@spartan-ng/helm/sheet';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
+import { LifeWheel, SeatPlayer } from './life-wheel/life-wheel';
+import { SEAT_COLOR_ORDER, SEAT_COLORS, SeatColorCode } from './life-wheel/seat-colors';
 import { NotificationService } from '../../shared/notification/notification.service';
 
-export interface Player {
+const SEATS_KEY = 'match-seats';
+const STARTING_LIFE = 40;
+
+interface StoredSeat {
   id: number;
-  life: number;
-  color: string;
-  cmdDamage: number;
+  name: string;
+  seatColor: SeatColorCode;
 }
 
 const DEFAULT_PLAYERS = 4;
@@ -15,26 +23,18 @@ const DEFAULT_PLAYERS = 4;
 @Component({
   selector: 'app-match',
   standalone: true,
-  imports: [CommonModule],
+  imports: [LifeWheel, BrnSheetImports, HlmSheetImports, HlmButtonImports, HlmSeparatorImports],
   templateUrl: './match.html',
-  styleUrls: ['./match.css'] // Certifique-se que este arquivo existe, mesmo vazio
+  styleUrls: ['./match.css'],
 })
 export class Match implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private notify = inject(NotificationService);
 
-  // Cores mais vibrantes baseadas na imagem
-  private readonly playerColors = [
-    '#A4C639', // Verde
-    '#EECFA1', // Bege
-    '#2F4F4F', // Azul Petróleo escuro
-    '#B22222', // Vermelho
-    '#4682B4', // Azul Claro
-    '#808080'  // Cinza
-  ];
+  protected players = signal<SeatPlayer[]>([]);
 
-  players: Player[] = [];
+  protected readonly seatColors = SEAT_COLORS;
 
   private usedDefaultPlayers = false;
 
@@ -50,8 +50,19 @@ export class Match implements OnInit {
   }
 
   ngOnInit(): void {
-    const startCount = this.getStoredPlayerCount();
-    this.initializeGame(startCount);
+    this.players.set(this.buildSeats());
+  }
+
+  private buildSeats(): SeatPlayer[] {
+    const count = this.getStoredPlayerCount();
+    const stored = this.getStoredSeats();
+
+    return Array.from({ length: count }, (_, i) => ({
+      id: i + 1,
+      name: stored[i]?.name ?? `Jogador ${i + 1}`,
+      life: STARTING_LIFE,
+      seatColor: stored[i]?.seatColor ?? SEAT_COLOR_ORDER[i % SEAT_COLOR_ORDER.length],
+    }));
   }
 
   private getStoredPlayerCount(): number {
@@ -67,27 +78,65 @@ export class Match implements OnInit {
     return DEFAULT_PLAYERS;
   }
 
-  initializeGame(count: number): void {
-    this.players = Array.from({ length: count }, (_, i) => ({
-      id: i + 1, life: 40, color: this.playerColors[i % this.playerColors.length], cmdDamage: 0
-    }));
+  private getStoredSeats(): StoredSeat[] {
+    if (!isPlatformBrowser(this.platformId)) return [];
+    try {
+      const raw = localStorage.getItem(SEATS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   }
 
-  updateLife(player: Player, amount: number): void {
-    const previousLife = player.life;
-    player.life += amount;
+  private persistSeats(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const seats: StoredSeat[] = this.players().map(p => ({
+      id: p.id,
+      name: p.name,
+      seatColor: p.seatColor,
+    }));
+    localStorage.setItem(SEATS_KEY, JSON.stringify(seats));
+  }
+
+  protected onLifeChange(event: { id: number; delta: number }): void {
+    const before = this.players().find(p => p.id === event.id);
+
+    this.players.update(players =>
+      players.map(p => (p.id === event.id ? { ...p, life: p.life + event.delta } : p)),
+    );
+
+    const after = this.players().find(p => p.id === event.id);
 
     // Avisa só na virada para zero, para não repetir o toast a cada toque.
-    if (previousLife > 0 && player.life <= 0) {
-      this.notify.warning(`Jogador ${player.id} está fora!`, {
-        description: `Chegou a ${player.life} pontos de vida.`
+    if (before && after && before.life > 0 && after.life <= 0) {
+      this.notify.warning(`${after.name} está fora!`, {
+        description: `Chegou a ${after.life} pontos de vida.`
       });
     }
   }
 
-  openMenu(): void {
+  /** Cicla a cor do assento entre os 6 tokens de mana — repetição permitida. */
+  protected cycleSeatColor(id: number): void {
+    this.players.update(players =>
+      players.map(p => {
+        if (p.id !== id) return p;
+        const next =
+          SEAT_COLOR_ORDER[(SEAT_COLOR_ORDER.indexOf(p.seatColor) + 1) % SEAT_COLOR_ORDER.length];
+        return { ...p, seatColor: next };
+      }),
+    );
+    this.persistSeats();
+  }
+
+  protected resetLives(): void {
+    this.players.update(players => players.map(p => ({ ...p, life: STARTING_LIFE })));
+    this.notify.info(`Vidas reiniciadas em ${STARTING_LIFE}.`);
+  }
+
+  protected confirmLeave(): void {
     this.notify.confirm('Sair da partida?', () => this.leaveMatch(), {
-      // Id fixo: tocar no M de novo reaproveita o mesmo aviso em vez de empilhar.
+      // Id fixo: tocar de novo reaproveita o mesmo aviso em vez de empilhar.
       id: 'match-exit',
       description: 'A contagem de vidas desta mesa será perdida.',
       confirmLabel: 'Sair',
@@ -102,43 +151,5 @@ export class Match implements OnInit {
 
     this.notify.info('Você saiu da partida.');
     this.router.navigate(['/play']);
-  }
-
-
-  // === LÓGICA CRÍTICA PARA O LAYOUT ===
-
-  getGridCols(count: number): string {
-    switch (count) {
-      case 2: return 'grid-rows-2';
-      case 3: return 'grid-cols-2 grid-rows-2';
-      case 4: return 'grid-cols-2 grid-rows-2';
-      
-      // PARA 5 JOGADORES (Igual à imagem): Grid base de 6 colunas
-      case 5: return 'grid-cols-6 grid-rows-2';
-      
-      case 6: return 'grid-cols-3 grid-rows-2';
-      default: return 'grid-cols-2 grid-rows-2';
-    }
-  }
-
-  getPlayerSpan(index: number, count: number): string {
-    if (count === 3 && index === 0) return 'col-span-2';
-    
-    // PARA 5 JOGADORES:
-    // Os 2 primeiros (topo) ocupam 3 colunas cada (metade da tela)
-    // Os 3 últimos (baixo) ocupam 2 colunas cada (um terço da tela)
-    if (count === 5) return index < 2 ? 'col-span-3' : 'col-span-2';
-    
-    return '';
-  }
-
-  getRotation(index: number, count: number): string {
-    let shouldRotate = false;
-    // Gira a "metade de cima" da mesa
-    if (count === 5) shouldRotate = index < 2;
-    else if (count <= 3) shouldRotate = index === 0;
-    else shouldRotate = index < (count / 2);
-    
-    return shouldRotate ? 'rotate-180' : '';
   }
 }

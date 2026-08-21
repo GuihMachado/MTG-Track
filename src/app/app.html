@@ -1,11 +1,12 @@
 <div>
   @if (showHeader()) {
-    <div class="pt-16">
+    <div class="pt-14">
       <app-header></app-header>
     </div>
   }
 
   <hlm-toaster
+    [theme]="theme.theme()"
     position="top-center"
     offset="72px"
     visibleToasts="3"

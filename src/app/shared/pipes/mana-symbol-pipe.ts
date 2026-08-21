@@ -25,7 +25,11 @@ export class ManaSymbolPipe implements PipeTransform {
         key = exceptions[key];
       }
 
-      return `<i class="ms ms-${key} ms-cost text-xs!"></i>`;
+      // Custos híbridos ({W/U}) e phyrexianos ({W/P}) usam classe sem a barra: ms-wu, ms-wp
+      key = key.replace('/', '');
+
+      // Tamanho é herdado do contexto — o pipe não impõe corpo de fonte.
+      return `<i class="ms ms-${key} ms-cost"></i>`;
     });
 
     return this.sanitizer.bypassSecurityTrustHtml(formattedText);

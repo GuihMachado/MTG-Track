@@ -1,9 +1,9 @@
-<div class="flex justify-center items-center h-screen">
-	<section class="w-[90%] max-w-sm" hlmCard>
+<div class="flex justify-center items-center h-screen px-4">
+	<section class="w-full max-w-sm" hlmCard>
 		<div hlmCardHeader>
 			<div class="flex items-center gap-2">
 				<app-back-button fallbackRoute="/" label="Voltar para o login" />
-				<h3 hlmCardTitle class="flex-1 text-center text-xl">Cadastro</h3>
+				<h3 hlmCardTitle class="flex-1 text-center font-display text-h3">Cadastro</h3>
 				<span class="size-9 shrink-0"></span>
 			</div>
 			<p hlmCardDescription>Digite seus dados abaixo para fazer o seu cadastro!</p>
@@ -36,8 +36,8 @@
 			<button hlmBtn type="button" class="w-full" [disabled]="loading" (click)="signUp()">
 				{{ loading ? 'Cadastrando...' : 'Cadastrar-se' }}
 			</button>
-            <p>ou</p>
-			<button [routerLink]="['']" hlmBtn class="bg-amber-700 w-full hover:bg-amber-900">Faça seu login</button>
+			<p class="text-sm text-foreground-muted">ou</p>
+			<button [routerLink]="['']" hlmBtn variant="secondary" class="w-full">Faça seu login</button>
 		</div>
 	</section>
 </div>

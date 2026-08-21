@@ -1,6 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { CreateMatchPayload } from '../pages/new-match/new-match';
+
+export interface CreateMatchPayload {
+  players: {
+    userId: number;
+    colors: string;
+    commander: string;
+  }[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {

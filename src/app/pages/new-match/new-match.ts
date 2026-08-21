@@ -1,6 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmLabelImports } from '@spartan-ng/helm/label';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
@@ -8,19 +9,11 @@ import { UserService } from '../../services/user-service';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
-import { MatchService } from '../../services/match-service';
+import { CreateMatchPayload, MatchService } from '../../services/match-service';
 import { Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
-
-export interface CreateMatchPayload {
-  players: {
-    userId: number;
-    colors: string;
-    commander: string;
-  }[];
-}
 
 /** Id fixo: um novo aviso substitui o anterior em vez de empilhar. */
 const FORM_WARNING = 'form-validation';
@@ -33,11 +26,12 @@ const MAX_PLAYERS = 6;
   selector: 'app-game',
   imports: [
     HlmSeparatorImports,
+    HlmButtonImports,
+    HlmCardImports,
     HlmInputImports,
     HlmLabelImports,
     BrnSelectImports,
     HlmSelectImports,
-    CommonModule,
     ManaSymbolPipe,
     ReactiveFormsModule,
     BackButton
@@ -55,17 +49,18 @@ export class NewMatch {
   private matchService = inject(MatchService);
   private notify = inject(NotificationService);
 
+  /* Identidade de mana do deck — a cor visual vem do mana-font + tokens --color-mana-* */
   protected manaColors = [
-    { code: 'W', label: 'White', bg: 'bg-yellow-100', border: 'border-yellow-500' },
-    { code: 'U', label: 'Blue',  bg: 'bg-blue-100',   border: 'border-blue-500' },
-    { code: 'B', label: 'Black', bg: 'bg-gray-300',   border: 'border-gray-800' },
-    { code: 'R', label: 'Red',   bg: 'bg-red-100',    border: 'border-red-500' },
-    { code: 'G', label: 'Green', bg: 'bg-green-100',  border: 'border-green-500' },
+    { code: 'W', label: 'White' },
+    { code: 'U', label: 'Blue' },
+    { code: 'B', label: 'Black' },
+    { code: 'R', label: 'Red' },
+    { code: 'G', label: 'Green' },
   ];
 
   constructor(private fb: FormBuilder) {
     this.gameForm = this.fb.group({
-      players: this.fb.array([]) 
+      players: this.fb.array([])
     });
 
     this.userService.getUsers()
@@ -85,9 +80,9 @@ export class NewMatch {
         }
       });
   }
-  
+
   ngOnInit() {
-    this.addPlayer(); 
+    this.addPlayer();
   }
 
   ngOnDestroy() {
@@ -162,10 +157,10 @@ export class NewMatch {
 
     const payload: CreateMatchPayload = {
       players: rawValue.players.map((p: any) => ({
-        userId: Number(p.userId), 
-        commander: p.commander,   
+        userId: Number(p.userId),
+        commander: p.commander,
         colors: p.colors
-          .join('/') 
+          .join('/')
       }))
     };
 
