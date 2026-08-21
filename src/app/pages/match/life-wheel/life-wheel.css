@@ -93,8 +93,8 @@ text.hint {
 .hub:hover .hub-fill { fill: var(--color-gold-400); }
 .hub:focus-visible .hub-fill { stroke: var(--ring); stroke-width: 2; }
 .hub-txt {
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-family: 'Mana', var(--font-display);
+  font-weight: 400;
   fill: var(--color-ink-950);
   pointer-events: none;
 }

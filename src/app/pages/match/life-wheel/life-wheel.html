@@ -69,7 +69,8 @@
   <svg:g class="hub" role="button" tabindex="0" aria-label="Abrir menu da partida"
          (click)="menu.emit()" (keydown.enter)="menu.emit()" (keydown.space)="menu.emit()">
     <svg:circle class="hub-fill" [attr.cx]="CX" [attr.cy]="CY" r="34" />
-    <svg:text class="hub-txt" [attr.x]="CX" [attr.y]="CY" font-size="24"
-              text-anchor="middle" dominant-baseline="central">M</svg:text>
+    <!-- símbolo de planeswalker da mana-font (U+E623) -->
+    <svg:text class="hub-txt" [attr.x]="CX" [attr.y]="CY" font-size="34"
+              text-anchor="middle" dominant-baseline="central">&#xe623;</svg:text>
   </svg:g>
 </svg>
