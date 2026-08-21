@@ -10,7 +10,11 @@ export interface SeatPlayer {
   name: string;
   life: number;
   seatColor: SeatColorCode;
+  /** Marcadores de veneno; 10 ou mais eliminam o jogador. */
+  poison?: number;
 }
+
+export const POISON_LETHAL = 10;
 
 interface SeatVM {
   player: SeatPlayer;
@@ -26,6 +30,7 @@ interface SeatVM {
   hintMinusT: { group: string; text: string };
   pip: { t: { group: string; text: string }; letter: string } | null;
   divider: { x1: number; y1: number; x2: number; y2: number } | null;
+  poison: number;
   low: boolean;
   out: boolean;
 }
@@ -80,8 +85,9 @@ export class LifeWheel {
           ? { t: seatTextTransform(mid, R_PIP), letter: player.seatColor }
           : null,
         divider: paint.needsDividerAfter ? dividerLine(i, n) : null,
+        poison: player.poison ?? 0,
         low: player.life > 0 && player.life <= 5,
-        out: player.life <= 0,
+        out: player.life <= 0 || (player.poison ?? 0) >= POISON_LETHAL,
       };
     });
   });

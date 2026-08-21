@@ -42,6 +42,12 @@ text.nm {
   pointer-events: none;
 }
 
+.psn {
+  fill: var(--color-mana-g);
+  opacity: 1;
+  font-weight: 700;
+}
+
 text.hint {
   font-family: var(--font-sans);
   fill: var(--seat-fg);

@@ -69,7 +69,7 @@
      -seat: variante para área grande (verde reprova AA com rótulo branco). */
   --color-mana-w: #F3EAD3;
   --color-mana-u: #2E6FD1;
-  --color-mana-b: #4B3B57;
+  --color-mana-b: #1E1C22; /* quase-preto; não desce a #000 para não sumir no fundo ink-950 */
   --color-mana-r: #D63B2F;
   --color-mana-g: #2F9E5E;
   --color-mana-c: #9AA3AE;

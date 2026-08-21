@@ -10,10 +10,10 @@
       <svg:path class="seg" [attr.d]="seat.path" [attr.fill]="seat.fill" />
       <svg:path class="warn-ring" [attr.d]="seat.warnPath" />
 
-      <!-- nome (Inter — a display nunca desce a 12px) -->
+      <!-- nome (Inter — a display nunca desce a 12px); veneno anexado quando existe -->
       <svg:g [attr.transform]="seat.nameT.group">
         <svg:text class="nm" [attr.x]="CX" [attr.y]="CY - 96" [attr.transform]="seat.nameT.text"
-                  text-anchor="middle" dominant-baseline="central">{{ seat.player.name.toUpperCase() }}</svg:text>
+                  text-anchor="middle" dominant-baseline="central">{{ seat.player.name.toUpperCase() }}@if (seat.poison > 0) {<svg:tspan class="psn" dx="6">☠{{ seat.poison }}</svg:tspan>}</svg:text>
       </svg:g>
 
       <!-- vidas (display, tabular; sem transição) -->

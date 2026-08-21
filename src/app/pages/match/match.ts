@@ -8,7 +8,7 @@ import { HlmDialogImports, HlmDialog } from '@spartan-ng/helm/dialog';
 import { HlmRadioGroupImports } from '@spartan-ng/helm/radio-group';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
-import { LifeWheel, SeatPlayer } from './life-wheel/life-wheel';
+import { LifeWheel, POISON_LETHAL, SeatPlayer } from './life-wheel/life-wheel';
 import { SEAT_COLOR_ORDER, SEAT_COLORS, SeatColorCode } from './life-wheel/seat-colors';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { MatchService } from '../../services/match-service';
@@ -25,6 +25,7 @@ interface StoredSeat {
 /** Assento da rosca + o usuário real por trás dele. */
 interface MatchSeat extends SeatPlayer {
   userId: number;
+  poison: number;
 }
 
 @Component({
@@ -93,6 +94,7 @@ export class Match implements OnInit {
               userId: mp.user.id,
               name: mp.user.name,
               life: STARTING_LIFE,
+              poison: 0,
               seatColor: stored[i]?.seatColor ?? SEAT_COLOR_ORDER[i % SEAT_COLOR_ORDER.length],
             }))
         );
@@ -144,6 +146,23 @@ export class Match implements OnInit {
     }
   }
 
+  protected updatePoison(id: number, delta: number): void {
+    const before = this.players().find(p => p.id === id);
+
+    this.players.update(players =>
+      players.map(p => (p.id === id ? { ...p, poison: Math.max(0, p.poison + delta) } : p)),
+    );
+
+    const after = this.players().find(p => p.id === id);
+
+    // Avisa só quando cruza o letal, para não repetir o toast a cada toque.
+    if (before && after && before.poison < POISON_LETHAL && after.poison >= POISON_LETHAL) {
+      this.notify.warning(`${after.name} está fora!`, {
+        description: `Chegou a ${after.poison} marcadores de veneno.`
+      });
+    }
+  }
+
   /** Cicla a cor do assento entre os 6 tokens de mana — repetição permitida. */
   protected cycleSeatColor(id: number): void {
     this.players.update(players =>
@@ -158,8 +177,8 @@ export class Match implements OnInit {
   }
 
   protected resetLives(): void {
-    this.players.update(players => players.map(p => ({ ...p, life: STARTING_LIFE })));
-    this.notify.info(`Vidas reiniciadas em ${STARTING_LIFE}.`);
+    this.players.update(players => players.map(p => ({ ...p, life: STARTING_LIFE, poison: 0 })));
+    this.notify.info(`Vidas reiniciadas em ${STARTING_LIFE}, veneno zerado.`);
   }
 
   protected openEndDialog(dialog: HlmDialog): void {
