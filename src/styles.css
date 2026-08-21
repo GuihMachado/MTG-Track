@@ -127,3 +127,12 @@ body {
     height: 50px;
   }
 }
+
+/* O ngx-sonner fixa top:20px em telas de até 600px e ignora o offset, o que joga
+   o toast por cima do header fixo (56px). O seletor extra sobe a especificidade
+   para vencer o estilo que o próprio componente injeta. */
+@media (max-width: 600px) {
+  body [data-sonner-toaster][data-y-position="top"] {
+    top: 4.5rem;
+  }
+}

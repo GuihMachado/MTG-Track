@@ -1,13 +1,16 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group';
 import { lucideSearch } from '@ng-icons/lucide';
 import { CardService } from '../../services/card-service';
-import { catchError, debounceTime, distinctUntilChanged, EMPTY, filter, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
 import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
+import { BackButton } from '../../shared/back-button/back-button';
+import { NotificationService } from '../../shared/notification/notification.service';
 
 @Component({
   selector: 'app-cards',
@@ -17,7 +20,8 @@ import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
     NgIcon,
     ReactiveFormsModule,
     AsyncPipe,
-    ManaSymbolPipe
+    ManaSymbolPipe,
+    BackButton
 ],
   providers: [provideIcons({ lucideSearch })],
   templateUrl: './cards.html',
@@ -25,30 +29,36 @@ import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
 })
 export class Cards {
   protected search = new FormControl('', { nonNullable: true });
-  protected card: any = null;
+
   private cardService = inject(CardService);
-  private readonly destroy = new Subject<void>();
+  private notify = inject(NotificationService);
 
   protected card$ = this.search.valueChanges.pipe(
     debounceTime(500),
     distinctUntilChanged(),
     switchMap(term => {
-      if (!term || term.length < 3) {
+      const query = term.trim();
+
+      if (query.length < 3) {
         return of(null); 
       }
 
-      return this.cardService.getCard(term).pipe(
-        catchError(error => {
-          console.warn('Erro:', error);
+      return this.cardService.getCard(query).pipe(
+        tap(card => {
+          if (!card) {
+            this.notify.warning(`Nenhum card encontrado para "${query}".`);
+          }
+        }),
+        catchError((error: unknown) => {
+          if (error instanceof HttpErrorResponse && error.status === 404) {
+            this.notify.warning(`Nenhum card encontrado para "${query}".`);
+          } else {
+            this.notify.apiError(error, { fallback: 'Não foi possível buscar esse card agora.' });
+          }
+
           return of(null);
         })
       );
     })
   );
-
-
-  ngOnDestroy() {
-    this.destroy.next();
-    this.destroy.complete();
-  }
 }

@@ -1,4 +1,3 @@
-<!-- <hlm-toaster /> -->
 <div class="flex justify-center items-center h-screen">
 	<section class="w-[90%] max-w-sm" hlmCard>
 		<div hlmCardHeader>
@@ -28,7 +27,9 @@
 		</div>
 
 		<div hlmCardFooter class="flex-col gap-2">
-			<button hlmBtn type="button" class="w-full" (click)="login()">Login</button>
+			<button hlmBtn type="button" class="w-full" [disabled]="loading" (click)="login()">
+				{{ loading ? 'Entrando...' : 'Login' }}
+			</button>
 			<button [routerLink]="['','register']" hlmBtn class="bg-amber-700 w-full hover:bg-amber-900">Cadastre-se</button>
 		</div>
 	</section>

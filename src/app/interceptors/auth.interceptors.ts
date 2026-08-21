@@ -1,14 +1,36 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+import { markSessionExpired } from '../shared/http/session-expired';
+import { NotificationService } from '../shared/notification/notification.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const router = inject(Router);
+  const notify = inject(NotificationService);
   const token = localStorage.getItem('auth-token');
-  if (token) {
-    const clonedRequest = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
+
+  const request = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(request).pipe(
+    catchError((error: unknown) => {
+      // 401 mesmo tendo mandado token = token expirado ou inválido: derruba a sessão.
+      if (token && error instanceof HttpErrorResponse && error.status === 401) {
+        localStorage.removeItem('auth-token');
+        localStorage.removeItem('user-name');
+        localStorage.removeItem('user-id');
+        localStorage.removeItem('matchId');
+
+        markSessionExpired(error);
+
+        // A API diz se o token expirou ou é inválido; a mensagem dela é mais precisa.
+        notify.warning(notify.messageFrom(error, 'Sua sessão expirou. Faça login novamente.'));
+        router.navigate(['/']);
       }
-    });
-    return next(clonedRequest);
-  }
-  return next(req);
+
+      return throwError(() => error);
+    })
+  );
 };

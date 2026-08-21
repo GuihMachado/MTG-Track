@@ -1,5 +1,8 @@
-<h1 class="text-3xl font-bold text-white ml-4">Nova Partida</h1>
-<p class="ml-4 text-muted-foreground pt-1">Inicie uma nova partida!</p>
+<div class="flex items-center gap-2 px-2 text-white">
+    <app-back-button />
+    <h1 class="text-3xl font-bold">Nova Partida</h1>
+</div>
+<p class="ml-13 text-muted-foreground pt-1">Inicie uma nova partida!</p>
 
 <hlm-separator class="my-4 w-2" />
 
@@ -70,9 +73,9 @@
 
     <div class="mt-6 flex justify-end">
         <button type="submit" 
-                [disabled]="gameForm.invalid"
+                [disabled]="loading"
                 class="bg-gray-900 text-white px-6 py-2 rounded hover:bg-indigo-700 disabled:opacity-50 w-full">
-            Iniciar Partida!
+            {{ loading ? 'Iniciando...' : 'Iniciar Partida!' }}
         </button>
     </div>
 

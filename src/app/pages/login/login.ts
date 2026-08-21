@@ -4,13 +4,15 @@ import { lucideCheck, lucideChevronDown } from '@ng-icons/lucide';
 import { AuthService } from '../../services/auth-service';
 import { Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
-import { toast } from 'ngx-sonner';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmLabelImports } from '@spartan-ng/helm/label';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
-import { HlmToasterImports } from '@spartan-ng/helm/sonner';
+import { NotificationService } from '../../shared/notification/notification.service';
+
+/** Id fixo: um novo aviso de validação substitui o anterior em vez de empilhar. */
+const FORM_WARNING = 'form-validation';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +21,6 @@ import { HlmToasterImports } from '@spartan-ng/helm/sonner';
     HlmLabelImports, 
     HlmInputImports, 
     HlmButtonImports, 
-    HlmToasterImports,
     RouterLink,
     ReactiveFormsModule
   ],
@@ -29,13 +30,16 @@ import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 })
 export class Login {
   protected mainForm: FormGroup;
+  protected loading = false;
+
   private authService = inject(AuthService);
-  private readonly destroy = new Subject<void>();
+  private notify = inject(NotificationService);
   private router = inject(Router);
+  private readonly destroy = new Subject<void>();
 
   constructor() {
     this.mainForm = new FormGroup({});
-    this.mainForm.addControl('email', new FormControl('', [Validators.required]));
+    this.mainForm.addControl('email', new FormControl('', [Validators.required, Validators.email]));
     this.mainForm.addControl('password', new FormControl('', [Validators.required]));
   }
 
@@ -45,25 +49,37 @@ export class Login {
   }
 
   protected login() {
-    const command = this.authService.login(this.bodybuilder());
-    command
+    if (this.mainForm.invalid) {
+      this.mainForm.markAllAsTouched();
+      this.notify.warning('Informe um e-mail válido e a sua senha para entrar.', { id: FORM_WARNING });
+      return;
+    }
+
+    this.loading = true;
+
+    this.authService.login(this.bodybuilder())
       .pipe(takeUntil(this.destroy))
       .subscribe({
       next: (data) => {
-        toast('Login efetuado com sucesso', {
-            action: {
-                label: 'Ok',
-                onClick: () => { },
-            }
-        });
+        this.loading = false;
+
         localStorage.setItem('auth-token', data.token);
         localStorage.setItem('user-name', data.user.name);
-        localStorage.setItem('user-id', data.user.id);
+        localStorage.setItem('user-id', String(data.user.id));
 
+        this.notify.success(`Bem-vindo, ${data.user.name}!`, { description: 'Login efetuado com sucesso.' });
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        toast(error.error.message);
+        this.loading = false;
+        this.notify.apiError(error, {
+          fallback: 'Não foi possível entrar agora.',
+          byStatus: {
+            400: 'E-mail ou senha inválidos.',
+            401: 'E-mail ou senha inválidos.',
+            404: 'Não encontramos nenhuma conta com esse e-mail.'
+          }
+        });
       }
     });
   }

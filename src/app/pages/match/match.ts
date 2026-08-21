@@ -1,5 +1,7 @@
-import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, afterNextRender, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
+import { NotificationService } from '../../shared/notification/notification.service';
 
 export interface Player {
   id: number;
@@ -7,6 +9,8 @@ export interface Player {
   color: string;
   cmdDamage: number;
 }
+
+const DEFAULT_PLAYERS = 4;
 
 @Component({
   selector: 'app-match',
@@ -17,6 +21,8 @@ export interface Player {
 })
 export class Match implements OnInit {
   private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
+  private notify = inject(NotificationService);
 
   // Cores mais vibrantes baseadas na imagem
   private readonly playerColors = [
@@ -30,12 +36,24 @@ export class Match implements OnInit {
 
   players: Player[] = [];
 
+  private usedDefaultPlayers = false;
+
+  constructor() {
+    // O aviso precisa sair depois da renderização, não no meio do ngOnInit.
+    afterNextRender(() => {
+      if (this.usedDefaultPlayers) {
+        this.notify.warning('Não encontramos quantos jogadores estão na mesa.', {
+          description: `Abrimos a partida com ${DEFAULT_PLAYERS} jogadores.`
+        });
+      }
+    });
+  }
+
   ngOnInit(): void {
     const startCount = this.getStoredPlayerCount();
     this.initializeGame(startCount);
   }
 
-  // ... (getStoredPlayerCount, initializeGame, updateLife, openMenu IGUAIS AO ANTERIOR) ...
   private getStoredPlayerCount(): number {
     if (isPlatformBrowser(this.platformId)) {
       const saved = localStorage.getItem('players');
@@ -43,8 +61,10 @@ export class Match implements OnInit {
         const parsed = parseInt(saved, 10);
         if (!isNaN(parsed) && parsed >= 2 && parsed <= 6) return parsed;
       }
+
+      this.usedDefaultPlayers = true;
     }
-    return 4;
+    return DEFAULT_PLAYERS;
   }
 
   initializeGame(count: number): void {
@@ -53,8 +73,36 @@ export class Match implements OnInit {
     }));
   }
 
-  updateLife(player: Player, amount: number): void { player.life += amount; }
-  openMenu(): void { console.log('Menu'); }
+  updateLife(player: Player, amount: number): void {
+    const previousLife = player.life;
+    player.life += amount;
+
+    // Avisa só na virada para zero, para não repetir o toast a cada toque.
+    if (previousLife > 0 && player.life <= 0) {
+      this.notify.warning(`Jogador ${player.id} está fora!`, {
+        description: `Chegou a ${player.life} pontos de vida.`
+      });
+    }
+  }
+
+  openMenu(): void {
+    this.notify.confirm('Sair da partida?', () => this.leaveMatch(), {
+      // Id fixo: tocar no M de novo reaproveita o mesmo aviso em vez de empilhar.
+      id: 'match-exit',
+      description: 'A contagem de vidas desta mesa será perdida.',
+      confirmLabel: 'Sair',
+      cancelLabel: 'Continuar jogando'
+    });
+  }
+
+  private leaveMatch(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('matchId');
+    }
+
+    this.notify.info('Você saiu da partida.');
+    this.router.navigate(['/play']);
+  }
 
 
   // === LÓGICA CRÍTICA PARA O LAYOUT ===
