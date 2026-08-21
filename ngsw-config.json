@@ -30,7 +30,7 @@
   "dataGroups": [
     {
       "name": "api",
-      "urls": ["http://localhost:3000/**", "https://mtg-api.onrender.com/**"],
+      "urls": ["http://localhost:3000/**", "https://mtg-0r86.onrender.com/**"],
       "cacheConfig": {
         "strategy": "freshness",
         "maxSize": 100,
