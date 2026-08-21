@@ -1,0 +1,49 @@
+<div class="flex w-full mb-1 bg-surface-2 border border-border rounded-lg overflow-hidden shadow-elev-1 shrink-0">
+    <div class="flex items-center justify-center w-10 font-data font-bold text-lg shrink-0"
+         [ngClass]="resultClass">
+        {{ result === 'E' ? '•' : result }}
+    </div>
+
+    @if (commanderImage) {
+        <img [src]="commanderImage"
+             (error)="onImageError()"
+             alt=""
+             loading="lazy"
+             class="w-16 h-full object-cover shrink-0" />
+    }
+
+    <div class="flex-1 p-3 flex flex-col justify-center min-w-0">
+
+        <div class="flex justify-between items-start mb-1">
+        <h3 class="font-semibold text-sm leading-tight truncate">
+            @if (opponentNames) {
+                vs. {{ opponentNames }}
+            } @else {
+                Partida solo
+            }
+        </h3>
+        <span class="text-foreground-subtle font-data text-xs shrink-0 ml-2">
+            @if (result === 'E') {
+                <span class="text-warning font-semibold">Em andamento</span>
+            } @else {
+                {{ match.matchDate | timeAgo }}
+            }
+        </span>
+        </div>
+
+        <p class="text-foreground-muted text-xs flex items-center gap-1 truncate">
+            @if (myPlayer?.commander) {
+                <span class="truncate">Usando: {{ myPlayer?.commander }}</span>
+            } @else {
+                <span>Sem commander</span>
+            }
+            @if (manaColors) {
+                <span [innerHTML]="manaColors | manaSymbol"></span>
+            }
+            @if (match.matchTime > 0) {
+                <span class="shrink-0 font-data">| {{ match.matchTime }}min</span>
+            }
+        </p>
+
+    </div>
+</div>

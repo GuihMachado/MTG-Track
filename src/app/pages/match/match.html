@@ -1,10 +1,14 @@
 <div class="w-screen h-screen bg-background-deep overflow-hidden flex items-center justify-center">
-  <div class="w-full max-w-[min(100vw,100vh)] p-2">
-    <app-life-wheel
-      [players]="players()"
-      (lifeChange)="onLifeChange($event)"
-      (menu)="menu_sheet.open()" />
-  </div>
+  @if (loading()) {
+    <p class="text-foreground-muted text-sm">Carregando partida...</p>
+  } @else {
+    <div class="w-full max-w-[min(100vw,100vh)] p-2">
+      <app-life-wheel
+        [players]="players()"
+        (lifeChange)="onLifeChange($event)"
+        (menu)="menu_sheet.open()" />
+    </div>
+  }
 </div>
 
 <hlm-sheet side="bottom" #menu_sheet>
@@ -31,6 +35,10 @@
 
       <hlm-separator class="my-1" />
 
+      <button hlmBtn type="button" (click)="ctx.close(); openEndDialog(endDialog)">
+        Encerrar Partida
+      </button>
+
       <button hlmBtn variant="secondary" type="button" (click)="resetLives()">
         Reiniciar vidas
       </button>
@@ -42,3 +50,40 @@
     </div>
   </hlm-sheet-content>
 </hlm-sheet>
+
+<hlm-dialog #endDialog>
+  <hlm-dialog-content class="sm:max-w-md" *brnDialogContent="let ctx">
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle class="font-display text-h3">Encerrar partida</h3>
+      <p hlmDialogDescription>
+        Selecione o vencedor. A vida atual de cada jogador é mostrada como referência.
+      </p>
+    </hlm-dialog-header>
+
+    <hlm-radio-group class="my-2" [value]="selectedWinnerId()" (valueChange)="onWinnerChange($event)">
+      @for (player of playersByLife(); track player.userId) {
+        <label class="flex items-center justify-between rounded-lg border border-border bg-surface-2 px-4 py-3 cursor-pointer hover:border-primary transition-colors"
+               [class.border-primary]="selectedWinnerId() === player.userId">
+          <hlm-radio [value]="player.userId">
+            <hlm-radio-indicator indicator />
+            <span class="ml-2 font-semibold">{{ player.name }}</span>
+          </hlm-radio>
+          <span class="text-foreground-muted font-data text-sm">{{ player.life }} de vida</span>
+        </label>
+      }
+    </hlm-radio-group>
+
+    <hlm-dialog-footer class="gap-2">
+      <button hlmBtn variant="outline" type="button"
+              [disabled]="finishing()"
+              (click)="ctx.close()">
+        Cancelar
+      </button>
+      <button hlmBtn type="button"
+              [disabled]="finishing() || selectedWinnerId() === null"
+              (click)="confirmFinish(endDialog)">
+        {{ finishing() ? 'Encerrando...' : 'Encerrar Partida' }}
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

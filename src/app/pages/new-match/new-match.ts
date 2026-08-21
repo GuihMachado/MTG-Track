@@ -9,18 +9,19 @@ import { UserService } from '../../services/user-service';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
-import { CreateMatchPayload, MatchService } from '../../services/match-service';
+import { MatchService } from '../../services/match-service';
 import { Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
+import { CreateMatchPayload } from '../../models/match.models';
 
 /** Id fixo: um novo aviso substitui o anterior em vez de empilhar. */
 const FORM_WARNING = 'form-validation';
 
-/** A tela de partida só sabe desenhar mesas de 2 a 6 jogadores. */
+/** A rosca desenha até 6 assentos, mas a API aceita partidas de 2 a 5 jogadores. */
 const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 6;
+const MAX_PLAYERS = 5;
 
 @Component({
   selector: 'app-game',
@@ -172,8 +173,8 @@ export class NewMatch {
         next: (data) => {
           this.loading = false;
 
-          localStorage.setItem('matchId', data.matchId.id);
-          localStorage.setItem('players', this.playersArray.value.length.toString());
+          localStorage.setItem('matchId', String(data.matchId));
+          localStorage.setItem('match-start', Date.now().toString());
 
           this.notify.success('Partida iniciada!', {
             description: `Boa sorte para os ${this.playersArray.length} jogadores da mesa.`

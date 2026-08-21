@@ -1,13 +1,17 @@
-import { Component, OnInit, afterNextRender, inject, PLATFORM_ID, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { BrnSheetImports } from '@spartan-ng/brain/sheet';
 import { HlmSheetImports } from '@spartan-ng/helm/sheet';
+import { BrnDialogImports } from '@spartan-ng/brain/dialog';
+import { HlmDialogImports, HlmDialog } from '@spartan-ng/helm/dialog';
+import { HlmRadioGroupImports } from '@spartan-ng/helm/radio-group';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { LifeWheel, SeatPlayer } from './life-wheel/life-wheel';
 import { SEAT_COLOR_ORDER, SEAT_COLORS, SeatColorCode } from './life-wheel/seat-colors';
 import { NotificationService } from '../../shared/notification/notification.service';
+import { MatchService } from '../../services/match-service';
 
 const SEATS_KEY = 'match-seats';
 const STARTING_LIFE = 40;
@@ -18,12 +22,24 @@ interface StoredSeat {
   seatColor: SeatColorCode;
 }
 
-const DEFAULT_PLAYERS = 4;
+/** Assento da rosca + o usuário real por trás dele. */
+interface MatchSeat extends SeatPlayer {
+  userId: number;
+}
 
 @Component({
   selector: 'app-match',
   standalone: true,
-  imports: [LifeWheel, BrnSheetImports, HlmSheetImports, HlmButtonImports, HlmSeparatorImports],
+  imports: [
+    LifeWheel,
+    BrnSheetImports,
+    HlmSheetImports,
+    BrnDialogImports,
+    HlmDialogImports,
+    HlmRadioGroupImports,
+    HlmButtonImports,
+    HlmSeparatorImports,
+  ],
   templateUrl: './match.html',
   styleUrls: ['./match.css'],
 })
@@ -31,51 +47,63 @@ export class Match implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private notify = inject(NotificationService);
+  private matchService = inject(MatchService);
 
-  protected players = signal<SeatPlayer[]>([]);
+  protected players = signal<MatchSeat[]>([]);
+  protected loading = signal(true);
+  protected finishing = signal(false);
+  protected selectedWinnerId = signal<number | null>(null);
+  private matchId: number | null = null;
 
   protected readonly seatColors = SEAT_COLORS;
 
-  private usedDefaultPlayers = false;
-
-  constructor() {
-    // O aviso precisa sair depois da renderização, não no meio do ngOnInit.
-    afterNextRender(() => {
-      if (this.usedDefaultPlayers) {
-        this.notify.warning('Não encontramos quantos jogadores estão na mesa.', {
-          description: `Abrimos a partida com ${DEFAULT_PLAYERS} jogadores.`
-        });
-      }
-    });
-  }
+  protected playersByLife = computed(() =>
+    [...this.players()].sort((a, b) => b.life - a.life)
+  );
 
   ngOnInit(): void {
-    this.players.set(this.buildSeats());
-  }
+    if (!isPlatformBrowser(this.platformId)) return;
 
-  private buildSeats(): SeatPlayer[] {
-    const count = this.getStoredPlayerCount();
-    const stored = this.getStoredSeats();
-
-    return Array.from({ length: count }, (_, i) => ({
-      id: i + 1,
-      name: stored[i]?.name ?? `Jogador ${i + 1}`,
-      life: STARTING_LIFE,
-      seatColor: stored[i]?.seatColor ?? SEAT_COLOR_ORDER[i % SEAT_COLOR_ORDER.length],
-    }));
-  }
-
-  private getStoredPlayerCount(): number {
-    if (isPlatformBrowser(this.platformId)) {
-      const saved = localStorage.getItem('players');
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 2 && parsed <= 6) return parsed;
-      }
-
-      this.usedDefaultPlayers = true;
+    const matchId = Number(localStorage.getItem('matchId'));
+    if (!matchId || isNaN(matchId)) {
+      this.clearMatchKeys();
+      this.notify.warning('Partida inválida.', {
+        description: 'Inicie uma nova partida para abrir a mesa.'
+      });
+      this.router.navigate(['/play']);
+      return;
     }
-    return DEFAULT_PLAYERS;
+
+    this.matchId = matchId;
+    this.matchService.getMatchById(matchId).subscribe({
+      next: (match) => {
+        // Partida antiga que já foi encerrada: limpa e volta para a home.
+        if (match.winner) {
+          this.clearMatchKeys();
+          this.router.navigate(['/dashboard']);
+          return;
+        }
+
+        const stored = this.getStoredSeats();
+        this.players.set(
+          [...match.playersConnection]
+            .sort((a, b) => a.id - b.id)
+            .map((mp, i) => ({
+              id: i + 1,
+              userId: mp.user.id,
+              name: mp.user.name,
+              life: STARTING_LIFE,
+              seatColor: stored[i]?.seatColor ?? SEAT_COLOR_ORDER[i % SEAT_COLOR_ORDER.length],
+            }))
+        );
+        this.loading.set(false);
+      },
+      error: (error) => {
+        this.notify.apiError(error, { fallback: 'Não foi possível carregar a partida.' });
+        this.clearMatchKeys();
+        this.router.navigate(['/play']);
+      }
+    });
   }
 
   private getStoredSeats(): StoredSeat[] {
@@ -134,22 +162,70 @@ export class Match implements OnInit {
     this.notify.info(`Vidas reiniciadas em ${STARTING_LIFE}.`);
   }
 
+  protected openEndDialog(dialog: HlmDialog): void {
+    if (this.loading() || this.players().length === 0) return;
+    // Sugestão: pré-seleciona quem tem mais vida; a escolha final é manual.
+    this.selectedWinnerId.set(this.playersByLife()[0].userId);
+    dialog.open();
+  }
+
+  protected onWinnerChange(value: unknown): void {
+    this.selectedWinnerId.set(Number(value));
+  }
+
+  protected confirmFinish(dialog: HlmDialog): void {
+    const winnerId = this.selectedWinnerId();
+    if (this.matchId === null || winnerId === null || this.finishing()) return;
+
+    const winner = this.players().find(p => p.userId === winnerId);
+    this.finishing.set(true);
+
+    this.matchService.finishMatch(this.matchId, {
+      winnerId,
+      matchTimeInMinutes: this.getElapsedMinutes()
+    }).subscribe({
+      next: () => {
+        this.notify.success('Partida encerrada!', {
+          description: `Vencedor: ${winner?.name ?? ''}.`
+        });
+        this.clearMatchKeys();
+        dialog.close(null);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error) => {
+        this.notify.apiError(error, { fallback: 'Não foi possível encerrar a partida.' });
+        this.finishing.set(false);
+      }
+    });
+  }
+
   protected confirmLeave(): void {
     this.notify.confirm('Sair da partida?', () => this.leaveMatch(), {
       // Id fixo: tocar de novo reaproveita o mesmo aviso em vez de empilhar.
       id: 'match-exit',
-      description: 'A contagem de vidas desta mesa será perdida.',
+      description: 'A partida fica em andamento, sem vencedor registrado.',
       confirmLabel: 'Sair',
       cancelLabel: 'Continuar jogando'
     });
   }
 
   private leaveMatch(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('matchId');
-    }
-
+    this.clearMatchKeys();
     this.notify.info('Você saiu da partida.');
     this.router.navigate(['/play']);
+  }
+
+  private getElapsedMinutes(): number {
+    const start = Number(localStorage.getItem('match-start'));
+    if (!start || isNaN(start)) return 0;
+    return Math.max(0, Math.round((Date.now() - start) / 60000));
+  }
+
+  private clearMatchKeys(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    localStorage.removeItem('matchId');
+    localStorage.removeItem('match-start');
+    localStorage.removeItem(SEATS_KEY);
+    localStorage.removeItem('players');
   }
 }

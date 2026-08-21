@@ -1,0 +1,54 @@
+<div class="container-page flex flex-col">
+  <h2 class="my-3 text-h2 font-semibold">Ranking de Vitórias</h2>
+
+  @if (loading()) {
+    <div class="flex flex-col gap-2">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <hlm-skeleton class="h-12 w-full" />
+      }
+    </div>
+  } @else if (ranking().length === 0) {
+    <hlm-empty class="border border-border rounded-lg py-10">
+      <hlm-empty-header>
+        <h3 hlmEmptyTitle>Ranking vazio</h3>
+        <p hlmEmptyDescription class="text-foreground-muted">Encerre partidas para começar a pontuar.</p>
+      </hlm-empty-header>
+    </hlm-empty>
+  } @else {
+    <div hlmTableContainer class="bg-surface-2 border border-border rounded-lg">
+      <table hlmTable>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh class="w-12">#</th>
+            <th hlmTh>Jogador</th>
+            <th hlmTh class="text-right">Vitórias</th>
+            <th hlmTh class="text-right">Partidas</th>
+            <th hlmTh class="text-right">Winrate</th>
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (entry of ranking(); track entry.userId; let i = $index) {
+            <tr hlmTr [class.bg-surface-3]="entry.userId === currentUserId()">
+              <td hlmTd class="font-data font-bold">
+                @if (i < 3 && entry.wins > 0) {
+                  <ng-icon hlm size="sm" name="lucideCrown" [class]="crownClass(i)" />
+                } @else {
+                  {{ i + 1 }}
+                }
+              </td>
+              <td hlmTd class="font-medium">
+                {{ entry.userName }}
+                @if (entry.userId === currentUserId()) {
+                  <span class="text-primary-text text-xs ml-1">(você)</span>
+                }
+              </td>
+              <td hlmTd class="text-right font-data font-bold">{{ entry.wins }}</td>
+              <td hlmTd class="text-right font-data text-foreground-muted">{{ entry.totalMatches }}</td>
+              <td hlmTd class="text-right font-data text-foreground-muted">{{ entry.winRate }}%</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
