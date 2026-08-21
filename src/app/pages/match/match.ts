@@ -218,22 +218,6 @@ export class Match implements OnInit {
     });
   }
 
-  protected confirmLeave(): void {
-    this.notify.confirm('Sair da partida?', () => this.leaveMatch(), {
-      // Id fixo: tocar de novo reaproveita o mesmo aviso em vez de empilhar.
-      id: 'match-exit',
-      description: 'A partida fica em andamento, sem vencedor registrado.',
-      confirmLabel: 'Sair',
-      cancelLabel: 'Continuar jogando'
-    });
-  }
-
-  private leaveMatch(): void {
-    this.clearMatchKeys();
-    this.notify.info('Você saiu da partida.');
-    this.router.navigate(['/play']);
-  }
-
   private getElapsedMinutes(): number {
     const start = Number(localStorage.getItem('match-start'));
     if (!start || isNaN(start)) return 0;
