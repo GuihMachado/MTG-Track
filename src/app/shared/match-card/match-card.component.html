@@ -46,4 +46,53 @@
         </p>
 
     </div>
+
+    @if (result === 'E') {
+        <div class="flex items-center pr-3 shrink-0">
+            <button hlmBtn size="sm" variant="outline" type="button"
+                    class="text-warning border-warning/40 hover:bg-warning-bg hover:text-warning"
+                    (click)="openEndDialog(endDialog)">
+                Encerrar
+            </button>
+        </div>
+    }
 </div>
+
+<hlm-dialog #endDialog>
+  <hlm-dialog-content class="sm:max-w-md" *brnDialogContent="let ctx">
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle class="font-display text-h3">Encerrar partida</h3>
+      <p hlmDialogDescription>
+        Selecione quem venceu esta partida.
+      </p>
+    </hlm-dialog-header>
+
+    <hlm-radio-group class="my-2" [value]="selectedWinnerId()" (valueChange)="onWinnerChange($event)">
+      @for (player of match.playersConnection; track player.user.id) {
+        <label class="flex items-center justify-between rounded-lg border border-border bg-surface-2 px-4 py-3 cursor-pointer hover:border-primary transition-colors"
+               [class.border-primary]="selectedWinnerId() === player.user.id">
+          <hlm-radio [value]="player.user.id">
+            <hlm-radio-indicator indicator />
+            <span class="ml-2 font-semibold">{{ player.user.name }}</span>
+          </hlm-radio>
+          @if (player.commander) {
+            <span class="text-foreground-muted text-sm truncate ml-3">{{ player.commander }}</span>
+          }
+        </label>
+      }
+    </hlm-radio-group>
+
+    <hlm-dialog-footer class="gap-2">
+      <button hlmBtn variant="outline" type="button"
+              [disabled]="finishing()"
+              (click)="ctx.close()">
+        Cancelar
+      </button>
+      <button hlmBtn type="button"
+              [disabled]="finishing() || selectedWinnerId() === null"
+              (click)="confirmFinish(endDialog)">
+        {{ finishing() ? 'Encerrando...' : 'Encerrar Partida' }}
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

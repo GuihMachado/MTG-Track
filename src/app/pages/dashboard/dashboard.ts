@@ -47,8 +47,12 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const userId = Number(localStorage.getItem('user-id')) || 0;
-    this.currentUserId.set(userId);
+    this.currentUserId.set(Number(localStorage.getItem('user-id')) || 0);
+    this.loadData();
+  }
+
+  protected loadData(): void {
+    const userId = this.currentUserId();
 
     this.matchService.getUserStats(userId).subscribe({
       next: (stats) => {

@@ -61,7 +61,7 @@
       <p class="text-foreground-muted text-sm py-4">Nenhuma partida ainda. Que tal começar uma?</p>
     } @else {
       @for (match of matches(); track match.id) {
-        <app-match-card [match]="match" [currentUserId]="currentUserId()" />
+        <app-match-card [match]="match" [currentUserId]="currentUserId()" (finished)="loadData()" />
       }
     }
   </div>

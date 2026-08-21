@@ -35,10 +35,12 @@ export class Matches implements OnInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const userId = Number(localStorage.getItem('user-id')) || 0;
-    this.currentUserId.set(userId);
+    this.currentUserId.set(Number(localStorage.getItem('user-id')) || 0);
+    this.loadMatches();
+  }
 
-    this.matchService.getMatchesByUser(userId).subscribe({
+  protected loadMatches(): void {
+    this.matchService.getMatchesByUser(this.currentUserId()).subscribe({
       next: (matches) => {
         this.matches.set(matches);
         this.loading.set(false);
