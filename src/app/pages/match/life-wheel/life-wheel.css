@@ -1,0 +1,94 @@
+svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.wheel-rim {
+  stroke: var(--accent-line);
+}
+
+.seg {
+  stroke: var(--color-ink-950);
+  stroke-width: 1.5;
+}
+
+.tap {
+  fill: #fff;
+  fill-opacity: 0;
+  cursor: pointer;
+  outline: none;
+}
+.tap:hover { fill-opacity: 0.08; }
+.tap:focus-visible { fill-opacity: 0.14; }
+
+text.life {
+  font-family: var(--font-numeral);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: var(--seat-fg);
+  pointer-events: none;
+}
+
+text.nm {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  fill: var(--seat-fg);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+text.hint {
+  font-family: var(--font-sans);
+  fill: var(--seat-fg);
+  opacity: 0.36;
+  pointer-events: none;
+}
+
+.pip text {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  pointer-events: none;
+}
+.pip circle {
+  stroke: rgba(0, 0, 0, 0.25);
+  stroke-width: 1;
+}
+
+.warn-ring {
+  fill: none;
+  stroke: var(--warning);
+  stroke-width: 0;
+  stroke-linecap: round;
+}
+.seat.low .warn-ring { stroke-width: 4; }
+
+.seat.out .seg { opacity: 0.22; }
+.seat.out text.life { fill: var(--danger); }
+.seat.out text.nm { fill: var(--foreground); }
+
+.split {
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.hub-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+.hub { cursor: pointer; outline: none; }
+.hub-fill { fill: var(--accent); }
+.hub:hover .hub-fill { fill: var(--color-gold-400); }
+.hub:focus-visible .hub-fill { stroke: var(--ring); stroke-width: 2; }
+.hub-txt {
+  font-family: var(--font-display);
+  font-weight: 700;
+  fill: var(--color-ink-950);
+  pointer-events: none;
+}

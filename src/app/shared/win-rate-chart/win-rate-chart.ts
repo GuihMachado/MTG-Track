@@ -1,6 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, PLATFORM_ID, ViewChild, effect, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import { ThemeService } from '../theme/theme.service';
+import { cssVar } from '../theme/css-vars';
 
 @Component({
   selector: 'app-win-rate-chart',
@@ -13,12 +16,42 @@ export class WinRateChart {
   @Input() wins: number = 0;
   @Input() losses: number = 0;
 
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+
+  private platformId = inject(PLATFORM_ID);
+  private theme = inject(ThemeService);
+
   public doughnutChartType: ChartType = 'doughnut';
+
+  constructor() {
+    // Canvas não lê var(): recolore quando o tema troca.
+    effect(() => {
+      this.theme.theme();
+      if (!isPlatformBrowser(this.platformId)) return;
+      this.applyThemeColors();
+      this.chart?.update();
+    });
+  }
 
   get winRate(): number {
     const total = this.wins + this.losses;
     if (total === 0) return 0;
     return Math.round((this.wins / total) * 100);
+  }
+
+  private colors = { win: '#34D39E', loss: '#2A2438' };
+
+  private applyThemeColors(): void {
+    this.colors = {
+      win: cssVar('--chart-win') || this.colors.win,
+      loss: cssVar('--chart-loss') || this.colors.loss,
+    };
+    const tooltip = this.doughnutChartOptions?.plugins?.tooltip;
+    if (tooltip) {
+      tooltip.backgroundColor = cssVar('--chart-tooltip-bg');
+      tooltip.bodyColor = cssVar('--chart-tooltip-fg');
+      tooltip.borderColor = cssVar('--chart-tooltip-border');
+    }
   }
 
   public get doughnutChartData(): ChartData<'doughnut'> {
@@ -27,8 +60,8 @@ export class WinRateChart {
       datasets: [
         {
           data: [this.wins, this.losses],
-          backgroundColor: ['#00A63E', '#171717'], 
-          hoverBackgroundColor: ['#00A63E', '#171717'],
+          backgroundColor: [this.colors.win, this.colors.loss],
+          hoverBackgroundColor: [this.colors.win, this.colors.loss],
           borderWidth: 0,
         },
       ],
@@ -43,9 +76,9 @@ export class WinRateChart {
         display: false,
       },
       tooltip: {
-        backgroundColor: '#000',
-        bodyColor: '#fff',
-        borderColor: '#333',
+        backgroundColor: '#1E1A2A',
+        bodyColor: '#EDEAF5',
+        borderColor: '#3A3350',
         borderWidth: 1,
         callbacks: {
           label: (context) => {

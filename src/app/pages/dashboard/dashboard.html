@@ -1,17 +1,17 @@
-<div class="flex justify-center">
-  <section hlmCard class="w-[90%] h-64 mt-4 py-2">
+<div class="container-page">
+  <section hlmCard class="min-h-64 mt-4 py-2">
     <div hlmCardHeader class="px-3">
-      <h3 hlmCardTitle class="">Season 1</h3>
+      <h3 hlmCardTitle class="font-display text-h3">Season 1</h3>
     </div>
     <div hlmCardContent>
       <div>
-        <app-win-rate-chart 
-          [wins]="stats.wins" 
+        <app-win-rate-chart
+          [wins]="stats.wins"
           [losses]="stats.losses">
         </app-win-rate-chart>
       </div>
     </div>
-    <div hlmCardFooter class="flex justify-between">
+    <div hlmCardFooter class="flex justify-between font-data text-sm text-foreground-muted">
       <p>Wins: {{ stats.wins }}</p>
       <p>Losses: {{ stats.losses }}</p>
       <p>Matches: 10</p>
@@ -19,31 +19,27 @@
   </section>
 </div>
 
-<div class="flex justify-center">
-  <div class="w-[90%]">
-    <h1 class="my-2 font-bold text-xl text-white">Últimos decks:</h1>
-    <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar gap-2">
-      @for(deck of decks; track deck.id) {
-        <app-deck-card 
-          [deck]="deck.name" 
-          [wins]="stats.wins"
-        />
-      }
-    </div>
+<div class="container-page">
+  <h2 class="my-3 text-h2 font-semibold">Últimos decks:</h2>
+  <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar gap-2">
+    @for(deck of decks; track deck.id) {
+      <app-deck-card
+        [deck]="deck.name"
+        [wins]="stats.wins"
+      />
+    }
   </div>
 </div>
 
-<div class="flex justify-center">
-  <div class="w-[90%] flex flex-col">
-    <h1 class="font-bold my-2 text-xl text-white">Últimas partidas:</h1>
-    <div class="h-56 overflow-y-auto no-scrollbar">
-      @for(deck of decks; track deck.id) {
-        <app-match-card />
-      }
-    </div>
+<div class="container-page flex flex-col">
+  <h2 class="my-3 text-h2 font-semibold">Últimas partidas:</h2>
+  <div class="max-h-56 overflow-y-auto no-scrollbar">
+    @for(deck of decks; track deck.id) {
+      <app-match-card />
+    }
   </div>
 </div>
 
-<a [routerLink]="['/cards']" class="text-white fab-btn">
+<a [routerLink]="['/cards']" class="fab-btn" aria-label="Buscar cartas">
     <ng-icon hlm size="sm" name="lucideSearch" />
 </a>

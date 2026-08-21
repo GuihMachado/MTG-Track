@@ -1,20 +1,22 @@
-<p class="text-3xl font-bold text-white ml-4">Cards</p>
-<p class="ml-4 text-muted-foreground pt-1">Obtenha detalhe dos cards.</p>
+<div class="container-page">
+    <h1 class="text-h1 font-display">Cards</h1>
+    <p class="text-foreground-muted pt-1">Obtenha detalhe dos cards.</p>
 
-<hlm-separator class="my-4 w-2" />
+    <hlm-separator class="my-4" />
 
-<div hlmInputGroup class="w-[95%] flex justify-self-center text-white">
-    <input hlmInputGroupInput [formControl]="search" placeholder="Digite o nome do card..." />
-    <div hlmInputGroupAddon>
-        <ng-icon name="lucideSearch" />
+    <div hlmInputGroup class="w-full">
+        <input hlmInputGroupInput [formControl]="search" placeholder="Digite o nome do card..." />
+        <div hlmInputGroupAddon>
+            <ng-icon hlm size="sm" name="lucideSearch" />
+        </div>
     </div>
+
+    @if (card$ | async; as card) {
+        <div class="border border-border rounded-(--radius-card-art) overflow-hidden w-full max-w-sm mt-6 mx-auto shadow-elev-2">
+            <img src="{{ card.imageUrl }}" alt="{{ card.name }}" class="w-full" />
+        </div>
+        <div class="flex flex-col items-center mt-6 max-w-[60ch] mx-auto border border-border rounded-xl bg-surface shadow-elev-1">
+            <p class="whitespace-pre-wrap p-4 text-body-lg" [innerHTML]="(card.descriptionTranslated ?? card.description) | manaSymbol"></p>
+        </div>
+    }
 </div>
-
-@if (card$ | async; as card) {
-    <div class="border border-black rounded-xl overflow-hidden w-[85%] mt-6 mx-auto shadow-xl/80">
-        <img src="{{ card.imageUrl }}" alt="{{ card.name }}" />
-    </div>
-    <div class="flex flex-col items-center mt-6 w-[90%] mx-auto border border-white rounded-xl bg-black/50">
-        <p class="whitespace-pre-wrap p-4 text-white" [innerHTML]="(card.descriptionTranslated ?? card.description) | manaSymbol"></p>
-    </div>
-}

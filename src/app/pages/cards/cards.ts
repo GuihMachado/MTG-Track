@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group';
 import { lucideSearch } from '@ng-icons/lucide';
 import { CardService } from '../../services/card-service';
@@ -15,6 +16,7 @@ import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
     HlmSeparatorImports,
     HlmInputGroupImports,
     NgIcon,
+    HlmIcon,
     ReactiveFormsModule,
     AsyncPipe,
     ManaSymbolPipe

@@ -17,7 +17,7 @@ const authGuard: CanActivateFn = () => {
         return true;
         }
 
-        router.navigate(['./login']);
+        router.navigate(['/']); // rota de login é ''
         return false;
     }
     return true; 

@@ -1,0 +1,75 @@
+<svg viewBox="0 0 400 400" role="application"
+     [attr.aria-label]="'Contador de vidas em rosca com ' + players().length + ' jogadores'">
+
+  <!-- aro externo decorativo em ouro -->
+  <svg:circle [attr.cx]="CX" [attr.cy]="CY" r="191" fill="none" class="wheel-rim" stroke-width="1" />
+
+  @for (seat of seats(); track seat.player.id) {
+    <svg:g class="seat" [class.low]="seat.low" [class.out]="seat.out" [style.--seat-fg]="seat.fg">
+
+      <svg:path class="seg" [attr.d]="seat.path" [attr.fill]="seat.fill" />
+      <svg:path class="warn-ring" [attr.d]="seat.warnPath" />
+
+      <!-- nome (Inter — a display nunca desce a 12px) -->
+      <svg:g [attr.transform]="seat.nameT.group">
+        <svg:text class="nm" [attr.x]="CX" [attr.y]="CY - 96" [attr.transform]="seat.nameT.text"
+                  text-anchor="middle" dominant-baseline="central">{{ seat.player.name.toUpperCase() }}</svg:text>
+      </svg:g>
+
+      <!-- vidas (display, tabular; sem transição) -->
+      <svg:g [attr.transform]="seat.lifeT.group">
+        <svg:text class="life" [attr.x]="CX" [attr.y]="CY - 138" [attr.transform]="seat.lifeT.text"
+                  [attr.font-size]="lifeSize()"
+                  text-anchor="middle" dominant-baseline="central">{{ seat.player.life }}</svg:text>
+      </svg:g>
+
+      <!-- hints ± -->
+      <svg:g [attr.transform]="seat.hintPlusT.group">
+        <svg:text class="hint" [attr.x]="CX" [attr.y]="CY - 168" [attr.transform]="seat.hintPlusT.text"
+                  font-size="20" text-anchor="middle" dominant-baseline="central">+</svg:text>
+      </svg:g>
+      <svg:g [attr.transform]="seat.hintMinusT.group">
+        <svg:text class="hint" [attr.x]="CX" [attr.y]="CY - 168" [attr.transform]="seat.hintMinusT.text"
+                  font-size="20" text-anchor="middle" dominant-baseline="central">−</svg:text>
+      </svg:g>
+
+      <!-- pip de letra: só quando a cor repete na mesa -->
+      @if (seat.pip; as pip) {
+        <svg:g class="pip" [attr.transform]="pip.t.group">
+          <svg:circle [attr.cx]="CX" [attr.cy]="CY - 164" r="11" [attr.fill]="seat.fg" />
+          <svg:text [attr.x]="CX" [attr.y]="CY - 164" [attr.transform]="pip.t.text"
+                    [attr.fill]="seat.fill" font-size="12"
+                    text-anchor="middle" dominant-baseline="central">{{ pip.letter }}</svg:text>
+        </svg:g>
+      }
+
+      <!-- zonas de toque: metade direita do jogador soma, esquerda subtrai -->
+      <svg:path class="tap" [attr.d]="seat.tapPlus" role="button" tabindex="0"
+                [attr.aria-label]="'Somar vida de ' + seat.player.name"
+                (click)="change(seat.player.id, 1)"
+                (keydown.enter)="change(seat.player.id, 1)"
+                (keydown.space)="change(seat.player.id, 1)" />
+      <svg:path class="tap" [attr.d]="seat.tapMinus" role="button" tabindex="0"
+                [attr.aria-label]="'Subtrair vida de ' + seat.player.name"
+                (click)="change(seat.player.id, -1)"
+                (keydown.enter)="change(seat.player.id, -1)"
+                (keydown.space)="change(seat.player.id, -1)" />
+    </svg:g>
+  }
+
+  <!-- divisores de ouro entre vizinhos da mesma cor -->
+  @for (seat of seats(); track seat.player.id) {
+    @if (seat.divider; as d) {
+      <svg:line class="split" [attr.x1]="d.x1" [attr.y1]="d.y1" [attr.x2]="d.x2" [attr.y2]="d.y2" />
+    }
+  }
+
+  <!-- hub central: única cor que não pertence a jogador nenhum -->
+  <svg:circle class="hub-ring" [attr.cx]="CX" [attr.cy]="CY" [attr.r]="R_INNER" />
+  <svg:g class="hub" role="button" tabindex="0" aria-label="Abrir menu da partida"
+         (click)="menu.emit()" (keydown.enter)="menu.emit()" (keydown.space)="menu.emit()">
+    <svg:circle class="hub-fill" [attr.cx]="CX" [attr.cy]="CY" r="34" />
+    <svg:text class="hub-txt" [attr.x]="CX" [attr.y]="CY" font-size="24"
+              text-anchor="middle" dominant-baseline="central">M</svg:text>
+  </svg:g>
+</svg>

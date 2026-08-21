@@ -1,40 +1,48 @@
-<div class="bg-gray-900 w-full h-14 text-white fixed top-0 z-50">
+<header class="bg-surface border-b border-border shadow-elev-1 w-full h-14 text-foreground fixed top-0 z-50">
     <div class="flex justify-between items-center px-2 h-full">
-        <div class="flex items-center">
-        <button id="edit-profile" hlmBtn (click)="menu_sheet.open()">
-            <img src="/mtg-icon.png" class="h-12 pr-2">
-        </button>
+        <div class="flex items-center gap-2">
+            <button id="edit-profile" hlmBtn variant="ghost" size="icon" (click)="menu_sheet.open()" aria-label="Abrir menu">
+                <img src="/mtg-icon.png" alt="" class="h-9">
+            </button>
 
-            <p>Ola, {{ userName }}</p>
+            <p class="text-sm">Olá, <span class="font-medium">{{ userName }}</span></p>
         </div>
-        
-        <div class="pr-2">
-            <img src="/user.png" class="h-10">
+
+        <div class="flex items-center gap-1 pr-2">
+            <button hlmBtn variant="ghost" size="icon" type="button" (click)="theme.toggle()"
+                [attr.aria-label]="theme.theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'">
+                <ng-icon hlm size="sm" [name]="theme.theme() === 'dark' ? 'lucideSun' : 'lucideMoon'" />
+            </button>
+            <img src="/user.png" alt="" class="h-9">
         </div>
     </div>
-</div>
+</header>
 
 <hlm-sheet side="left" #menu_sheet>
     <hlm-sheet-content *brnSheetContent="let ctx">
         <hlm-sheet-header class="pb-0">
-            <h3 hlmSheetTitle class="text-white">Menu</h3>
+            <h3 hlmSheetTitle class="font-display text-h3">Menu</h3>
             <p hlmSheetDescription>Selecione para onde quer ir.</p>
             <hlm-separator class="my-4" />
         </hlm-sheet-header>
         <div class="grid flex-1 auto-rows-min gap-6 px-4">
-            <a [routerLink]="['dashboard']" class="text-white">
+            <a [routerLink]="['/dashboard']" routerLinkActive="text-primary-text"
+               class="text-foreground-muted hover:text-foreground transition-colors">
                 <ng-icon hlm size="sm" class="pr-6" name="lucideHome" />
                 Home
             </a>
-            <a [routerLink]="['play']" class="text-white">
+            <a [routerLink]="['/play']" routerLinkActive="text-primary-text"
+               class="text-foreground-muted hover:text-foreground transition-colors">
                 <ng-icon hlm size="sm" class="pr-6" name="lucideJoystick" />
                 Jogar
             </a>
-            <a [routerLink]="['matchs']" class="text-white">
+            <a [routerLink]="['/matchs']" routerLinkActive="text-primary-text"
+               class="text-foreground-muted hover:text-foreground transition-colors">
                 <ng-icon hlm size="sm" class="pr-6" name="lucideSwords" />
                 Partidas
             </a>
-            <a [routerLink]="['ranking']" class="text-white">
+            <a [routerLink]="['/ranking']" routerLinkActive="text-primary-text"
+               class="text-foreground-muted hover:text-foreground transition-colors">
                 <ng-icon hlm size="sm" class="pr-6" name="lucideCrown" />
                 Ranking
             </a>
