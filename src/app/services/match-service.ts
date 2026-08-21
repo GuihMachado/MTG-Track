@@ -10,11 +10,12 @@ import {
     StartMatchResponse,
     UserStats
 } from '../models/match.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
     private http = inject(HttpClient);
-    private API_URL = 'http://localhost:3000/match';
+    private API_URL = `${environment.apiUrl}/match`;
 
     startMatch(payload: CreateMatchPayload): Observable<StartMatchResponse> {
         return this.http.post<StartMatchResponse>(`${this.API_URL}/start`, payload);
