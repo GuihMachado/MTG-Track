@@ -1,0 +1,57 @@
+<div class="flex justify-center">
+  <div class="w-[90%] flex flex-col">
+    <h1 class="font-bold my-2 text-xl text-white">Ranking de Vitórias</h1>
+
+    @if (loading()) {
+      <div class="flex flex-col gap-2">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <hlm-skeleton class="h-12 w-full bg-gray-800" />
+        }
+      </div>
+    } @else if (ranking().length === 0) {
+      <hlm-empty class="border border-gray-700 rounded-lg py-10">
+        <hlm-empty-header>
+          <h3 hlmEmptyTitle class="text-white">Ranking vazio</h3>
+          <p hlmEmptyDescription class="text-gray-400">Encerre partidas para começar a pontuar.</p>
+        </hlm-empty-header>
+      </hlm-empty>
+    } @else {
+      <div hlmTableContainer class="bg-gray-800 rounded-lg">
+        <table hlmTable>
+          <thead hlmTHead>
+            <tr hlmTr class="border-gray-700">
+              <th hlmTh class="w-12 text-gray-400">#</th>
+              <th hlmTh class="text-gray-400">Jogador</th>
+              <th hlmTh class="text-right text-gray-400">Vitórias</th>
+              <th hlmTh class="text-right text-gray-400">Partidas</th>
+              <th hlmTh class="text-right text-gray-400">Winrate</th>
+            </tr>
+          </thead>
+          <tbody hlmTBody>
+            @for (entry of ranking(); track entry.userId; let i = $index) {
+              <tr hlmTr class="border-gray-700"
+                  [class.bg-gray-700]="entry.userId === currentUserId()">
+                <td hlmTd class="font-bold text-white">
+                  @if (i < 3 && entry.wins > 0) {
+                    <ng-icon hlm size="sm" name="lucideCrown" [class]="crownClass(i)" />
+                  } @else {
+                    {{ i + 1 }}
+                  }
+                </td>
+                <td hlmTd class="text-white font-medium">
+                  {{ entry.userName }}
+                  @if (entry.userId === currentUserId()) {
+                    <span class="text-amber-400 text-xs ml-1">(você)</span>
+                  }
+                </td>
+                <td hlmTd class="text-right text-white font-bold">{{ entry.wins }}</td>
+                <td hlmTd class="text-right text-gray-400">{{ entry.totalMatches }}</td>
+                <td hlmTd class="text-right text-gray-400">{{ entry.winRate }}%</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

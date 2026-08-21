@@ -1,0 +1,29 @@
+<div class="flex justify-center">
+  <div class="w-[90%] flex flex-col">
+    <h1 class="font-bold my-2 text-xl text-white">Partidas</h1>
+
+    @if (loading()) {
+      <div class="flex flex-col gap-2">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <hlm-skeleton class="h-16 w-full bg-gray-800" />
+        }
+      </div>
+    } @else if (matches().length === 0) {
+      <hlm-empty class="border border-gray-700 rounded-lg py-10">
+        <hlm-empty-header>
+          <h3 hlmEmptyTitle class="text-white">Nenhuma partida ainda</h3>
+          <p hlmEmptyDescription class="text-gray-400">Que tal começar uma?</p>
+        </hlm-empty-header>
+        <hlm-empty-content>
+          <a hlmBtn routerLink="/play">Nova partida</a>
+        </hlm-empty-content>
+      </hlm-empty>
+    } @else {
+      <div class="flex flex-col">
+        @for (match of matches(); track match.id) {
+          <app-match-card [match]="match" [currentUserId]="currentUserId()" />
+        }
+      </div>
+    }
+  </div>
+</div>

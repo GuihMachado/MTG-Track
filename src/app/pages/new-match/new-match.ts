@@ -13,14 +13,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { toast } from 'ngx-sonner';
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 import { Router } from '@angular/router';
-
-export interface CreateMatchPayload {
-  players: {
-    userId: number;
-    colors: string;
-    commander: string;
-  }[];
-}
+import { CreateMatchPayload } from '../../models/match.models';
 
 
 @Component({
@@ -137,8 +130,8 @@ export class NewMatch {
                   onClick: () => { },
               }
           });
-          localStorage.setItem('matchId', data.matchId.id);
-          localStorage.setItem('players', this.playersArray.value.length.toString());
+          localStorage.setItem('matchId', String(data.matchId));
+          localStorage.setItem('match-start', Date.now().toString());
           this.router.navigate(['/match']);
         },
         error: (error) => {

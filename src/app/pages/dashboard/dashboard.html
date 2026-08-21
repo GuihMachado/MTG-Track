@@ -1,20 +1,26 @@
 <div class="flex justify-center">
   <section hlmCard class="w-[90%] h-64 mt-4 py-2">
     <div hlmCardHeader class="px-3">
-      <h3 hlmCardTitle class="">Season 1</h3>
+      <h3 hlmCardTitle class="">Resumo</h3>
     </div>
     <div hlmCardContent>
-      <div>
-        <app-win-rate-chart 
-          [wins]="stats.wins" 
-          [losses]="stats.losses">
-        </app-win-rate-chart>
-      </div>
+      @if (loadingStats()) {
+        <div class="flex justify-center items-center h-28">
+          <hlm-skeleton class="h-24 w-24 rounded-full bg-gray-800" />
+        </div>
+      } @else if (stats(); as s) {
+        <div>
+          <app-win-rate-chart
+            [wins]="s.wins"
+            [losses]="s.losses">
+          </app-win-rate-chart>
+        </div>
+      }
     </div>
     <div hlmCardFooter class="flex justify-between">
-      <p>Wins: {{ stats.wins }}</p>
-      <p>Losses: {{ stats.losses }}</p>
-      <p>Matches: 10</p>
+      <p>Vitórias: {{ stats()?.wins ?? 0 }}</p>
+      <p>Derrotas: {{ stats()?.losses ?? 0 }}</p>
+      <p>Partidas: {{ stats()?.total ?? 0 }}</p>
     </div>
   </section>
 </div>
@@ -22,14 +28,25 @@
 <div class="flex justify-center">
   <div class="w-[90%]">
     <h1 class="my-2 font-bold text-xl text-white">Últimos decks:</h1>
-    <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar gap-2">
-      @for(deck of decks; track deck.id) {
-        <app-deck-card 
-          [deck]="deck.name" 
-          [wins]="stats.wins"
-        />
-      }
-    </div>
+    @if (loadingDecks()) {
+      <div class="flex gap-2">
+        @for (i of [1, 2]; track i) {
+          <hlm-skeleton class="w-44 h-44 shrink-0 rounded-xl bg-gray-800" />
+        }
+      </div>
+    } @else if (decks().length === 0) {
+      <p class="text-gray-400 text-sm py-4">Nenhum deck registrado ainda.</p>
+    } @else {
+      <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar gap-2">
+        @for (deck of decks(); track deck.commander) {
+          <app-deck-card
+            [name]="deck.commander"
+            [imageUrl]="deck.imageCard"
+            [colors]="deck.colors"
+          />
+        }
+      </div>
+    }
   </div>
 </div>
 
@@ -37,8 +54,18 @@
   <div class="w-[90%] flex flex-col">
     <h1 class="font-bold my-2 text-xl text-white">Últimas partidas:</h1>
     <div class="h-56 overflow-y-auto no-scrollbar">
-      @for(deck of decks; track deck.id) {
-        <app-match-card />
+      @if (loadingMatches()) {
+        <div class="flex flex-col gap-2">
+          @for (i of [1, 2, 3]; track i) {
+            <hlm-skeleton class="h-16 w-full bg-gray-800" />
+          }
+        </div>
+      } @else if (matches().length === 0) {
+        <p class="text-gray-400 text-sm py-4">Nenhuma partida ainda. Que tal começar uma?</p>
+      } @else {
+        @for (match of matches(); track match.id) {
+          <app-match-card [match]="match" [currentUserId]="currentUserId()" />
+        }
       }
     </div>
   </div>
