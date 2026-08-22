@@ -19,9 +19,9 @@ import { CreateMatchPayload } from '../../models/match.models';
 /** Id fixo: um novo aviso substitui o anterior em vez de empilhar. */
 const FORM_WARNING = 'form-validation';
 
-/** A rosca desenha até 6 assentos, mas a API aceita partidas de 2 a 5 jogadores. */
+/** A mesa desenha de 2 a 6 assentos — o mesmo intervalo que a API aceita. */
 const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 5;
+const MAX_PLAYERS = 6;
 
 @Component({
   selector: 'app-game',

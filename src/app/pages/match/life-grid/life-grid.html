@@ -1,0 +1,52 @@
+<div class="table" [style.grid-template-rows]="rowsTemplate()">
+  @for (seat of seats(); track seat.player.id) {
+    <div class="seat"
+         [class.wide]="seat.slot.wide"
+         [class.low]="seat.low"
+         [class.out]="seat.out"
+         [class.picked]="pickedId() === seat.player.id"
+         [style.background]="seat.fill"
+         [style.--seat-bg]="seat.fill"
+         [style.--seat-fg]="seat.fg">
+
+      @if (arranging()) {
+        <button type="button" class="tap zone-full"
+                [attr.aria-label]="'Trocar o assento de ' + seat.player.name"
+                (click)="pick.emit(seat.player.id)"></button>
+      } @else {
+        <button type="button" class="tap" [ngClass]="seat.slot.minusZone"
+                [attr.aria-label]="'Subtrair vida de ' + seat.player.name"
+                (click)="change(seat.player.id, -1)">−</button>
+
+        <button type="button" class="tap" [ngClass]="seat.slot.plusZone"
+                [attr.aria-label]="'Somar vida de ' + seat.player.name"
+                (click)="change(seat.player.id, 1)">+</button>
+      }
+
+      <div class="content" [style.transform]="seat.transform">
+        <span class="name">
+          {{ seat.player.name }}
+          @if (seat.pip; as pip) {
+            <span class="pip">{{ pip }}</span>
+          }
+        </span>
+
+        <span class="life" [style.font-size.vmin]="lifeSize()">{{ seat.player.life }}</span>
+
+        @if (seat.poison > 0) {
+          <span class="psn" [class.lethal]="seat.poison >= 10">☠ {{ seat.poison }}</span>
+        }
+
+        @if (arranging()) {
+          <span class="arrange-hint">
+            {{ pickedId() === seat.player.id ? 'Selecionado' : 'Tocar para trocar' }}
+          </span>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<button type="button" class="hub" (click)="menu.emit()" aria-label="Abrir menu da partida">
+  <span class="hub-icon">&#xe623;</span>
+</button>
