@@ -1,0 +1,425 @@
+/*
+ * Carta traduzida. O texto de oráculo deixa de ser um parágrafo corrido: cada
+ * linha de regra é um bloco com divisor próprio, o lembrete tem outro tom e o
+ * custo de habilidade ativada vira pílula acima do texto. A única aparição do
+ * gótico aqui é a força/resistência, como manda a lei 3 do sistema.
+ */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  min-height: calc(100dvh - 3.5rem);
+  background: var(--background);
+}
+
+/* A arte é botão: tocar abre a carta impressa em tela cheia. */
+.art-hit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 236px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.art {
+  width: 100%;
+  height: 236px;
+  object-fit: cover;
+  opacity: 0.85;
+}
+
+/* Véu de 290px: a arte nasce visível e morre no fundo, sem linha de corte. */
+.veil {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 290px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--background) 72%, transparent) 0%,
+    color-mix(in oklab, var(--background) 15%, transparent) 34%,
+    color-mix(in oklab, var(--background) 94%, transparent) 84%,
+    var(--background) 100%
+  );
+}
+
+.face-glow {
+  position: absolute;
+  top: 40px;
+  left: -70px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(var(--face-rgb) / 0.22), transparent 70%);
+  filter: blur(10px);
+}
+
+/* Botão de ação sobre a arte: 38px visuais, 44px de alvo pelo padding. */
+.act {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hairline-strong);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+
+.act:active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.act:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Já na lista de proxies: o ouro é o acabamento de "guardado". */
+.act.saved {
+  background: rgb(var(--accent-rgb) / 0.16);
+  border-color: rgb(var(--accent-rgb) / 0.45);
+  color: var(--accent);
+}
+
+.no-cost {
+  flex: none;
+  margin-top: 5px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--foreground-muted);
+}
+
+/* Raridade: comum e incomum em cinza, rara e mítica em ouro (a mítica com fio). */
+.rarity {
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.14);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--foreground-muted);
+}
+
+.rarity.uncommon {
+  color: var(--color-ink-200);
+}
+
+.rarity.rare {
+  background: transparent;
+  color: var(--accent);
+}
+
+.rarity.mythic {
+  background: transparent;
+  border-color: rgb(var(--accent-rgb) / 0.45);
+  color: var(--accent);
+}
+
+/* Trilho do seletor de idioma. */
+.lang-track {
+  display: flex;
+  flex: 1;
+  gap: 3px;
+  height: 38px;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hairline);
+}
+
+.lang-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--foreground-subtle);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.lang-tab.on {
+  background-image: linear-gradient(180deg, #241e3d, #171326);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.9);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.lang-tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lang-tab:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/* Aba de face: a única peça roxa da tela, porque transformar é a ação da carta. */
+.face-tab {
+  flex: 1;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--hairline);
+  color: var(--foreground-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color 150ms ease-out, background-color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+.face-tab.on {
+  background: rgba(124, 92, 255, 0.16);
+  border-color: rgba(124, 92, 255, 0.5);
+  color: var(--color-arcane-200);
+  font-weight: 600;
+}
+
+.face-tab:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* A placa do oráculo: um bloco por linha, divisores por dentro. */
+.oracle {
+  overflow: hidden;
+  border-radius: var(--radius-xl, 1.25rem);
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 22px 40px -22px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  animation: face-in 200ms ease-out;
+}
+
+@keyframes face-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.divider {
+  height: 1px;
+  background: var(--hairline);
+}
+
+.rule {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--foreground);
+  text-wrap: pretty;
+}
+
+/* Lembrete: itálico, um tom abaixo, com fio de ouro à esquerda. 4.6:1 sobre a
+   placa — não escurecer mais. */
+.reminder {
+  margin-top: 8px;
+  padding-left: 11px;
+  border-left: 2px solid rgb(var(--accent-rgb) / 0.34);
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-style: italic;
+  color: #8b8499;
+  text-wrap: pretty;
+}
+
+.ability-label {
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Custo da habilidade ativada, acima do texto — os pips aqui são maiores que
+   os do meio da frase, de propósito. */
+.cost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 15px;
+}
+
+.kw {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.025);
+  border-top: 1px solid var(--hairline);
+}
+
+.pt-value {
+  font-family: var(--font-numeral);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ação fixa: adicionar é a única coisa a fazer com a carta aberta. */
+.cta-add,
+.cta-added {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1.125rem;
+  z-index: var(--z-fab);
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: var(--radius-lg, 1.125rem);
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.cta-add {
+  border: 0;
+  background-image: linear-gradient(180deg, #8a6bff, #6242de);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--elev-float);
+  animation: floaty 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.cta-add:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Já guardada: vira estado, não ação — sem gradiente e sem flutuar. */
+.cta-added {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--hairline-strong);
+  backdrop-filter: blur(12px);
+  color: var(--accent);
+  font-size: 15px;
+}
+
+@media (min-width: 640px) {
+  .cta-add,
+  .cta-added {
+    left: 50%;
+    right: auto;
+    translate: -50% 0;
+    width: 360px;
+  }
+}
+
+/* Carta impressa em tela cheia. */
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: color-mix(in oklab, var(--background) 94%, transparent);
+  backdrop-filter: blur(20px);
+  cursor: zoom-out;
+}
+
+.fullscreen img {
+  max-width: min(100%, 24rem);
+  max-height: 100%;
+  border-radius: var(--radius-card-art);
+  box-shadow: 0 26px 50px -22px rgba(0, 0, 0, 0.98);
+}
+
+/* Linha de resultado da busca. */
+.result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 0.875rem);
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-1);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: transform 120ms ease-out, border-color 150ms ease-out;
+}
+
+.result:hover {
+  border-color: var(--hairline-strong);
+}
+
+.result:active {
+  transform: scale(0.99);
+}
+
+.result:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.result-art {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: center 22%;
+  background: var(--surface-plate-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oracle,
+  .cta-add {
+    animation: none;
+  }
+
+  .result:active {
+    transform: none;
+  }
+}

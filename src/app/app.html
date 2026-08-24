@@ -1,7 +1,10 @@
 <div>
   @if (showHeader()) {
-    <div class="pt-14">
-      <app-header></app-header>
+    <!-- O respiro de 3.5rem existe porque o header é fixo. Na home ele não
+         existe: a arte do commander nasce em y=0 e corre por baixo do header,
+         que ali não tem barra. -->
+    <div [class.pt-14]="!overArt()">
+      <app-header [overArt]="overArt()" />
     </div>
   }
 

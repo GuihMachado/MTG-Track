@@ -1,14 +1,15 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
+import { Router } from '@angular/router';
 import { BrnSheetImports } from '@spartan-ng/brain/sheet';
 import { HlmSheetImports } from '@spartan-ng/helm/sheet';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
+import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import {
   lucideCrown,
   lucideHouse,
-  lucideJoystick,
   lucideMenu,
   lucideMoon,
   lucidePrinter,
@@ -16,9 +17,11 @@ import {
   lucideSearch,
   lucideSun,
   lucideSwords,
+  lucideUser,
+  lucideUserCog,
 } from '@ng-icons/lucide';
 import { ThemeService } from '../theme/theme.service';
-import { inject } from '@angular/core';
+import { ProfileService } from '../profile/profile.service';
 
 interface NavItem {
   route: string;
@@ -32,6 +35,7 @@ interface NavItem {
     BrnSheetImports,
     HlmSheetImports,
     HlmSeparatorImports,
+    HlmDropdownMenuImports,
     RouterLink,
     RouterLinkActive,
     NgIcon,
@@ -39,7 +43,6 @@ interface NavItem {
   ],
   providers: [
     provideIcons({
-      lucideJoystick,
       lucideCrown,
       lucideSwords,
       lucideHouse,
@@ -49,6 +52,8 @@ interface NavItem {
       lucideScrollText,
       lucideMenu,
       lucideSearch,
+      lucideUser,
+      lucideUserCog,
     }),
   ],
   templateUrl: './header.component.html',
@@ -59,18 +64,24 @@ export class HeaderComponent {
   overArt = input(false);
 
   protected theme = inject(ThemeService);
+  protected profile = inject(ProfileService);
+  private router = inject(Router);
 
   /**
    * Buscar carta entra no menu — era um FAB na home, que a Levitação tirou de
-   * lá para o rodapé pertencer só a "nova partida".
+   * lá para o rodapé pertencer só a "nova partida". E "Jogar" saiu: levava para
+   * a mesma /play da pílula da home, que está a um toque daqui.
    */
   protected readonly navItems: NavItem[] = [
     { route: '/dashboard', icon: 'lucideHouse', label: 'Home' },
-    { route: '/play', icon: 'lucideJoystick', label: 'Jogar' },
     { route: '/matchs', icon: 'lucideSwords', label: 'Partidas' },
     { route: '/ranking', icon: 'lucideCrown', label: 'Ranking' },
     { route: '/proxies', icon: 'lucidePrinter', label: 'Proxies' },
     { route: '/rules', icon: 'lucideScrollText', label: 'Regras da Casa' },
     { route: '/cards', icon: 'lucideSearch', label: 'Buscar carta' },
   ];
+
+  protected goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
 }

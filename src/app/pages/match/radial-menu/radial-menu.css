@@ -11,13 +11,78 @@
   animation: veil-in 140ms ease-out;
 }
 
+/* Saída: o véu apaga e a rosca recolhe para o centro. A tela de partida só
+   desmonta o componente depois disso (EXIT_MS em radial-menu.ts). */
+.veil.closing {
+  animation: veil-out 180ms ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes veil-out {
+  to {
+    opacity: 0;
+  }
+}
+
 .wheel {
   width: min(88%, 340px);
   height: auto;
-  /* A rosca também é placa: sombra longa embaixo para não encostar na mesa. */
+  /* A rosca também é placa: sombra longa embaixo para não encostar na mesa,
+     e a mesma flutuação do hub — é o mesmo objeto, aberto. */
   filter: drop-shadow(0 26px 40px rgb(0 0 0 / 0.85));
+  /* Entra crescendo do centro e só então assume a flutuação — o atraso da
+     segunda animação é a duração da primeira. */
+  animation: wheel-in 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    floaty 5s ease-in-out 220ms infinite;
+  will-change: transform;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+.wheel.closing {
+  animation: wheel-out 180ms ease-in forwards;
+}
+
+@keyframes wheel-in {
+  from {
+    opacity: 0;
+    scale: 0.86;
+  }
+}
+
+@keyframes wheel-out {
+  to {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+/* Cada fatia entra na sequência. Os nós são recriados quando o submenu troca,
+   então a escada roda de novo ao abrir "Cores" ou "Dado" — de graça. */
+.slice-group {
+  animation: slice-in 200ms ease-out backwards;
+}
+
+.slice-group:nth-of-type(2) {
+  animation-delay: 30ms;
+}
+.slice-group:nth-of-type(3) {
+  animation-delay: 60ms;
+}
+.slice-group:nth-of-type(4) {
+  animation-delay: 90ms;
+}
+.slice-group:nth-of-type(5) {
+  animation-delay: 120ms;
+}
+.slice-group:nth-of-type(n + 6) {
+  animation-delay: 150ms;
+}
+
+@keyframes slice-in {
+  from {
+    opacity: 0;
+  }
 }
 
 .rim {
@@ -26,17 +91,40 @@
   stroke-width: 1;
 }
 
+/* Gradiente da placa da fatia — SVG não tem background-image, então o degradê
+   vem de um <linearGradient> pintado pelos mesmos tokens da placa. */
+.stop-top {
+  stop-color: var(--surface-plate-top);
+}
+
+.stop-bottom {
+  stop-color: var(--surface-plate-bottom);
+}
+
 .slice {
-  fill: var(--surface-plate-top);
+  fill: url(#slice-plate);
   stroke: var(--background-deep);
-  stroke-width: 2;
+  stroke-width: 3;
   cursor: pointer;
   transition: fill 120ms ease;
 }
 
+/* Sombra colorida da fatia — só onde existe cor no dado (assento, encerrar).
+   O filtro fica no path, não no grupo: no grupo o drop-shadow desfocaria o
+   rótulo junto, e texto com halo de 16px vira mancha. */
+.slice-group.glowing .slice {
+  filter: drop-shadow(0 10px 16px rgb(var(--slice-rgb) / 0.55));
+  transition: filter 150ms ease-out, fill 120ms ease;
+}
+
+.slice-group.glowing .slice:hover,
+.slice-group.glowing .slice:focus-visible {
+  filter: drop-shadow(0 12px 22px rgb(var(--slice-rgb) / 0.85));
+}
+
 .slice:hover,
 .slice:focus-visible {
-  fill: color-mix(in oklab, var(--surface-plate-top), white 8%);
+  fill: color-mix(in oklab, var(--surface-plate-top), white 10%);
   outline: none;
 }
 
@@ -66,6 +154,11 @@
   fill: var(--label-fg, var(--foreground));
 }
 
+.center:focus-visible circle {
+  stroke: var(--ring);
+  stroke-width: 2;
+}
+
 .text.solo {
   font-family: var(--font-numeral);
   font-size: 22px;
@@ -77,16 +170,22 @@
 }
 
 .center circle {
-  fill: var(--accent);
-  stroke: var(--background-deep);
-  stroke-width: 2;
+  fill: rgba(255, 255, 255, 0.1);
+  stroke: var(--hairline-strong);
+  stroke-width: 1;
+}
+
+.center-halo {
+  fill: rgb(var(--accent-rgb) / 0.14);
+  animation: halo 3.4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .center text {
   font-family: var(--font-sans);
   font-size: 26px;
-  font-weight: 700;
-  fill: var(--accent-foreground);
+  font-weight: 600;
+  fill: var(--foreground);
   pointer-events: none;
 }
 
@@ -96,20 +195,21 @@
 }
 
 .hint {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  fill: var(--foreground-subtle);
+  fill: var(--text-faint);
   pointer-events: none;
 }
 
+/* Resultado de dado é dado: numeral gótico em branco, como a vida na mesa. */
 .result {
   font-family: var(--font-numeral);
   font-size: 46px;
   font-weight: 700;
-  fill: var(--accent);
+  fill: var(--foreground);
   animation: result-in 200ms ease-out;
 }
 
@@ -133,7 +233,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .veil,
-  .result {
+  .veil.closing,
+  .result,
+  .wheel,
+  .wheel.closing,
+  .center-halo,
+  .slice-group {
     animation: none;
   }
 

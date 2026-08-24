@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { HlmTabsImports } from '@spartan-ng/helm/tabs';
-import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ProxyListService } from '../../services/proxy-list-service';
 import { ScryfallCard } from '../../models/proxy.models';
@@ -12,7 +11,7 @@ import { PrintStudio } from './components/print-studio/print-studio';
 @Component({
   selector: 'app-proxies',
   standalone: true,
-  imports: [HlmTabsImports, BackButton, ProxySearch, ProxyList, PrintStudio],
+  imports: [HlmTabsImports, ProxySearch, ProxyList, PrintStudio],
   templateUrl: './proxies.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

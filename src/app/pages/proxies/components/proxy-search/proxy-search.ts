@@ -9,6 +9,7 @@ import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmLabelImports } from '@spartan-ng/helm/label';
+import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { HlmDialogService } from '@spartan-ng/helm/dialog';
 import { NotificationService } from '../../../../shared/notification/notification.service';
 import { ScryfallService } from '../../../../services/scryfall-service';
@@ -40,7 +41,15 @@ const TYPE_FILTERS = [
 @Component({
   selector: 'app-proxy-search',
   standalone: true,
-  imports: [ReactiveFormsModule, NgIcon, HlmIcon, HlmButtonImports, HlmInputImports, HlmLabelImports],
+  imports: [
+    ReactiveFormsModule,
+    NgIcon,
+    HlmIcon,
+    HlmButtonImports,
+    HlmInputImports,
+    HlmLabelImports,
+    HlmSkeletonImports,
+  ],
   providers: [provideIcons({ lucideSearch, lucidePlus, lucideX, lucideChevronDown })],
   templateUrl: './proxy-search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

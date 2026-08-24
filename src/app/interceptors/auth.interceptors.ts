@@ -28,6 +28,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         localStorage.removeItem('auth-token');
         localStorage.removeItem('user-name');
         localStorage.removeItem('user-id');
+        localStorage.removeItem('user-avatar');
         localStorage.removeItem('matchId');
 
         markSessionExpired(error);

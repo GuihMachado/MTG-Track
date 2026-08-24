@@ -44,20 +44,71 @@
   background: rgba(23, 19, 31, 0.05);
 }
 
-.avatar {
+/* Avatar do header: é botão (abre o menu do perfil), então tem estado de foco
+   e de toque como qualquer outro. Sem ícone, mostra a inicial em vidro. */
+.avatar-btn {
+  display: grid;
+  place-items: center;
   width: 38px;
   height: 38px;
+  padding: 0;
+  overflow: hidden;
   border-radius: 999px;
-  opacity: 0.9;
+  border: 1px solid var(--hairline-strong);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
 }
 
-/* O PNG é um traço escuro: no tema escuro ele precisa inverter. */
-:host-context(:root:not(.light)) .avatar {
-  filter: invert(1);
+.avatar-btn:active {
+  background: rgba(255, 255, 255, 0.16);
 }
 
-/* Item do menu: 48px, ícone 18px, rótulo 15px. O ativo ganha placa — antes era
-   só cor de texto, que sobre placa escura quase não se lê. */
+.avatar-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+:host-context(:root.light) .avatar-btn {
+  background: rgba(23, 19, 31, 0.05);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initial {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Luz ambiente do painel: dá direção às sombras das placas dos itens. */
+.menu-glow {
+  position: relative;
+}
+
+.menu-glow::before {
+  content: '';
+  position: absolute;
+  inset: -24px -12px auto;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(60% 60% at 30% 0%, rgb(var(--accent-rgb) / 0.07), transparent 70%);
+  pointer-events: none;
+}
+
+/* Item do menu: 48px, ícone 18px, rótulo 15px. Cada um é uma placa suspensa —
+   nada encosta no fundo do painel, nem aqui. */
 .nav-item {
   display: flex;
   align-items: center;
@@ -65,19 +116,86 @@
   height: 48px;
   padding-inline: 0.75rem;
   border-radius: 12px;
-  border: 1px solid transparent;
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-1);
   color: var(--foreground-muted);
   font-size: 15px;
-  transition: color 150ms ease-out, background-color 150ms ease-out,
-    border-color 150ms ease-out;
+  transition: color 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+.nav-item {
+  animation: rise-in 220ms ease-out backwards;
+}
+
+.nav-item:nth-child(2) {
+  animation-delay: 30ms;
+}
+.nav-item:nth-child(3) {
+  animation-delay: 60ms;
+}
+.nav-item:nth-child(4) {
+  animation-delay: 90ms;
+}
+.nav-item:nth-child(5) {
+  animation-delay: 120ms;
+}
+.nav-item:nth-child(n + 6) {
+  animation-delay: 150ms;
 }
 
 .nav-item:hover {
   color: var(--foreground);
+  border-color: var(--hairline-strong);
+  box-shadow: var(--elev-2);
+  transform: translateY(-1px);
 }
 
+.nav-item:active {
+  transform: translateY(0);
+  box-shadow: var(--elev-1);
+}
+
+/* O item da tela atual levita e acende em ouro: é o mesmo par (flutuação +
+   sombra colorida) que o hub e o assento usam para dizer "este aqui". */
 .nav-item.active {
-  background: rgba(124, 92, 255, 0.14);
-  border-color: rgba(124, 92, 255, 0.4);
-  color: var(--color-arcane-200);
+  border-color: rgb(var(--accent-rgb) / 0.42);
+  color: var(--foreground);
+  box-shadow: 0 14px 24px -14px rgb(var(--accent-rgb) / 0.55),
+    0 8px 16px -10px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  animation: nav-float 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+.nav-item.active ng-icon {
+  color: var(--accent);
+}
+
+/* Amplitude menor que a do hub: ao lado de itens parados, 5px vira tremor. */
+@keyframes nav-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item,
+  .nav-item.active,
+  .nav-item:nth-child(n) {
+    animation: none;
+    transition: none;
+  }
+
+  .nav-item:hover {
+    transform: none;
+  }
 }

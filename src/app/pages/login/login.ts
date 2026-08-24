@@ -10,6 +10,7 @@ import { HlmLabelImports } from '@spartan-ng/helm/label';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { NotificationService } from '../../shared/notification/notification.service';
+import { ProfileService } from '../../shared/profile/profile.service';
 
 /** Id fixo: um novo aviso de validação substitui o anterior em vez de empilhar. */
 const FORM_WARNING = 'form-validation';
@@ -36,6 +37,8 @@ export class Login {
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
   private router = inject(Router);
+  // Busca o perfil (inclui o ícone) assim que a sessão existe.
+  private profileService = inject(ProfileService);
   private readonly destroy = new Subject<void>();
 
   constructor() {
@@ -67,6 +70,7 @@ export class Login {
         localStorage.setItem('auth-token', data.token);
         localStorage.setItem('user-name', data.user.name);
         localStorage.setItem('user-id', String(data.user.id));
+        this.profileService.load();
 
         this.notify.success(`Bem-vindo, ${data.user.name}!`, { description: 'Login efetuado com sucesso.' });
         this.router.navigate(['/dashboard']);

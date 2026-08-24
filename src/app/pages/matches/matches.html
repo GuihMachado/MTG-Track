@@ -4,7 +4,23 @@
     Todo o histórico da mesa, do mais recente para o mais antigo.
   </p>
 
-  <!-- Faixa de filtros: a pílula ativa vira placa arcana. -->
+  <!-- Placar geral: o mesmo trio que o histórico resume, em numeral gótico. -->
+  <div class="glass mt-4 flex rounded-lg">
+    <div class="score">
+      <span class="label-caps">Jogadas</span>
+      <span class="score-value">{{ stats()?.total ?? 0 }}</span>
+    </div>
+    <div class="score">
+      <span class="label-caps">Vitórias</span>
+      <span class="score-value text-success">{{ stats()?.wins ?? 0 }}</span>
+    </div>
+    <div class="score">
+      <span class="label-caps">Derrotas</span>
+      <span class="score-value text-danger">{{ stats()?.losses ?? 0 }}</span>
+    </div>
+  </div>
+
+  <!-- Faixa de filtros: a pílula ativa vira vidro branco. -->
   <div class="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
     @for (option of filters; track option.id) {
       <button type="button" class="chip-filter" [class.on]="filter() === option.id"
@@ -40,8 +56,8 @@
   } @else {
     <div class="mt-4 flex flex-col gap-2">
       @for (match of filtered(); track match.id) {
-        <app-match-card [match]="match" [currentUserId]="currentUserId()" [showFinish]="true"
-                        (finished)="loadMatches()" />
+        <app-match-card class="rise-stagger" [match]="match" [currentUserId]="currentUserId()"
+                        [showFinish]="true" (finished)="onFinished()" />
       }
     </div>
   }

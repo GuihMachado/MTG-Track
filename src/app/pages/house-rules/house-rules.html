@@ -1,6 +1,4 @@
 <div class="container-page py-6">
-  <app-back-button fallbackRoute="/dashboard" />
-
   @if (loading()) {
     <div class="mt-2 grid gap-4">
       <hlm-skeleton class="h-9 w-64" />
@@ -37,41 +35,53 @@
 
     <hlm-separator class="my-6" />
 
-    <div class="grid gap-4">
-      @for (section of doc.sections; track section.id) {
-        <article class="plate rounded-xl p-4">
-          <h2 class="title-section flex items-center gap-2">
-            @if (isIcon(section.icon)) {
-              <ng-icon hlm size="sm" [name]="iconName(section.icon)" class="text-primary-text" />
-            } @else if (section.icon) {
-              <span aria-hidden="true">{{ section.icon }}</span>
+    <!-- Uma regra por linha, fechada: a mesa tem 6+ regras, e o documento
+         inteiro aberto empurra a banlist para fora da tela. Abre uma por vez. -->
+    <hlm-accordion type="single" class="gap-2.5">
+      @for (section of doc.sections; track section.id; let i = $index) {
+        <div hlmAccordionItem class="rule rise-stagger">
+          <!-- O h3 não é enfeite: o BrnAccordionTrigger exige heading em volta
+               do botão, e o título da regra é heading de verdade. -->
+          <h3>
+            <button hlmAccordionTrigger class="rule-trigger">
+              <span class="flex min-w-0 items-center gap-3">
+                <span class="rule-index">{{ i + 1 }}</span>
+                @if (isIcon(section.icon)) {
+                  <ng-icon hlm size="sm" [name]="iconName(section.icon)" class="shrink-0 text-accent" />
+                } @else if (section.icon) {
+                  <span aria-hidden="true">{{ section.icon }}</span>
+                }
+                <span class="title-section truncate">{{ section.title }}</span>
+              </span>
+              <ng-icon hlm hlmAccIcon name="lucideChevronDown" />
+            </button>
+          </h3>
+
+          <hlm-accordion-content class="rule-content">
+            @if (section.content) {
+              <p class="max-w-prose text-sm leading-relaxed text-foreground-muted">{{ section.content }}</p>
             }
-            {{ section.title }}
-          </h2>
 
-          @if (section.content) {
-            <p class="mt-2 max-w-prose text-sm leading-relaxed text-foreground-muted">{{ section.content }}</p>
-          }
+            @if (section.listItems?.length) {
+              <ul class="grid gap-1.5">
+                @for (item of section.listItems; track $index) {
+                  <li class="flex items-start gap-2 text-sm text-foreground-muted">
+                    <ng-icon hlm size="sm" name="lucideCheck" class="mt-0.5 shrink-0 text-success" />
+                    <span>{{ item }}</span>
+                  </li>
+                }
+              </ul>
+            }
 
-          @if (section.listItems?.length) {
-            <ul class="mt-3 grid gap-1.5">
-              @for (item of section.listItems; track $index) {
-                <li class="flex items-start gap-2 text-sm text-foreground-muted">
-                  <ng-icon hlm size="sm" name="lucideCheck" class="mt-0.5 shrink-0 text-success" />
-                  <span>{{ item }}</span>
-                </li>
-              }
-            </ul>
-          }
-
-          @if (section.warningNote) {
-            <p class="mt-3 rounded-sm border border-warning/30 bg-warning-bg px-3 py-2 text-sm">
-              ⚠️ {{ section.warningNote }}
-            </p>
-          }
-        </article>
+            @if (section.warningNote) {
+              <p class="rounded-sm border border-warning/30 bg-warning-bg px-3 py-2 text-sm">
+                ⚠️ {{ section.warningNote }}
+              </p>
+            }
+          </hlm-accordion-content>
+        </div>
       }
-    </div>
+    </hlm-accordion>
 
     <hlm-separator class="my-6" />
 

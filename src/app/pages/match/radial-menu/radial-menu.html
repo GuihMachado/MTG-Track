@@ -1,12 +1,22 @@
-@if (open()) {
-  <div class="veil" (click)="onBackdrop($event)">
-    <svg class="wheel" [attr.viewBox]="viewBox" role="application"
+@if (mounted()) {
+  <div class="veil" [class.closing]="closing()" (click)="onBackdrop($event)">
+    <svg class="wheel" [class.closing]="closing()" [attr.viewBox]="viewBox" role="application"
          [attr.aria-label]="title() ? 'Menu da partida: ' + title() : 'Menu da partida'">
+
+      <defs>
+        <!-- As paradas são pintadas pela folha de estilo: var() em atributo de
+             apresentação do SVG não é confiável em todo navegador. -->
+        <linearGradient id="slice-plate" x1="0" y1="0" x2="0" y2="1">
+          <stop class="stop-top" offset="0" />
+          <stop class="stop-bottom" offset="1" />
+        </linearGradient>
+      </defs>
 
       <circle [attr.cx]="cx" [attr.cy]="cy" [attr.r]="rimR" class="rim" />
 
       @for (slice of slices(); track slice.item.id) {
-        <g>
+        <g class="slice-group" [style.--slice-rgb]="slice.glowRgb"
+           [class.glowing]="slice.glowRgb !== null">
           <path class="slice"
                 [class.danger]="slice.item.danger"
                 [class.tinted]="slice.item.fill"
@@ -42,6 +52,9 @@
                 role="button" tabindex="0" aria-label="Fechar resultado"
                 (click)="onCenter()" (keydown.enter)="onCenter()"></circle>
       } @else {
+        <circle class="center-halo" [attr.cx]="cx" [attr.cy]="cy" [attr.r]="centerR + 14"
+                aria-hidden="true" />
+
         <g class="center" role="button" tabindex="0"
            [attr.aria-label]="centerLabel() === '←' ? 'Voltar' : 'Fechar menu'"
            (click)="onCenter()" (keydown.enter)="onCenter()" (keydown.space)="onCenter()">

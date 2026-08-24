@@ -2,10 +2,16 @@ import { Injectable } from '@angular/core';
 import { PrintSettings, ProxyCard } from '../models/proxy.models';
 
 /** Carta MTG impressa: 63×88mm exatos — sem isso a proxy não serve para jogar. */
-const CARD_W = 63;
-const CARD_H = 88;
+export const CARD_W = 63;
+export const CARD_H = 88;
 /** Comprimento dos traços de corte nas margens, em mm. */
 const CUT_TICK = 4;
+
+/** Papéis em mm, na orientação retrato. Os mesmos números do jsPDF. */
+const PAPERS: Record<PrintSettings['pageSize'], [number, number]> = {
+  a4: [210, 297],
+  letter: [215.9, 279.4],
+};
 
 export interface PdfProgress {
   done: number;
@@ -13,12 +19,51 @@ export interface PdfProgress {
   cardName: string;
 }
 
-interface PageGeometry {
+export interface PageGeometry {
+  /** Folha em mm, já na orientação escolhida. */
+  pageW: number;
+  pageH: number;
   cols: number;
   rows: number;
   startX: number;
   startY: number;
   gap: number;
+  perPage: number;
+}
+
+/**
+ * Geometria da folha: onde cada carta cai, em mm. É a única fonte da verdade —
+ * o PDF desenha com ela e o preview se dimensiona por ela, então a maquete na
+ * tela não pode discordar do arquivo impresso.
+ *
+ * `pageW/pageH` só são passados pelo gerador, que pega a medida do próprio
+ * jsPDF; o preview usa a tabela de papéis.
+ */
+export function pageGeometry(settings: PrintSettings, pageW?: number, pageH?: number): PageGeometry {
+  const landscape = settings.orientation === 'landscape';
+  const [shortSide, longSide] = PAPERS[settings.pageSize];
+
+  const w = pageW ?? (landscape ? longSide : shortSide);
+  const h = pageH ?? (landscape ? shortSide : longSide);
+
+  const cols = landscape ? 4 : 3;
+  const rows = landscape ? 2 : 3;
+  const gap = settings.gapMm;
+
+  const gridW = cols * CARD_W + (cols - 1) * gap;
+  const gridH = rows * CARD_H + (rows - 1) * gap;
+
+  return {
+    pageW: w,
+    pageH: h,
+    cols,
+    rows,
+    gap,
+    perPage: cols * rows,
+    // A grade fica centralizada; o piso de 5mm protege a margem da impressora.
+    startX: Math.max(5, (w - gridW) / 2),
+    startY: Math.max(5, (h - gridH) / 2),
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -42,8 +87,12 @@ export class ProxyPdfService {
     });
 
     const slots = this.flatten(cards);
-    const geometry = this.pageGeometry(doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight(), settings);
-    const perPage = geometry.cols * geometry.rows;
+    const geometry = pageGeometry(
+      settings,
+      doc.internal.pageSize.getWidth(),
+      doc.internal.pageSize.getHeight(),
+    );
+    const perPage = geometry.perPage;
 
     // Cada imagem única é baixada e rasterizada uma vez; quantidades repetem o dataURL.
     const imageCache = new Map<string, string | null>();
@@ -96,25 +145,6 @@ export class ProxyPdfService {
 
   private totalCount(cards: ProxyCard[]): number {
     return cards.reduce((sum, card) => sum + card.quantity, 0);
-  }
-
-  /** Grade sempre centralizada — cabe em qualquer papel × orientação × gap. */
-  private pageGeometry(pageW: number, pageH: number, settings: PrintSettings): PageGeometry {
-    const landscape = settings.orientation === 'landscape';
-    const cols = landscape ? 4 : 3;
-    const rows = landscape ? 2 : 3;
-    const gap = settings.gapMm;
-
-    const gridW = cols * CARD_W + (cols - 1) * gap;
-    const gridH = rows * CARD_H + (rows - 1) * gap;
-
-    return {
-      cols,
-      rows,
-      gap,
-      startX: Math.max(5, (pageW - gridW) / 2),
-      startY: Math.max(5, (pageH - gridH) / 2),
-    };
   }
 
   /** Traços curtos nas margens, alinhados às bordas das cartas, em todas as páginas. */

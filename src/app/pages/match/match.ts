@@ -9,7 +9,7 @@ import { HlmRadioGroupImports } from '@spartan-ng/helm/radio-group';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
-import { LifeGrid, POISON_LETHAL, SeatPlayer } from './life-grid/life-grid';
+import { LifeGrid, SeatPlayer } from './life-grid/life-grid';
 import { SEAT_COLOR_ORDER, SEAT_COLORS, SeatColorCode } from './seat-colors';
 import { CounterMap, CounterType, emptyCounters, normalizeCounters } from './counters';
 import { RadialItem, RadialMenu } from './radial-menu/radial-menu';
@@ -114,6 +114,8 @@ export class Match implements OnInit {
         // chapado — é o que mantém o rótulo branco legível em qualquer cor.
         fill: `rgb(var(${SEAT_COLORS[player.seatColor].rgbVarName}) / 0.22)`,
         labelColor: '#EDEAF5',
+        // A fatia do assento levita na cor dele, como o próprio assento na mesa.
+        glowRgb: `var(${SEAT_COLORS[player.seatColor].rgbVarName})`,
       })),
     },
     {
@@ -228,39 +230,19 @@ export class Match implements OnInit {
   }
 
   protected onLifeChange(event: { id: number; delta: number }): void {
-    const before = this.players().find(p => p.id === event.id);
-
     this.players.update(players =>
       players.map(p => (p.id === event.id ? { ...p, life: p.life + event.delta } : p)),
     );
 
-    const after = this.players().find(p => p.id === event.id);
     this.persistSeats();
-
-    // Avisa só na virada para zero, para não repetir o toast a cada toque.
-    if (before && after && before.life > 0 && after.life <= 0) {
-      this.notify.warning(`${after.name} está fora!`, {
-        description: `Chegou a ${after.life} pontos de vida.`
-      });
-    }
   }
 
   protected updatePoison(id: number, delta: number): void {
-    const before = this.players().find(p => p.id === id);
-
     this.players.update(players =>
       players.map(p => (p.id === id ? { ...p, poison: Math.max(0, p.poison + delta) } : p)),
     );
 
-    const after = this.players().find(p => p.id === id);
     this.persistSeats();
-
-    // Avisa só quando cruza o letal, para não repetir o toast a cada toque.
-    if (before && after && before.poison < POISON_LETHAL && after.poison >= POISON_LETHAL) {
-      this.notify.warning(`${after.name} está fora!`, {
-        description: `Chegou a ${after.poison} marcadores de veneno.`
-      });
-    }
   }
 
   /** Toque de ± num assento cujo contador ativo não é a vida. */

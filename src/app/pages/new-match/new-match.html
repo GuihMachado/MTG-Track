@@ -1,5 +1,5 @@
 <div class="page">
-  <div class="glow" aria-hidden="true"></div>
+  <div class="glow" [class.on]="tableRgb() !== null" [style.--table-rgb]="tableRgb()" aria-hidden="true"></div>
 
   <div class="container-page relative pt-4 pb-32">
     <!-- Cabeçalho próprio: esta tela não usa o header do app. -->
@@ -33,7 +33,13 @@
             </div>
 
             <div class="relative mt-3 flex items-start gap-3">
-              <span class="avatar" aria-hidden="true">{{ initial(i) }}</span>
+              <span class="avatar" aria-hidden="true">
+                @if (avatarFor(i); as pic) {
+                  <img [src]="pic" alt="" />
+                } @else {
+                  {{ initial(i) }}
+                }
+              </span>
 
               <div class="min-w-0 flex-1">
                 <brn-select class="block" placeholder="Escolher jogador" formControlName="userId">
@@ -110,8 +116,10 @@
         </button>
       </div>
 
-      <button type="submit" class="cta" [disabled]="loading() || playersArray.length < minPlayers">
-        {{ loading() ? 'Iniciando…' : 'Começar partida' }}
+      <!-- A mesma pílula da home: uma ação por tela, sempre no mesmo lugar. -->
+      <button type="submit" class="cta-pill" [disabled]="loading() || playersArray.length < minPlayers">
+        <ng-icon hlm size="sm" name="lucidePlay" />
+        <span>{{ loading() ? 'Iniciando…' : 'Começar partida' }}</span>
       </button>
     </form>
   </div>

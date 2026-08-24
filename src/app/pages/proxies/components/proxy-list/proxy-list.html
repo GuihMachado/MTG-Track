@@ -12,8 +12,8 @@
       </hlm-empty-header>
     </hlm-empty>
   } @else {
-    <div class="flex items-center justify-between gap-3">
-      <p class="font-data text-sm text-foreground-muted">
+    <div class="flex min-w-0 items-center justify-between gap-3">
+      <p class="min-w-0 font-data text-sm text-foreground-muted">
         {{ proxyList.totalModels() }} {{ proxyList.totalModels() === 1 ? 'modelo' : 'modelos' }}
         ({{ proxyList.totalCards() }} {{ proxyList.totalCards() === 1 ? 'carta' : 'cartas' }} no total)
       </p>
@@ -22,7 +22,7 @@
 
     <div class="grid gap-2">
       @for (card of proxyList.list(); track card.id) {
-        <div class="plate-alt flex items-center gap-3 rounded-md p-2">
+        <div class="plate-alt rise-stagger flex min-w-0 items-center gap-3 rounded-md p-2">
           <div class="h-16 w-[2.9rem] shrink-0 overflow-hidden rounded bg-surface-2">
             @if (!failedImages().has(card.id)) {
               <img class="h-full w-full object-cover" [src]="card.imageUrl" [alt]="card.name"

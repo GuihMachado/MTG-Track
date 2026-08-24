@@ -4,8 +4,10 @@ import {
   computed,
   effect,
   input,
+  OnDestroy,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import {
   CENTER_R,
@@ -31,11 +33,19 @@ export interface RadialItem {
   fill?: string;
   /** Cor do rótulo quando a fatia tem preenchimento próprio. */
   labelColor?: string;
+  /**
+   * Canais RGB da sombra colorida da fatia (mesma camada de luz do assento).
+   * Só existe onde há cor de verdade no dado: assento no submenu de cores e o
+   * vermelho de encerrar. Fatia neutra levita com sombra preta.
+   */
+  glowRgb?: string;
 }
 
 interface SliceVM {
   item: RadialItem;
   path: string;
+  /** `--slice-rgb` da fatia, ou null quando ela não tem cor própria. */
+  glowRgb: string | null;
   labelX: number;
   labelY: number;
   /** Rótulo já truncado para caber no arco da fatia. */
@@ -49,6 +59,8 @@ interface SliceVM {
 const MAX_LABEL = 13;
 /** Lado do ícone dentro da fatia, em unidades do viewBox da rosca. */
 const ICON_SIZE = 32;
+/** Duração da saída — tem de casar com a animação em radial-menu.css. */
+const EXIT_MS = 180;
 
 /**
  * Menu em rosca da partida. Puramente apresentacional: recebe a árvore de
@@ -62,7 +74,7 @@ const ICON_SIZE = 32;
   styleUrl: './radial-menu.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RadialMenu {
+export class RadialMenu implements OnDestroy {
   open = input(false);
   items = input.required<RadialItem[]>();
   /** Resultado de dado/sorteio exibido no centro; null esconde. */
@@ -82,11 +94,39 @@ export class RadialMenu {
   /** Trilha de ids até o submenu aberto (hoje um nível). */
   private path = signal<string[]>([]);
 
+  /**
+   * Presença no DOM. Não é o mesmo que `open()`: ao fechar, a rosca fica
+   * montada por mais 180ms para a animação de saída rodar — remover o nó na
+   * hora faria o menu sumir de um quadro para o outro.
+   */
+  protected mounted = signal(false);
+  protected closing = signal(false);
+  private exitTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
-    // Fechar por fora volta a rosca para a raiz.
     effect(() => {
-      if (!this.open()) this.path.set([]);
+      const open = this.open();
+
+      if (open) {
+        if (this.exitTimer) clearTimeout(this.exitTimer);
+        this.closing.set(false);
+        this.mounted.set(true);
+        return;
+      }
+
+      // Fechou: anima a saída, depois desmonta e volta para a raiz.
+      if (!untracked(this.mounted)) return;
+      this.closing.set(true);
+      this.exitTimer = setTimeout(() => {
+        this.mounted.set(false);
+        this.closing.set(false);
+        this.path.set([]);
+      }, EXIT_MS);
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.exitTimer) clearTimeout(this.exitTimer);
   }
 
   protected currentParent = computed<RadialItem | null>(() => {
@@ -111,6 +151,7 @@ export class RadialMenu {
 
       return {
         item,
+        glowRgb: item.glowRgb ?? (item.danger ? 'var(--danger-rgb)' : null),
         path: slicePath(index, count),
         labelX: point.x,
         labelY: point.y,

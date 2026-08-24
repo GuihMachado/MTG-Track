@@ -7,7 +7,7 @@
 
 <div class="table" [style.grid-template-rows]="rowsTemplate()">
   @for (seat of seats(); track seat.player.id) {
-    <div class="seat"
+    <div class="seat rise-stagger"
          [class.wide]="seat.slot.wide"
          [class.low]="seat.low"
          [class.out]="seat.out"

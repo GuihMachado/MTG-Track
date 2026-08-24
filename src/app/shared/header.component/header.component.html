@@ -7,18 +7,47 @@
             <ng-icon hlm size="sm" name="lucideMenu" />
         </button>
 
-        <div class="flex items-center gap-2">
-            <button type="button" class="icon-btn"
-                    (click)="theme.toggle()"
-                    [attr.aria-label]="theme.theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'">
-                <ng-icon hlm size="sm" [name]="theme.theme() === 'dark' ? 'lucideSun' : 'lucideMoon'" />
-            </button>
-
-            <!-- O PNG é um traço escuro; no tema escuro ele precisa inverter. -->
-            <img src="user.png" alt="" width="38" height="38" class="avatar" />
-        </div>
+        <!-- O avatar é o acesso ao perfil: dropdown com perfil e tema. -->
+        <button type="button" class="avatar-btn" [hlmDropdownMenuTrigger]="profileMenu"
+                align="end" aria-label="Abrir menu do perfil">
+            @if (profile.avatar(); as avatar) {
+                <img class="avatar-img" [src]="avatar" alt="" />
+            } @else if (profile.initial(); as initial) {
+                <span class="avatar-initial">{{ initial }}</span>
+            } @else {
+                <ng-icon hlm size="sm" name="lucideUser" />
+            }
+        </button>
     </div>
 </header>
+
+<ng-template #profileMenu>
+    <div hlmDropdownMenu class="w-56">
+        <div class="flex items-center gap-3 px-2 py-2">
+            @if (profile.avatar(); as avatar) {
+                <img class="size-9 rounded-full object-cover" [src]="avatar" alt="" />
+            } @else {
+                <span class="avatar-initial size-9">{{ profile.initial() || '?' }}</span>
+            }
+            <span class="min-w-0">
+                <span class="block truncate text-sm font-semibold">{{ profile.profile()?.name }}</span>
+                <span class="label-caps">Sua conta</span>
+            </span>
+        </div>
+
+        <hlm-dropdown-menu-separator />
+
+        <button hlmDropdownMenuItem (click)="goToProfile()">
+            <ng-icon hlm size="sm" name="lucideUserCog" />
+            Meu Perfil
+        </button>
+
+        <button hlmDropdownMenuItem (click)="theme.toggle()">
+            <ng-icon hlm size="sm" [name]="theme.theme() === 'dark' ? 'lucideSun' : 'lucideMoon'" />
+            {{ theme.theme() === 'dark' ? 'Modo Light' : 'Modo Dark' }}
+        </button>
+    </div>
+</ng-template>
 
 <hlm-sheet side="left" #menu_sheet>
     <hlm-sheet-content *brnSheetContent="let ctx">
@@ -30,7 +59,7 @@
         <!-- Cada link fecha o sheet: sem isso a navegação acontece por baixo do
              overlay e o menu fica aberto na tela nova. O item ativo ganha placa,
              não só cor de texto. -->
-        <nav class="grid flex-1 auto-rows-min gap-1 px-3">
+        <nav class="menu-glow grid flex-1 auto-rows-min gap-2 px-3">
             @for (item of navItems; track item.route) {
                 <a class="nav-item" [routerLink]="[item.route]" (click)="ctx.close()"
                    routerLinkActive="active">

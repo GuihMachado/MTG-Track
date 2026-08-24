@@ -183,6 +183,14 @@
   --mana-g-rgb: 47 158 94;
   --mana-c-rgb: 154 163 174;
 
+  /* Canais dos estados e do ouro, pela mesma razão dos de mana: sombra e glow
+     pedem a cor em várias opacidades, e color-mix não serve dentro de
+     drop-shadow() com alfa variável. */
+  --accent-rgb: 230 199 127;
+  --success-rgb: 52 211 158;
+  --warning-rgb: 245 180 84;
+  --danger-rgb: 255 107 133;
+
   /* Levitação: o fundo desce abaixo de qualquer placa para que a sombra longa
      tenha onde cair. `background` é a home e as listas; `background-deep` são
      as telas de fluxo e a mesa. */
@@ -215,10 +223,14 @@
   --hairline-strong: rgba(255, 255, 255, 0.16);
   --glass: rgba(255, 255, 255, 0.045);
 
+  /* O roxo arcano deixa de ser a cor de ação: a identidade da home é
+     preto-e-branco com vidro, e o único acento é o ouro. Os tokens seguem
+     apontando para o violeta porque ainda pintam o link e nada mais — quem
+     desenha ação agora é o botão em vidro (ver buttonVariants). */
   --primary: var(--color-arcane-600);
   --primary-hover: var(--color-arcane-500);
   --primary-foreground: #FFFFFF;
-  --primary-text: var(--color-arcane-300);
+  --primary-text: var(--color-gold-300);
   --secondary: var(--color-ink-700);
   --secondary-foreground: #EDEAF5;
   --muted: var(--color-ink-700);
@@ -235,7 +247,8 @@
      como fundo (bg-input/30), e 9% de branco a 30% cai nos 3% que o sistema
      pede para o fundo de campo. */
   --input: rgba(255, 255, 255, 0.09);
-  --ring: var(--color-arcane-500);
+  /* Foco em branco: é o que se lê sobre placa escura sem trazer o roxo de volta. */
+  --ring: #EDEAF5;
   --destructive: #FF6B85;
 
   /* Placeholder de carregamento: cinza claro sobre o fundo escuro (ink-500).
@@ -255,12 +268,12 @@
      placas dos itens saem. */
   --sidebar: var(--color-ink-950);
   --sidebar-foreground: #EDEAF5;
-  --sidebar-primary: var(--color-arcane-600);
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary: var(--color-gold-300);
+  --sidebar-primary-foreground: var(--color-ink-950);
   --sidebar-accent: var(--color-ink-700);
   --sidebar-accent-foreground: #EDEAF5;
-  --sidebar-border: #2A2438;
-  --sidebar-ring: var(--color-arcane-500);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: #EDEAF5;
 
   /* Sombra longa e difusa embaixo + fio de luz no topo: é o par que levanta a
      placa do fundo. O fio vem como `inset`, não como anel, para não competir
@@ -323,7 +336,7 @@
   --primary: var(--color-arcane-700);
   --primary-hover: var(--color-arcane-800);
   --primary-foreground: #FFFFFF;
-  --primary-text: var(--color-arcane-700);
+  --primary-text: var(--color-gold-700);
   --secondary: var(--color-ink-50);
   --secondary-foreground: #16131F;
   --muted: var(--color-ink-50);
@@ -335,7 +348,7 @@
   --border: var(--hairline);
   --border-strong: var(--hairline-strong);
   --input: rgba(23, 19, 31, 0.14);
-  --ring: var(--color-arcane-700);
+  --ring: #16131F;
   --destructive: #C4123B;
 
   /* No papel o skeleton escurece, em vez de clarear (ink-200). */
@@ -352,12 +365,12 @@
 
   --sidebar: var(--color-ink-50);
   --sidebar-foreground: #16131F;
-  --sidebar-primary: var(--color-arcane-700);
+  --sidebar-primary: var(--color-gold-700);
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: var(--color-ink-100);
   --sidebar-accent-foreground: #16131F;
-  --sidebar-border: var(--color-ink-100);
-  --sidebar-ring: var(--color-arcane-700);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: #16131F;
 
   /* No papel o fio de luz não existe: quem separa é a sombra de contato. */
   --elev-1: 0 1px 2px rgba(23, 19, 31, 0.1), 0 0 0 1px rgba(23, 19, 31, 0.04);
@@ -394,12 +407,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* O hlm-skeleton do spartan pinta com bg-accent — que no Grimório é ouro e
-     transforma o carregamento numa mancha dourada. Uma regra por data-slot
-     corrige todos os skeletons do app, presentes e futuros. */
-  [data-slot='skeleton'] {
-    background-color: var(--skeleton);
-  }
 }
 
 /* Gutter único do app (substitui w-[90%]/w-[95%]/w-[85%]):
@@ -596,9 +603,14 @@
   }
 
   .chip-filter.on {
-    background: rgba(124, 92, 255, 0.16);
-    border-color: rgba(124, 92, 255, 0.5);
-    color: var(--color-arcane-200);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.34);
+    color: var(--foreground);
+  }
+
+  :root.light .chip-filter.on {
+    background: rgba(23, 19, 31, 0.1);
+    border-color: rgba(23, 19, 31, 0.28);
   }
 
   .chip-filter:focus-visible {
@@ -672,5 +684,165 @@
   .segmented-tab:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: -2px;
+  }
+
+  /* Ação principal em linha: o mesmo vidro da pílula, em tamanho de botão.
+     Existe como classe (e não como utilitário de cor) porque precisa virar
+     tinta escura no papel — 8% de branco sobre papel não é nada. */
+  .btn-glass {
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--hairline-strong);
+    color: var(--foreground);
+  }
+
+  .btn-glass:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  :root.light .btn-glass {
+    background: rgba(23, 19, 31, 0.06);
+  }
+
+  :root.light .btn-glass:hover {
+    background: rgba(23, 19, 31, 0.11);
+  }
+
+  /* Ação principal de tela cheia: a pílula em vidro da home. É a mesma peça em
+     "Nova partida" e em "Começar partida" — duas telas, um só gesto. */
+  .cta-pill {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1.125rem;
+    z-index: var(--z-fab);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--foreground);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 34px -16px rgba(0, 0, 0, 0.9);
+    transition: transform 120ms ease-out, background-color 150ms ease-out;
+  }
+
+  .cta-pill:active {
+    transform: scale(0.99);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .cta-pill:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .cta-pill:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  :root.light .cta-pill {
+    background: rgba(255, 255, 255, 0.75);
+  }
+
+  @media (min-width: 640px) {
+    .cta-pill {
+      left: 50%;
+      right: auto;
+      translate: -50% 0;
+      width: 340px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cta-pill {
+      transition: none;
+    }
+
+    .cta-pill:active {
+      transform: none;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEVITAÇÃO · movimento de entrada
+   Uma curva para tudo que aparece: sobe 8px e ganha opacidade em
+   200ms ease-out. É a mesma da navegação entre telas, então lista,
+   aba e tela nova entram com o mesmo gesto.
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* `backwards` e não `both`: a escada só precisa segurar o estado inicial
+   durante o atraso. Forwards deixaria a animação no comando das propriedades
+   depois de terminar, o que não serve para nada aqui — o último keyframe é o
+   próprio estilo do elemento. */
+@utility rise-in {
+  animation: rise-in 200ms ease-out backwards;
+}
+
+/* Escada de entrada para lista: cada linha entra 28ms depois da anterior.
+   Para no sexto item — além disso a espera passa a ser percebida como lentidão,
+   e lista longa não deve fazer o usuário assistir a uma animação. */
+@utility rise-stagger {
+  animation: rise-in 200ms ease-out backwards;
+
+  &:nth-child(2) {
+    animation-delay: 28ms;
+  }
+  &:nth-child(3) {
+    animation-delay: 56ms;
+  }
+  &:nth-child(4) {
+    animation-delay: 84ms;
+  }
+  &:nth-child(5) {
+    animation-delay: 112ms;
+  }
+  &:nth-child(n + 6) {
+    animation-delay: 140ms;
+  }
+}
+
+/* Transição entre telas (View Transitions API). O navegador que não suporta
+   ignora o bloco e a navegação fica instantânea — nada quebra. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: fade-out-screen 120ms ease-out both;
+  }
+
+  ::view-transition-new(root) {
+    animation: rise-in 200ms ease-out both;
+  }
+}
+
+@keyframes fade-out-screen {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .rise-stagger {
+    animation: none;
   }
 }

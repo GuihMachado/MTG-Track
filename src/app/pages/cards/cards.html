@@ -1,25 +1,223 @@
-<div class="container-page pt-4">
-    <div class="flex items-center gap-2">
-        <app-back-button />
-        <h1 class="title-screen">Buscar carta</h1>
-    </div>
-    <p class="ml-[3.125rem] pt-1 text-sm text-foreground-muted">Nome em português quando existe; texto traduzido quando não.</p>
-
-    <hlm-separator class="my-4" />
-
-    <div hlmInputGroup class="w-full">
-        <input hlmInputGroupInput [formControl]="search" placeholder="Digite o nome do card..." />
-        <div hlmInputGroupAddon>
-            <ng-icon hlm size="sm" name="lucideSearch" />
-        </div>
-    </div>
-
-    @if (card$ | async; as card) {
-        <div class="mx-auto mt-6 w-full max-w-sm overflow-hidden rounded-(--radius-card-art) shadow-[0_18px_30px_-18px_rgba(0,0,0,.95)]">
-            <img src="{{ card.imageUrl }}" alt="{{ card.name }}" class="w-full" />
-        </div>
-        <div class="plate mx-auto mt-6 flex max-w-[60ch] flex-col items-center rounded-lg">
-            <p class="whitespace-pre-wrap p-4 text-body-lg" [innerHTML]="(card.descriptionTranslated ?? card.description) | manaSymbol"></p>
-        </div>
+@if (card(); as found) {
+  <!-- ═══════════ DETALHE DA CARTA ═══════════ -->
+  <div class="page" [style.--face-rgb]="faceRgb()">
+    @if (artUrl(); as art) {
+      <button type="button" class="art-hit" (click)="fullscreen.set(true)"
+              [attr.aria-label]="'Ver ' + found.name + ' em tela cheia'">
+        <img class="art" [src]="art" alt="" />
+      </button>
     }
-</div>
+    <div class="veil" aria-hidden="true"></div>
+    @if (isBackFace()) {
+      <!-- O verso ganha a luz da própria cor: é outra carta, na prática. -->
+      <div class="face-glow" aria-hidden="true"></div>
+    }
+
+    <!-- Barra de ações sobre a arte -->
+    <div class="relative flex h-[58px] items-center justify-between px-4">
+      <button type="button" class="act" (click)="close()" aria-label="Voltar para a busca">
+        <ng-icon hlm size="sm" name="lucideChevronLeft" />
+      </button>
+
+      <div class="flex gap-2">
+        <button type="button" class="act" (click)="copyText()" aria-label="Copiar texto da carta">
+          <ng-icon hlm size="sm" name="lucideCopy" />
+        </button>
+        <button type="button" class="act" [class.saved]="inProxyList()" (click)="toggleProxy()"
+                [attr.aria-pressed]="inProxyList()"
+                aria-label="Adicionar à lista de proxies">
+          <ng-icon hlm size="sm" name="lucideBookmark" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Cabeçalho da carta -->
+    <header class="relative px-4 pt-[82px]">
+      <div class="flex items-start justify-between gap-3">
+        <h1 class="text-[26px] leading-[1.12] font-bold tracking-[-0.02em] text-pretty">
+          {{ face()?.name ?? found.name }}
+        </h1>
+
+        @if (face()?.manaCost; as cost) {
+          <span class="flex shrink-0 gap-[3px] pt-1 text-[17px]"
+                [attr.aria-label]="costLabel(cost)"
+                [innerHTML]="cost | manaSymbol"></span>
+        } @else {
+          <span class="no-cost">Sem custo</span>
+        }
+      </div>
+
+      @if (face()?.typeLine) {
+        <p class="mt-2 text-[13.5px] leading-[1.5] text-ink-200 text-pretty">{{ face()?.typeLine }}</p>
+      }
+
+      <div class="mt-2.5 flex flex-wrap items-center gap-2">
+        @if (found.rarity) {
+          <span class="rarity" [class]="'rarity ' + found.rarity">{{ found.rarity }}</span>
+        }
+        <span class="font-data text-[11px] text-faint">
+          @if (isBackFace()) {
+            verso de {{ frontName() }}
+          } @else {
+            {{ found.setCode }} · {{ found.collectorNumber }}
+            @if (found.artist) { · {{ found.artist }} }
+          }
+        </span>
+      </div>
+    </header>
+
+    <!-- Idioma: alterna só o conteúdo do oráculo, sem recarregar a carta -->
+    <div class="relative flex gap-2 px-4 pt-[18px]">
+      <div class="lang-track" role="tablist" aria-label="Idioma do texto">
+        <button type="button" class="lang-tab" role="tab"
+                [class.on]="language() === 'pt'"
+                [attr.aria-selected]="language() === 'pt'"
+                [disabled]="!hasPortuguese()"
+                (click)="setLanguage('pt')">{{ ptLabel() }}</button>
+        <button type="button" class="lang-tab" role="tab"
+                [class.on]="language() === 'en'"
+                [attr.aria-selected]="language() === 'en'"
+                (click)="setLanguage('en')">English</button>
+      </div>
+    </div>
+
+    <!-- Face: só existe em carta de duas faces -->
+    @if (faceTabs().length > 1) {
+      <div class="relative flex items-center gap-2 px-4 pt-3">
+        <ng-icon hlm size="xs" name="lucideRefreshCw" class="shrink-0 text-arcane-500" />
+        <div class="flex flex-1 gap-1.5" role="tablist" aria-label="Face da carta">
+          @for (tab of faceTabs(); track $index) {
+            <button type="button" class="face-tab" role="tab"
+                    [class.on]="activeFaceIndex() === $index"
+                    [attr.aria-selected]="activeFaceIndex() === $index"
+                    (click)="setFace($index)">{{ tab }}</button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Bloco de oráculo: um bloco por linha de regra -->
+    <div class="relative px-4 pt-3.5 pb-32">
+      <div class="oracle" role="tabpanel">
+        @for (block of blocks(); track $index) {
+          @if (!$first) {
+            <div class="divider" aria-hidden="true"></div>
+          }
+
+          @if (block.kind === 'keywords') {
+            <div class="flex flex-wrap gap-1.5 px-4 py-3">
+              @for (keyword of block.keywords; track keyword) {
+                <span class="kw">{{ keyword }}</span>
+              }
+            </div>
+          } @else {
+            <div class="px-4 py-3.5">
+              @if (block.cost; as cost) {
+                <span class="cost-pill" [attr.aria-label]="costLabel(cost)"
+                      [innerHTML]="cost | manaSymbol"></span>
+              }
+              @if (block.label; as label) {
+                <p class="ability-label">{{ label }}</p>
+              }
+              <p class="rule" [innerHTML]="block.text | manaSymbol"></p>
+              @if (block.reminder; as reminder) {
+                <p class="reminder" [innerHTML]="reminder | manaSymbol"></p>
+              }
+            </div>
+          }
+        }
+
+        @if (blocks().length === 0) {
+          <div class="px-4 py-3.5">
+            <p class="rule text-foreground-muted">Esta carta não tem texto de regras.</p>
+          </div>
+        }
+
+        @if (face()?.power && face()?.toughness) {
+          <div class="pt-footer">
+            <span class="label-caps">Força / resistência</span>
+            <span class="pt-value">{{ face()?.power }}/{{ face()?.toughness }}</span>
+          </div>
+        }
+      </div>
+
+      @if (found.translated && language() === 'pt') {
+        <p class="mt-3 px-0.5 font-data text-[10.5px] leading-[1.5] text-ink-500 text-pretty">
+          Tradução automática — a carta não tem impressão em português.
+        </p>
+      }
+    </div>
+
+    <!-- Ação fixa: entrar na lista de proxies -->
+    @if (inProxyList()) {
+      <div class="cta-added">
+        <ng-icon hlm size="sm" name="lucideCheck" />
+        <span>Na lista de proxies</span>
+      </div>
+    } @else {
+      <button type="button" class="cta-add" (click)="toggleProxy()">
+        <ng-icon hlm size="sm" name="lucidePlus" />
+        <span>Adicionar à lista de proxies</span>
+      </button>
+    }
+  </div>
+
+  <!-- Arte em tela cheia -->
+  @if (fullscreen() && printUrl(); as print) {
+    <div class="fullscreen" (click)="fullscreen.set(false)">
+      <img [src]="print" [alt]="found.name" />
+      <button type="button" class="act absolute top-4 right-4" (click)="fullscreen.set(false)"
+              aria-label="Fechar">
+        <ng-icon hlm size="sm" name="lucideX" />
+      </button>
+    </div>
+  }
+} @else {
+  <!-- ═══════════ BUSCA ═══════════ -->
+  <div class="container-page pt-4 pb-10">
+    <h1 class="title-screen">Buscar carta</h1>
+    <p class="mt-1 text-[13px] text-foreground-subtle">
+      Escolha a carta na lista; o texto vem em português.
+    </p>
+
+    <div class="relative mt-5">
+      <ng-icon hlm size="sm" name="lucideSearch"
+               class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-foreground-subtle" />
+      <input hlmInput class="w-full pl-9" type="search" [formControl]="query"
+             placeholder="Digite o nome da carta..." autocomplete="off" />
+    </div>
+
+    @if (loadingCard() || searching()) {
+      <div class="mt-4 flex flex-col gap-2">
+        @for (i of [1, 2, 3]; track i) {
+          <hlm-skeleton class="h-[62px] w-full rounded-md" />
+        }
+      </div>
+    } @else if (results().length > 0) {
+      <ul class="mt-4 flex flex-col gap-2">
+        @for (result of results(); track result.id) {
+          <li>
+            <button type="button" class="result rise-in" (click)="open(result)">
+              @if (artOf(result); as art) {
+                <img class="result-art" [src]="art" alt="" loading="lazy" />
+              } @else {
+                <span class="result-art" aria-hidden="true"></span>
+              }
+              <span class="min-w-0 flex-1 text-left">
+                <span class="block truncate text-sm font-semibold">{{ result.name }}</span>
+                <span class="block truncate text-xs text-foreground-muted">{{ typeOf(result) }}</span>
+              </span>
+              @if (result.mana_cost) {
+                <span class="shrink-0 text-sm" [innerHTML]="result.mana_cost | manaSymbol"></span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="mt-6 text-center text-sm text-foreground-muted">
+        Digite três letras para ver as cartas e toque na que você quer.
+      </p>
+    }
+  </div>
+}

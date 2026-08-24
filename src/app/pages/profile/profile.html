@@ -1,0 +1,83 @@
+<div class="container-page pt-4 pb-32">
+  <div class="flex items-center gap-3">
+    <app-back-button fallbackRoute="/dashboard" />
+    <div>
+      <h1 class="title-screen">Meu perfil</h1>
+      <p class="mt-0.5 text-[13px] text-foreground-subtle">
+        Como a mesa te vê: nome, email e ícone.
+      </p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="mt-6 flex flex-col gap-4">
+      <hlm-skeleton class="size-24 rounded-full" />
+      <hlm-skeleton class="h-[42px] w-full rounded-md" />
+      <hlm-skeleton class="h-[42px] w-full rounded-md" />
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()" class="mt-6 flex flex-col gap-4">
+      <!-- Ícone: o mesmo que aparece no header e no assento da nova partida. -->
+      <div class="plate flex items-center gap-4 rounded-lg p-4">
+        <span class="pic">
+          @if (avatar(); as src) {
+            <img [src]="src" alt="Seu ícone de perfil" />
+          } @else {
+            <span class="pic-initial">{{ initial() }}</span>
+          }
+        </span>
+
+        <div class="flex min-w-0 flex-1 flex-col gap-2">
+          <p class="label-caps">Ícone de perfil</p>
+          <div class="flex flex-wrap gap-2">
+            <!-- Label, e não botão: é o <input type="file"> dentro dele que abre
+                 o seletor, sem JS. hlmBtn não casa com <label>, então a classe
+                 de vidro entra à mão. -->
+            <label class="btn-glass inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm font-medium focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--ring)]">
+              <ng-icon hlm size="sm" name="lucideCamera" />
+              {{ avatar() ? 'Trocar imagem' : 'Escolher imagem' }}
+              <!-- sr-only e não hidden: hidden tira o input do foco do teclado. -->
+              <input class="sr-only" type="file" accept="image/png,image/jpeg,image/webp"
+                     (change)="onPickImage($event)" />
+            </label>
+
+            @if (avatar()) {
+              <button hlmBtn size="sm" variant="ghost" type="button" class="text-danger"
+                      (click)="removeImage()">
+                <ng-icon hlm size="sm" name="lucideTrash2" />
+                Remover
+              </button>
+            }
+          </div>
+          <p class="text-xs text-foreground-muted">
+            A imagem é recortada em quadrado e reduzida para 256px antes de salvar.
+          </p>
+        </div>
+      </div>
+
+      <div class="plate flex flex-col gap-4 rounded-lg p-4">
+        <div class="grid gap-1.5">
+          <label hlmLabel for="profile-name">Nome</label>
+          <input hlmInput id="profile-name" class="w-full" type="text" formControlName="name"
+                 autocomplete="name" placeholder="Como te chamam na mesa" />
+          @if (form.get('name')?.touched && form.get('name')?.invalid) {
+            <p class="text-xs text-danger">O nome precisa de pelo menos 3 letras.</p>
+          }
+        </div>
+
+        <div class="grid gap-1.5">
+          <label hlmLabel for="profile-email">Email</label>
+          <input hlmInput id="profile-email" class="w-full" type="email" formControlName="email"
+                 autocomplete="email" placeholder="voce@exemplo.com" />
+          @if (form.get('email')?.touched && form.get('email')?.invalid) {
+            <p class="text-xs text-danger">Digite um email válido.</p>
+          }
+        </div>
+      </div>
+
+      <button type="submit" class="cta-pill" [disabled]="saving() || !dirty">
+        <span>{{ saving() ? 'Salvando…' : 'Salvar perfil' }}</span>
+      </button>
+    </form>
+  }
+</div>

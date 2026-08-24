@@ -87,13 +87,21 @@
 
   <!-- Preview da folha -->
   <div class="grid content-start justify-items-center gap-3">
-    <div class="w-full rounded-md bg-white p-[4%] shadow-elev-2"
+    <!-- Maquete em escala: margem, gap e proporção vêm da mesma geometria que o
+         PDF usa, então a célula é 63×88mm de verdade. As linhas da grade são
+         explícitas — faixa implícita `auto` seria dimensionada pela altura
+         intrínseca da imagem (680px) e estouraria a folha. -->
+    <div class="w-full rounded-md bg-white shadow-elev-2"
          [style.aspect-ratio]="sheetRatio()"
+         [style.padding]="sheetPadding()"
          [style.max-width]="landscape() ? '30rem' : '22rem'">
-      <div class="grid h-full gap-[2px]"
-           [style.grid-template-columns]="'repeat(' + cols() + ', 1fr)'">
+      <div class="grid h-full w-full"
+           [style.grid-template-columns]="'repeat(' + cols() + ', minmax(0, 1fr))'"
+           [style.grid-template-rows]="'repeat(' + rows() + ', minmax(0, 1fr))'"
+           [style.column-gap.%]="columnGap()"
+           [style.row-gap.%]="rowGap()">
         @for (slot of pageSlots(); track $index) {
-          <div class="overflow-hidden rounded-[4%] outline-dashed outline-1 outline-neutral-300"
+          <div class="min-h-0 min-w-0 overflow-hidden rounded-[4%] outline-dashed outline-1 outline-neutral-300"
                [class.bg-neutral-100]="!slot">
             @if (slot) {
               <img class="h-full w-full object-cover" [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />

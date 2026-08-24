@@ -25,8 +25,8 @@
 
 /* A linha de quem está logado se destaca por anel, não por fundo diferente. */
 .row.mine {
-  border-color: rgba(124, 92, 255, 0.45);
-  box-shadow: var(--elev-1), 0 0 0 3px rgba(124, 92, 255, 0.1);
+  border-color: var(--hairline-strong);
+  box-shadow: var(--elev-1), 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
 .meter {

@@ -10,12 +10,19 @@
   background: var(--background-deep);
 }
 
-/* Brilho arcano no topo: assina a tela de fluxo. */
+/* Brilho do topo na cor do primeiro assento — sem cor escolhida, não há
+   brilho. É o mesmo princípio da home: a luz vem do dado, não da marca. */
 .glow {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(70% 26% at 50% 0%, rgba(124, 92, 255, 0.18), transparent);
+  background: radial-gradient(70% 26% at 50% 0%, rgb(var(--table-rgb, 255 255 255) / 0.14), transparent);
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.glow.on {
+  opacity: 1;
 }
 
 .seat-card {
@@ -97,6 +104,13 @@
   color: #fff;
   font-size: 17px;
   font-weight: 700;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Orbe de mana: apagada é placa fria a 35%; acesa é luz. */
@@ -233,53 +247,8 @@
   outline-offset: 2px;
 }
 
-/* CTA: o único elemento roxo da tela, e o único que levita. */
-.cta {
-  position: fixed;
-  left: 1rem;
-  right: 1rem;
-  bottom: 1.125rem;
-  z-index: var(--z-fab);
-  height: 58px;
-  border: 0;
-  border-radius: var(--radius-lg, 1.125rem);
-  background-image: linear-gradient(180deg, #8a6bff, #6242de);
-  color: #fff;
-  font-size: 17px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--elev-float);
-  animation: floaty 6s ease-in-out infinite;
-  will-change: transform;
-}
-
-.cta:disabled {
-  opacity: 0.45;
-  box-shadow: none;
-  animation: none;
-  cursor: not-allowed;
-}
-
-.cta:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
-}
-
-@media (min-width: 640px) {
-  .cta {
-    left: 50%;
-    right: auto;
-    translate: -50% 0;
-    width: 360px;
-  }
-}
-
 :root.light .orb {
   background-image: linear-gradient(180deg, #f1eef9, #e4e0ee);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .cta {
-    animation: none;
-  }
-}
+/* Nada aqui anima por conta própria: o movimento da tela mora na pílula. */

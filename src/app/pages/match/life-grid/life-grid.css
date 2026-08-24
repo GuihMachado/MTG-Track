@@ -139,6 +139,7 @@
   line-height: 1;
   color: var(--seat-ink);
   text-shadow: 0 0 26px rgb(var(--mana-rgb) / var(--glow-a));
+  transition: color 240ms ease-out, text-shadow 240ms ease-out;
 }
 
 .life.lethal {
@@ -366,11 +367,50 @@
 }
 
 /* Fora: a placa perde a cor e a sombra colorida. Continua placa — nada encosta
-   no fundo, nem quem já morreu. */
+   no fundo, nem quem já morreu.
+   A animação toca uma vez, quando a classe entra: é o aviso de eliminação (o
+   toast saiu). Um pulso vermelho, a placa afundando, e o assento apaga. */
 .seat.out {
   background-image: linear-gradient(180deg, #100e19, #0a0912);
   border-color: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  animation: seat-out 520ms ease-out;
+}
+
+@keyframes seat-out {
+  0% {
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgb(var(--danger-rgb) / 0), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  22% {
+    transform: scale(0.965);
+    box-shadow: 0 0 34px -4px rgb(var(--danger-rgb) / 0.6),
+      inset 0 0 0 3px rgb(var(--danger-rgb) / 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgb(var(--danger-rgb) / 0), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+}
+
+/* O rótulo FORA chega depois do pulso, não junto: primeiro o golpe, depois o
+   letreiro. */
+.seat.out .out-label {
+  animation: fora-in 320ms ease-out 180ms both;
+}
+
+@keyframes fora-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* O numeral do eliminado encolhe um fio, para o assento não competir com quem
+   ainda está na mesa. */
+.seat.out .life {
+  scale: 0.94;
+  transition: color 240ms ease-out, text-shadow 240ms ease-out, scale 240ms ease-out;
 }
 
 .seat.out .name {
@@ -439,6 +479,13 @@
   .seat,
   .hub {
     transition: none;
+  }
+
+  /* Sem movimento, a eliminação ainda precisa se anunciar: o estado final já
+     é diferente (placa apagada, rótulo FORA), então basta não animar. */
+  .seat.out,
+  .seat.out .out-label {
+    animation: none;
   }
 
   .seat:has(.tap:active) {

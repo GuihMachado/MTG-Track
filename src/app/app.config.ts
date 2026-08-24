@@ -1,5 +1,5 @@
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -12,7 +12,10 @@ import { ThemeService } from './shared/theme/theme.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    // A transição entre telas usa a View Transitions API do navegador: o
+    // fade + 8px de subida ficam em styles.css (::view-transition-new). Quem
+    // não suporta navega instantâneo, sem quebrar nada.
+    provideRouter(routes, withViewTransitions()),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideCharts(withDefaultRegisterables()),
     provideAppInitializer(() => inject(ThemeService).init()),

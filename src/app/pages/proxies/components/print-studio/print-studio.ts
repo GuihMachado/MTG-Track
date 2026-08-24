@@ -4,7 +4,7 @@ import { lucideChevronLeft, lucideChevronRight, lucideFileDown } from '@ng-icons
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { ProxyListService } from '../../../../services/proxy-list-service';
-import { PdfProgress, ProxyPdfService } from '../../../../services/proxy-pdf-service';
+import { pageGeometry, PdfProgress, ProxyPdfService } from '../../../../services/proxy-pdf-service';
 import { NotificationService } from '../../../../shared/notification/notification.service';
 import { PrintSettings } from '../../../../models/proxy.models';
 
@@ -12,12 +12,6 @@ interface PreviewSlot {
   name: string;
   imageUrl: string;
 }
-
-/** Dimensões dos papéis em mm, na orientação retrato. */
-const PAPERS: Record<PrintSettings['pageSize'], [number, number]> = {
-  a4: [210, 297],
-  letter: [215.9, 279.4],
-};
 
 /** Estúdio de impressão: configurações, preview da folha e geração do PDF. */
 @Component({
@@ -47,14 +41,40 @@ export class PrintStudio {
   );
 
   protected landscape = computed(() => this.proxyList.settings().orientation === 'landscape');
-  protected cols = computed(() => (this.landscape() ? 4 : 3));
-  protected perPage = computed(() => (this.landscape() ? 8 : 9));
+
+  /**
+   * A mesma geometria que o PDF usa. O preview é uma maquete em escala: a
+   * proporção da folha, a margem e o gap saem daqui em porcentagem, então cada
+   * célula cai exatamente na proporção de 63×88mm — sem isso a tela mostra uma
+   * carta e o arquivo imprime outra.
+   */
+  protected geometry = computed(() => pageGeometry(this.proxyList.settings()));
+
+  protected cols = computed(() => this.geometry().cols);
+  protected rows = computed(() => this.geometry().rows);
+  protected perPage = computed(() => this.geometry().perPage);
   protected pageCount = computed(() => Math.max(1, Math.ceil(this.slots().length / this.perPage())));
 
-  /** aspect-ratio da folha conforme papel + orientação (preview fiel ao PDF). */
   protected sheetRatio = computed(() => {
-    const [w, h] = PAPERS[this.proxyList.settings().pageSize];
-    return this.landscape() ? `${h} / ${w}` : `${w} / ${h}`;
+    const g = this.geometry();
+    return `${g.pageW} / ${g.pageH}`;
+  });
+
+  /** Margem da folha em % da largura — em CSS, padding % sempre é da largura. */
+  protected sheetPadding = computed(() => {
+    const g = this.geometry();
+    return `${(g.startY / g.pageW) * 100}% ${(g.startX / g.pageW) * 100}%`;
+  });
+
+  /** Gap por eixo: em CSS, % de row-gap é da altura e de column-gap é da largura. */
+  protected columnGap = computed(() => {
+    const g = this.geometry();
+    return (g.gap / (g.pageW - 2 * g.startX)) * 100;
+  });
+
+  protected rowGap = computed(() => {
+    const g = this.geometry();
+    return (g.gap / (g.pageH - 2 * g.startY)) * 100;
   });
 
   /** Slots da página visível, completados com null (slot vazio). */

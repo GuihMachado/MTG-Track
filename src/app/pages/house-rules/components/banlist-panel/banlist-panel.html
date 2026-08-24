@@ -73,7 +73,7 @@
     <div class="grid gap-2">
       @for (item of filtered(); track item.id) {
         <button type="button"
-                class="plate-alt flex items-center gap-3 rounded-md p-2 text-left transition-colors hover:border-border-strong"
+                class="plate-alt flex min-w-0 items-center gap-3 rounded-md p-2 text-left transition-colors hover:border-border-strong"
                 [attr.aria-label]="'Ver ' + item.cardName"
                 (click)="openPreview(item)">
           <div class="h-14 w-10 shrink-0 overflow-hidden rounded bg-surface-2">

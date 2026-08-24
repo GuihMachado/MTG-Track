@@ -55,7 +55,7 @@
     }
   ],
   "description": "Life tracker, histórico de partidas e ranking de Commander",
-  "theme_color": "#171717",
-  "background_color": "#292929",
+  "theme_color": "#08060E",
+  "background_color": "#06050B",
   "lang": "pt-BR"
 }

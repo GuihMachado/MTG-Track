@@ -1,0 +1,26 @@
+/* Partidas — a faixa de placar no topo é o resumo do que a lista detalha. */
+:host {
+  display: block;
+}
+
+.score {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  padding: 14px 8px;
+}
+
+/* Divisória de fio entre as três células, no lugar de três caixas. */
+.score + .score {
+  border-left: 1px solid var(--hairline);
+}
+
+.score-value {
+  font-family: var(--font-numeral);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}

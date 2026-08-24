@@ -33,7 +33,11 @@
 
   <!-- Estados -->
   @if (loading()) {
-    <p class="py-8 text-center text-sm text-foreground-muted">Buscando cartas...</p>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <hlm-skeleton class="aspect-[63/88] w-full rounded-card-art" />
+      }
+    </div>
   } @else if (searched() && results().length === 0) {
     <p class="py-8 text-center text-sm text-foreground-muted">
       Nenhuma carta encontrada para "{{ queryControl.value }}".

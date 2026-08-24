@@ -10,10 +10,12 @@ export const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				// Grimório: botões sólidos flutuam (sobem no hover, afundam no clique);
+				// Levitação: a ação principal é vidro branco, não retângulo roxo — a mesma
+				// peça da pílula "Nova partida" da home, em tamanho de linha. Sólidos
+				// flutuam (sobem no hover, afundam no clique);
 				// ghost e link seguem chapados, porque são ação secundária.
 				default:
-					'bg-primary text-primary-foreground hover:bg-primary/90 shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
+					'btn-glass shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
 				destructive:
 					'bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
 				// Grimório: o hover é neutro (surface-3), nunca o ouro. O padrão do
@@ -21,11 +23,11 @@ export const buttonVariants = cva(
 				// quase preto sobre fundo escuro — texto invisível ao passar o mouse
 				// (e "colado" depois do tap no celular).
 				outline:
-					'bg-background hover:bg-surface-3 hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 border shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
+					'plate-quiet hover:text-foreground shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
 				secondary:
-					'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
-				ghost: 'hover:bg-surface-3 hover:text-foreground dark:hover:bg-input/50',
-				link: 'text-primary underline-offset-4 hover:underline',
+					'plate-quiet text-foreground hover:shadow-elev-1 hover:-translate-y-px active:translate-y-0',
+				ghost: 'hover:bg-hairline hover:text-foreground',
+				link: 'text-foreground underline-offset-4 hover:underline',
 			},
 			size: {
 				default: 'h-[42px] px-4 py-2 has-[>ng-icon]:px-3',

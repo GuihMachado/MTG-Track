@@ -5,7 +5,7 @@ import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
-import { lucideCirclePlus, lucideDice5, lucideX } from '@ng-icons/lucide';
+import { lucideCirclePlus, lucideDice5, lucidePlay, lucideX } from '@ng-icons/lucide';
 import { ManaSymbolPipe } from '../../shared/pipes/mana-symbol-pipe';
 import { MatchService } from '../../services/match-service';
 import { Subject, takeUntil } from 'rxjs';
@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { CreateMatchPayload } from '../../models/match.models';
+import { PlayerOption } from '../../models/user.models';
 import { CardPicker } from '../../shared/card-picker/card-picker';
 import { FormControl } from '@angular/forms';
 
@@ -43,7 +44,7 @@ type FirstTurnMode = 'manual' | 'random';
     BackButton,
     CardPicker
   ],
-  providers: [provideIcons({ lucideCirclePlus, lucideDice5, lucideX })],
+  providers: [provideIcons({ lucideCirclePlus, lucideDice5, lucidePlay, lucideX })],
   templateUrl: './new-match.html',
   styleUrl: './new-match.css',
 })
@@ -51,7 +52,7 @@ export class NewMatch {
   private readonly destroy = new Subject<void>();
   private router = inject(Router);
   protected gameForm: FormGroup;
-  protected usersList: { id: number; name: string }[] = [];
+  protected usersList: PlayerOption[] = [];
   // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
   protected loading = signal(false);
   /** Vida com que a mesa começa; a mesa lê pelo localStorage. */
@@ -148,6 +149,18 @@ export class NewMatch {
   }
 
   /**
+   * Cor da mesa: a primeira cor escolhida em qualquer assento. Tinge o brilho
+   * do topo da tela, no lugar do antigo halo roxo da marca.
+   */
+  protected tableRgb(): string | null {
+    for (let i = 0; i < this.playersArray.length; i++) {
+      const rgb = this.seatRgb(i);
+      if (rgb) return rgb;
+    }
+    return null;
+  }
+
+  /**
    * Canais RGB da primeira cor escolhida no assento — é o que tinge a placa.
    * `null` (assento sem cor) deixa a placa neutra.
    */
@@ -159,9 +172,17 @@ export class NewMatch {
 
   /** Inicial do jogador escolhido, para o avatar do assento. */
   protected initial(index: number): string {
+    return this.userAt(index)?.name.trim().charAt(0).toUpperCase() ?? '?';
+  }
+
+  /** Ícone de perfil do jogador do assento, quando ele tem um. */
+  protected avatarFor(index: number): string | null {
+    return this.userAt(index)?.avatar ?? null;
+  }
+
+  private userAt(index: number): PlayerOption | undefined {
     const userId = this.playersArray.at(index).get('userId')?.value;
-    const user = this.usersList.find(u => String(u.id) === String(userId));
-    return user?.name.trim().charAt(0).toUpperCase() ?? '?';
+    return this.usersList.find(u => String(u.id) === String(userId));
   }
 
   protected addPlayer() {

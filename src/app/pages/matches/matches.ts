@@ -6,7 +6,7 @@ import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { HlmEmptyImports } from '@spartan-ng/helm/empty';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { MatchService } from '../../services/match-service';
-import { MatchDto } from '../../models/match.models';
+import { MatchDto, UserStats } from '../../models/match.models';
 import { MatchCardComponent } from '../../shared/match-card/match-card.component';
 
 type MatchFilter = 'all' | 'wins' | 'losses' | 'fun' | 'open';
@@ -38,6 +38,8 @@ export class Matches implements OnInit {
   ];
 
   protected matches = signal<MatchDto[]>([]);
+  /** Placar geral do jogador — a faixa no topo da tela. */
+  protected stats = signal<UserStats | null>(null);
   protected loading = signal(true);
   protected currentUserId = signal(0);
   protected filter = signal<MatchFilter>('all');
@@ -64,6 +66,21 @@ export class Matches implements OnInit {
 
     this.currentUserId.set(Number(localStorage.getItem('user-id')) || 0);
     this.loadMatches();
+    this.loadStats();
+  }
+
+  /** Falha em silêncio: a lista de partidas é o conteúdo, o placar é resumo. */
+  private loadStats(): void {
+    this.matchService.getUserStats(this.currentUserId()).subscribe({
+      next: stats => this.stats.set(stats),
+      error: () => undefined,
+    });
+  }
+
+  /** Encerrar uma partida muda a lista e o placar. */
+  protected onFinished(): void {
+    this.loadMatches();
+    this.loadStats();
   }
 
   protected loadMatches(): void {

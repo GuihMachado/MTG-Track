@@ -1,0 +1,35 @@
+/* Perfil — duas placas e a pílula de sempre. O ícone é o único elemento
+   redondo da tela, porque é o que se repete no header e no assento. */
+:host {
+  display: block;
+}
+
+.pic {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid var(--hairline-strong);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: var(--elev-1);
+}
+
+.pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pic-initial {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+:host-context(:root.light) .pic {
+  background: rgba(23, 19, 31, 0.05);
+}

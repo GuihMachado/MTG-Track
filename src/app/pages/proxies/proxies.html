@@ -1,7 +1,5 @@
 <div class="container-page py-6">
-  <app-back-button fallbackRoute="/dashboard" />
-
-  <header class="mt-2 mb-5 grid gap-1">
+  <header class="mb-5 grid gap-1">
     <h1 class="title-screen">Proxies</h1>
     <p class="text-sm text-foreground-muted">
       Busque cartas, monte a lista e gere um PDF com cartas em tamanho real para imprimir e recortar.
@@ -14,7 +12,7 @@
       <button hlmTabsTrigger="lista">
         Lista
         @if (proxyList.totalCards() > 0) {
-          <span class="ml-1 rounded-full bg-arcane-600 px-1.5 py-0.5 font-data text-[0.65rem] font-bold text-white">
+          <span class="ml-1 rounded-full border border-hairline-strong bg-white/12 px-1.5 py-0.5 font-data text-[0.65rem] font-bold">
             {{ proxyList.totalCards() }}
           </span>
         }

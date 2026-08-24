@@ -24,7 +24,7 @@
          jogador é uma placa, com o winrate como barra fina sob o nome. -->
     <ol class="mt-4 flex flex-col gap-2.5">
       @for (entry of ranking(); track entry.userId; let i = $index) {
-        <li class="plate-alt row" [class.mine]="entry.userId === currentUserId()">
+        <li class="plate-alt row rise-stagger" [class.mine]="entry.userId === currentUserId()">
           <span class="pos">
             @if (i < 3 && entry.wins > 0) {
               <ng-icon hlm size="sm" name="lucideCrown" [class]="crownClass(i)" />
@@ -37,7 +37,7 @@
             <p class="truncate text-[15px] font-semibold">
               {{ entry.userName }}
               @if (entry.userId === currentUserId()) {
-                <span class="ml-1 text-xs text-arcane-300">(você)</span>
+                <span class="ml-1 text-xs text-accent">(você)</span>
               }
             </p>
             <div class="mt-2 flex items-center gap-2">

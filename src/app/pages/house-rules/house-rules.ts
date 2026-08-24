@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { DatePipe } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucidePencil, lucidePlus, lucideRotateCcw } from '@ng-icons/lucide';
+import { lucideCheck, lucideChevronDown, lucidePencil, lucidePlus, lucideRotateCcw } from '@ng-icons/lucide';
 import { isMtgIcon, iconKey, MTG_ICONS } from '../../shared/icons/mtg-icons';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmAccordionImports } from '@spartan-ng/helm/accordion';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { HlmDialogService } from '@spartan-ng/helm/dialog';
-import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { HouseRulesService } from '../../services/house-rules-service';
 import { BanlistItem, HouseRulesData, UpdateHouseRulesPayload } from '../../models/house-rules.models';
@@ -31,16 +31,17 @@ import {
     DatePipe,
     NgIcon,
     HlmIcon,
+    HlmAccordionImports,
     HlmButtonImports,
     HlmSeparatorImports,
     HlmSkeletonImports,
-    BackButton,
-    BanlistPanel,
+    BanlistPanel
   ],
   providers: [
-    provideIcons({ lucideCheck, lucidePencil, lucidePlus, lucideRotateCcw, ...MTG_ICONS }),
+    provideIcons({ lucideCheck, lucideChevronDown, lucidePencil, lucidePlus, lucideRotateCcw, ...MTG_ICONS }),
   ],
   templateUrl: './house-rules.html',
+  styleUrl: './house-rules.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Rules implements OnInit {
