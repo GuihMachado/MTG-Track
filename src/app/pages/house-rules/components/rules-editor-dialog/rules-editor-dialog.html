@@ -1,0 +1,92 @@
+<!-- w-full: quem limita a largura é o próprio hlm-dialog-content (contentClass no
+     open()). Uma largura em vw aqui soma ao padding do diálogo e estoura a tela. -->
+<div class="grid max-h-[75dvh] w-full min-w-0 grid-rows-[auto_1fr_auto] gap-3">
+  <h3 class="title-section">Editar regras</h3>
+
+  <div class="grid content-start gap-4 overflow-y-auto pr-1">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div class="grid gap-1.5">
+        <label hlmLabel for="rules-title">Título</label>
+        <input hlmInput id="rules-title" type="text" [value]="title()"
+               (input)="title.set($any($event.target).value)" />
+      </div>
+      <div class="grid gap-1.5">
+        <label hlmLabel for="rules-subtitle">Subtítulo</label>
+        <input hlmInput id="rules-subtitle" type="text" [value]="subtitle()"
+               (input)="subtitle.set($any($event.target).value)" />
+      </div>
+    </div>
+
+    <hlm-separator />
+
+    @for (section of sections(); track section.id; let i = $index) {
+      <fieldset class="grid gap-2.5 rounded-lg border border-border bg-surface-2/40 p-3">
+        <div class="flex items-end gap-2">
+          <div class="grid flex-1 gap-1.5">
+            <label hlmLabel [for]="'sec-title-' + i">Título da seção</label>
+            <input hlmInput [id]="'sec-title-' + i" type="text" [value]="section.title"
+                   (input)="patchSection(i, { title: $any($event.target).value })" />
+          </div>
+          <button hlmBtn variant="ghost" size="icon" type="button"
+                  [attr.aria-label]="'Remover a seção ' + section.title"
+                  (click)="removeSection(i)">
+            <ng-icon hlm size="sm" name="lucideTrash2" />
+          </button>
+        </div>
+
+        <div class="grid gap-1.5">
+          <span class="text-sm font-medium">Ícone</span>
+          <div class="flex flex-wrap gap-1">
+            @for (icon of iconNames; track icon) {
+              <button type="button"
+                      class="flex h-8 w-8 items-center justify-center rounded-md border transition-colors"
+                      [class.border-primary]="section.icon === icon"
+                      [class.bg-primary]="section.icon === icon"
+                      [class.text-white]="section.icon === icon"
+                      [class.border-border]="section.icon !== icon"
+                      [class.text-foreground-muted]="section.icon !== icon"
+                      [attr.aria-pressed]="section.icon === icon"
+                      [attr.aria-label]="'Usar o ícone ' + icon"
+                      (click)="pickIcon(i, icon)">
+                <ng-icon hlm size="sm" [name]="iconName(icon)" />
+              </button>
+            }
+          </div>
+          @if (section.icon && !isIcon(section.icon)) {
+            <p class="text-xs text-foreground-subtle">
+              Esta seção ainda usa o emoji {{ section.icon }} — escolha um ícone para padronizar.
+            </p>
+          }
+        </div>
+
+        <div class="grid gap-1.5">
+          <label hlmLabel [for]="'sec-content-' + i">Texto principal</label>
+          <textarea hlmTextarea [id]="'sec-content-' + i" rows="3" [value]="section.content"
+                    (input)="patchSection(i, { content: $any($event.target).value })"></textarea>
+        </div>
+
+        <div class="grid gap-1.5">
+          <label hlmLabel [for]="'sec-items-' + i">Bullets (um por linha)</label>
+          <textarea hlmTextarea [id]="'sec-items-' + i" rows="2" [value]="section.listItemsText"
+                    (input)="patchSection(i, { listItemsText: $any($event.target).value })"></textarea>
+        </div>
+
+        <div class="grid gap-1.5">
+          <label hlmLabel [for]="'sec-warning-' + i">Aviso destacado (opcional)</label>
+          <input hlmInput [id]="'sec-warning-' + i" type="text" [value]="section.warningNote"
+                 (input)="patchSection(i, { warningNote: $any($event.target).value })" />
+        </div>
+      </fieldset>
+    }
+
+    <button hlmBtn variant="secondary" type="button" class="justify-self-start" (click)="addSection()">
+      <ng-icon hlm size="sm" name="lucidePlus" />
+      Nova seção
+    </button>
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-border pt-3">
+    <button hlmBtn variant="outline" type="button" (click)="cancel()">Cancelar</button>
+    <button hlmBtn type="button" [disabled]="title().trim().length === 0" (click)="save()">Salvar</button>
+  </div>
+</div>

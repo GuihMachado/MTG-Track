@@ -1,0 +1,51 @@
+/* Ranking — uma placa por jogador. A posição é dado (Mono), as vitórias são
+   numeral (gótico), o winrate é barra: três leituras sem uma tabela. */
+:host {
+  display: block;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md, 0.875rem);
+}
+
+.pos {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+/* A linha de quem está logado se destaca por anel, não por fundo diferente. */
+.row.mine {
+  border-color: rgba(124, 92, 255, 0.45);
+  box-shadow: var(--elev-1), 0 0 0 3px rgba(124, 92, 255, 0.1);
+}
+
+.meter {
+  display: block;
+  flex: 1;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--success);
+  box-shadow: 0 0 12px rgba(52, 211, 158, 0.6);
+}
+
+:host-context(:root.light) .meter {
+  background: rgba(23, 19, 31, 0.1);
+}

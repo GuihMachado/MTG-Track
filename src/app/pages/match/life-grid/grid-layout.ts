@@ -46,19 +46,33 @@ const ZONES: Record<SeatOrientation, [TapZone, TapZone]> = {
 };
 
 export function gridRows(count: number): number {
-  return Math.ceil(clampCount(count) / 2);
+  const total = clampCount(count);
+  // Mesa de 2 é a exceção: empilhada, não lado a lado.
+  if (total === 2) return 2;
+  return Math.ceil(total / 2);
+}
+
+function makeSlot(index: number, wide: boolean, orientation: SeatOrientation): SeatSlot {
+  const [minusZone, plusZone] = ZONES[orientation];
+  return { index, wide, orientation, rotation: ROTATION[orientation], minusZone, plusZone };
 }
 
 export function seatSlots(count: number): SeatSlot[] {
   const total = clampCount(count);
+
+  // Dois jogadores ficam frente a frente ao longo do lado curto do celular:
+  // uma faixa em cima (lendo de cabeça para baixo) e outra embaixo. Em duas
+  // colunas cada um leria o próprio número deitado, que é o caso errado.
+  if (total === 2) {
+    return [makeSlot(0, true, 'up'), makeSlot(1, true, 'down')];
+  }
+
   const lastIsWide = total % 2 === 1;
 
   return Array.from({ length: total }, (_, index) => {
     const wide = lastIsWide && index === total - 1;
     const orientation: SeatOrientation = wide ? 'down' : index % 2 === 0 ? 'left' : 'right';
-    const [minusZone, plusZone] = ZONES[orientation];
-
-    return { index, wide, orientation, rotation: ROTATION[orientation], minusZone, plusZone };
+    return makeSlot(index, wide, orientation);
   });
 }
 

@@ -1,20 +1,20 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
-import { HlmCardImports } from '@spartan-ng/helm/card';
-import { HlmInputImports } from '@spartan-ng/helm/input';
-import { HlmLabelImports } from '@spartan-ng/helm/label';
-import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { UserService } from '../../services/user-service';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
-import { ManaSymbolPipe } from "../../shared/pipes/mana-symbol-pipe";
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { lucideCirclePlus, lucideDice5, lucideX } from '@ng-icons/lucide';
+import { ManaSymbolPipe } from '../../shared/pipes/mana-symbol-pipe';
 import { MatchService } from '../../services/match-service';
 import { Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { CreateMatchPayload } from '../../models/match.models';
+import { CardPicker } from '../../shared/card-picker/card-picker';
+import { FormControl } from '@angular/forms';
 
 /** Id fixo: um novo aviso substitui o anterior em vez de empilhar. */
 const FORM_WARNING = 'form-validation';
@@ -23,20 +23,27 @@ const FORM_WARNING = 'form-validation';
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 6;
 
+/** Vidas iniciais oferecidas — as mesmas do submenu da rosca na mesa. */
+const LIFE_PRESETS = [20, 30, 40, 50] as const;
+
+/** Chave lida pela mesa ao montar os assentos de uma partida nova. */
+const STARTING_LIFE_KEY = 'match-starting-life';
+
+type FirstTurnMode = 'manual' | 'random';
+
 @Component({
   selector: 'app-game',
   imports: [
-    HlmSeparatorImports,
-    HlmButtonImports,
-    HlmCardImports,
-    HlmInputImports,
-    HlmLabelImports,
     BrnSelectImports,
     HlmSelectImports,
+    NgIcon,
+    HlmIconImports,
     ManaSymbolPipe,
     ReactiveFormsModule,
-    BackButton
-],
+    BackButton,
+    CardPicker
+  ],
+  providers: [provideIcons({ lucideCirclePlus, lucideDice5, lucideX })],
   templateUrl: './new-match.html',
   styleUrl: './new-match.css',
 })
@@ -45,23 +52,35 @@ export class NewMatch {
   private router = inject(Router);
   protected gameForm: FormGroup;
   protected usersList: { id: number; name: string }[] = [];
-  protected loading = false;
+  // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
+  protected loading = signal(false);
+  /** Vida com que a mesa começa; a mesa lê pelo localStorage. */
+  protected startingLife = signal<number>(40);
+  /** Sortear anuncia quem começa assim que a partida abre. */
+  protected firstTurnMode = signal<FirstTurnMode>('random');
+
   private userService = inject(UserService);
   private matchService = inject(MatchService);
   private notify = inject(NotificationService);
 
-  /* Identidade de mana do deck — a cor visual vem do mana-font + tokens --color-mana-* */
+  protected readonly minPlayers = MIN_PLAYERS;
+  protected readonly maxPlayers = MAX_PLAYERS;
+
+  /* Identidade de mana do deck. `rgb` alimenta a camada de luz da orbe e da
+     placa do assento — a cor nunca preenche a área. */
   protected manaColors = [
-    { code: 'W', label: 'White' },
-    { code: 'U', label: 'Blue' },
-    { code: 'B', label: 'Black' },
-    { code: 'R', label: 'Red' },
-    { code: 'G', label: 'Green' },
+    { code: 'W', label: 'White', rgb: 'var(--mana-w-rgb)' },
+    { code: 'U', label: 'Blue', rgb: 'var(--mana-u-rgb)' },
+    { code: 'B', label: 'Black', rgb: 'var(--mana-b-rgb)' },
+    { code: 'R', label: 'Red', rgb: 'var(--mana-r-rgb)' },
+    { code: 'G', label: 'Green', rgb: 'var(--mana-g-rgb)' },
   ];
 
   constructor(private fb: FormBuilder) {
     this.gameForm = this.fb.group({
-      players: this.fb.array([])
+      players: this.fb.array([]),
+      // Flag de partida (não de jogador): 4Fun entra no histórico, fora do ranking.
+      isFun: [false]
     });
 
     this.userService.getUsers()
@@ -83,6 +102,8 @@ export class NewMatch {
   }
 
   ngOnInit() {
+    // A mesa nasce com dois lugares: é o mínimo que a partida aceita.
+    this.addPlayer();
     this.addPlayer();
   }
 
@@ -98,9 +119,49 @@ export class NewMatch {
   private createPlayerGroup(): FormGroup {
     return this.fb.group({
       userId: ['', Validators.required],
-      commander: [''],
+      // Só aceita nome escolhido na busca da Scryfall (app-card-picker).
+      commander: ['', Validators.required],
       colors: [[]]
     });
+  }
+
+  /** O card-picker recebe o controle do assento em vez de um formControlName. */
+  protected commanderControl(index: number): FormControl<string> {
+    return this.playersArray.at(index).get('commander') as FormControl<string>;
+  }
+
+  protected get isFunControl(): FormControl<boolean> {
+    return this.gameForm.get('isFun') as FormControl<boolean>;
+  }
+
+  protected toggleFun(): void {
+    this.isFunControl.setValue(!this.isFunControl.value);
+  }
+
+  protected cycleStartingLife(): void {
+    const index = LIFE_PRESETS.indexOf(this.startingLife() as (typeof LIFE_PRESETS)[number]);
+    this.startingLife.set(LIFE_PRESETS[(index + 1) % LIFE_PRESETS.length]!);
+  }
+
+  protected toggleFirstTurn(): void {
+    this.firstTurnMode.update(mode => (mode === 'random' ? 'manual' : 'random'));
+  }
+
+  /**
+   * Canais RGB da primeira cor escolhida no assento — é o que tinge a placa.
+   * `null` (assento sem cor) deixa a placa neutra.
+   */
+  protected seatRgb(index: number): string | null {
+    const colors: string[] = this.playersArray.at(index).get('colors')?.value ?? [];
+    const first = colors[0];
+    return first ? `var(--mana-${first.toLowerCase()}-rgb)` : null;
+  }
+
+  /** Inicial do jogador escolhido, para o avatar do assento. */
+  protected initial(index: number): string {
+    const userId = this.playersArray.at(index).get('userId')?.value;
+    const user = this.usersList.find(u => String(u.id) === String(userId));
+    return user?.name.trim().charAt(0).toUpperCase() ?? '?';
   }
 
   protected addPlayer() {
@@ -114,7 +175,7 @@ export class NewMatch {
 
   protected removePlayer(index: number) {
     this.playersArray.removeAt(index);
-    this.notify.info(`Jogador ${index + 1} removido da mesa.`);
+    this.notify.info(`Assento ${index + 1} removido da mesa.`);
   }
 
   protected toggleColor(playerIndex: number, colorCode: string) {
@@ -136,7 +197,7 @@ export class NewMatch {
   protected onSubmit() {
     if (this.gameForm.invalid) {
       this.gameForm.markAllAsTouched();
-      this.notify.warning('Escolha o jogador de cada assento antes de começar.', { id: FORM_WARNING });
+      this.notify.warning('Escolha o jogador e o commander de cada assento antes de começar.', { id: FORM_WARNING });
       return;
     }
 
@@ -157,6 +218,7 @@ export class NewMatch {
     }
 
     const payload: CreateMatchPayload = {
+      isFun: rawValue.isFun === true,
       players: rawValue.players.map((p: any) => ({
         userId: Number(p.userId),
         commander: p.commander,
@@ -165,28 +227,43 @@ export class NewMatch {
       }))
     };
 
-    this.loading = true;
+    this.loading.set(true);
 
     this.matchService.startMatch(payload)
       .pipe(takeUntil(this.destroy))
       .subscribe({
         next: (data) => {
-          this.loading = false;
+          this.loading.set(false);
 
           localStorage.setItem('matchId', String(data.matchId));
           localStorage.setItem('match-start', Date.now().toString());
+          // A vida inicial é estado de mesa, não de partida: só o front a usa.
+          localStorage.setItem(STARTING_LIFE_KEY, String(this.startingLife()));
 
           this.notify.success('Partida iniciada!', {
-            description: `Boa sorte para os ${this.playersArray.length} jogadores da mesa.`
+            description: this.startDescription(rawValue.players)
           });
           this.router.navigate(['/match']);
         },
         error: (error) => {
-          this.loading = false;
+          this.loading.set(false);
           this.notify.apiError(error, { fallback: 'Não foi possível iniciar a partida.' });
         }
       }
     )
+  }
+
+  /** Aviso de abertura: quem começa, quando o primeiro turno é sorteado. */
+  private startDescription(players: { userId: string | number }[]): string {
+    const seats = players.length;
+
+    if (this.firstTurnMode() !== 'random' || seats === 0) {
+      return `Boa sorte para os ${seats} jogadores da mesa.`;
+    }
+
+    const drawn = players[Math.floor(Math.random() * seats)]!;
+    const name = this.usersList.find(u => String(u.id) === String(drawn.userId))?.name;
+    return name ? `${name} começa jogando.` : `Boa sorte para os ${seats} jogadores da mesa.`;
   }
 
   /** Devolve o nome do primeiro jogador escolhido em dois assentos, se houver. */

@@ -1,0 +1,99 @@
+/* Linha de partida — a peça mais repetida do app (home e Partidas).
+   Placa baixa, tingida pela identidade do deck à esquerda, com um trilho de
+   3px na cor do resultado. */
+:host {
+  display: block;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md, 0.875rem);
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--deck-rgb) / 0.18),
+    color-mix(in oklab, var(--foreground) 3%, transparent) 55%
+  );
+  border: 1px solid var(--hairline);
+  transition: transform 120ms ease-out;
+}
+
+.row:active {
+  transform: scale(0.99);
+}
+
+/* Partida aberta: a borda também avisa. */
+.row.open {
+  border-color: rgba(245, 180, 84, 0.28);
+}
+
+.rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.rail.win {
+  background: var(--success);
+  box-shadow: 0 0 14px var(--success);
+}
+
+.rail.loss {
+  background: var(--danger);
+}
+
+.rail.open {
+  background: var(--warning);
+  box-shadow: 0 0 14px var(--warning);
+}
+
+/* Ação de texto da linha (Voltar / Encerrar): sem caixa, só peso e cor. */
+.ghost-action {
+  flex: none;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius-sm, 0.625rem);
+  background: transparent;
+  color: var(--warning);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ghost-action:active {
+  background: rgba(245, 180, 84, 0.12);
+}
+
+.ghost-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.badge-fun {
+  flex: none;
+  padding: 3px 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(230, 199, 127, 0.4);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+
+  .row:active {
+    transform: none;
+  }
+}

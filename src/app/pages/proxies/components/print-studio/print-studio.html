@@ -1,0 +1,120 @@
+<div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+  <!-- Configurações -->
+  <div class="grid content-start gap-4">
+    <div class="grid gap-1.5">
+      <span class="text-sm font-medium">Papel</span>
+      <div class="flex gap-1.5">
+        <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold font-data transition-colors"
+                [class.bg-primary]="proxyList.settings().pageSize === 'a4'"
+                [class.text-white]="proxyList.settings().pageSize === 'a4'"
+                [class.bg-surface-2]="proxyList.settings().pageSize !== 'a4'"
+                [class.text-foreground-muted]="proxyList.settings().pageSize !== 'a4'"
+                (click)="setPageSize('a4')">A4</button>
+        <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold font-data transition-colors"
+                [class.bg-primary]="proxyList.settings().pageSize === 'letter'"
+                [class.text-white]="proxyList.settings().pageSize === 'letter'"
+                [class.bg-surface-2]="proxyList.settings().pageSize !== 'letter'"
+                [class.text-foreground-muted]="proxyList.settings().pageSize !== 'letter'"
+                (click)="setPageSize('letter')">Carta (Letter)</button>
+      </div>
+    </div>
+
+    <div class="grid gap-1.5">
+      <span class="text-sm font-medium">Orientação</span>
+      <div class="flex gap-1.5">
+        <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold font-data transition-colors"
+                [class.bg-primary]="!landscape()"
+                [class.text-white]="!landscape()"
+                [class.bg-surface-2]="landscape()"
+                [class.text-foreground-muted]="landscape()"
+                (click)="setOrientation('portrait')">Retrato · 3×3</button>
+        <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold font-data transition-colors"
+                [class.bg-primary]="landscape()"
+                [class.text-white]="landscape()"
+                [class.bg-surface-2]="!landscape()"
+                [class.text-foreground-muted]="!landscape()"
+                (click)="setOrientation('landscape')">Paisagem · 4×2</button>
+      </div>
+    </div>
+
+    <div class="grid gap-1.5">
+      <span class="text-sm font-medium">Espaço entre cartas</span>
+      <div class="flex gap-1.5">
+        @for (gap of [0, 1, 2]; track gap) {
+          <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold font-data transition-colors"
+                  [class.bg-primary]="proxyList.settings().gapMm === gap"
+                  [class.text-white]="proxyList.settings().gapMm === gap"
+                  [class.bg-surface-2]="proxyList.settings().gapMm !== gap"
+                  [class.text-foreground-muted]="proxyList.settings().gapMm !== gap"
+                  (click)="setGap($any(gap))">{{ gap }}mm</button>
+        }
+      </div>
+    </div>
+
+    <label class="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
+      <input type="checkbox" class="h-4 w-4 accent-[--primary]"
+             [checked]="proxyList.settings().cutLines" (change)="toggleCutLines()" />
+      Linhas de corte nas margens
+    </label>
+
+    <p class="text-xs text-foreground-subtle">
+      A grade é sempre centralizada na folha e cada carta sai com 63×88mm exatos — imprima a 100%,
+      sem "ajustar à página".
+    </p>
+
+    <button hlmBtn type="button" class="w-full sm:w-auto"
+            [disabled]="generating() || slots().length === 0"
+            (click)="generate()">
+      <ng-icon hlm size="sm" name="lucideFileDown" />
+      {{ generating() ? 'Gerando...' : 'Gerar PDF (' + slots().length + ' cartas)' }}
+    </button>
+
+    @if (progress(); as p) {
+      <div class="grid gap-1.5">
+        <div class="h-2 overflow-hidden rounded-full bg-surface-3">
+          <div class="h-full rounded-full bg-primary transition-all" [style.width.%]="progressPercent()"></div>
+        </div>
+        <p class="font-data text-xs text-foreground-muted">
+          @if (p.cardName) {
+            Renderizando {{ p.done + 1 }}/{{ p.total }}: {{ p.cardName }}
+          } @else {
+            Montando o arquivo...
+          }
+        </p>
+      </div>
+    }
+  </div>
+
+  <!-- Preview da folha -->
+  <div class="grid content-start justify-items-center gap-3">
+    <div class="w-full rounded-md bg-white p-[4%] shadow-elev-2"
+         [style.aspect-ratio]="sheetRatio()"
+         [style.max-width]="landscape() ? '30rem' : '22rem'">
+      <div class="grid h-full gap-[2px]"
+           [style.grid-template-columns]="'repeat(' + cols() + ', 1fr)'">
+        @for (slot of pageSlots(); track $index) {
+          <div class="overflow-hidden rounded-[4%] outline-dashed outline-1 outline-neutral-300"
+               [class.bg-neutral-100]="!slot">
+            @if (slot) {
+              <img class="h-full w-full object-cover" [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button hlmBtn variant="outline" size="icon-sm" type="button" aria-label="Página anterior"
+              [disabled]="page() === 0" (click)="previousPage()">
+        <ng-icon hlm size="sm" name="lucideChevronLeft" />
+      </button>
+      <span class="font-data text-xs text-foreground-muted">
+        Página {{ page() + 1 }} de {{ pageCount() }} · {{ perPage() }} por página
+      </span>
+      <button hlmBtn variant="outline" size="icon-sm" type="button" aria-label="Próxima página"
+              [disabled]="page() >= pageCount() - 1" (click)="nextPage()">
+        <ng-icon hlm size="sm" name="lucideChevronRight" />
+      </button>
+    </div>
+  </div>
+</div>

@@ -14,7 +14,9 @@
     closeButton
     expand
   />
-  <main class="pb-5">
+  <!-- O respiro de rodapé só existe nas telas com header: em tela cheia
+       (partida) ele somaria 20px a uma altura de 100dvh e criaria scroll. -->
+  <main [class.pb-5]="showHeader()">
     <router-outlet></router-outlet>
   </main>
 

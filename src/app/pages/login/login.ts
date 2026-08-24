@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideChevronDown } from '@ng-icons/lucide';
 import { AuthService } from '../../services/auth-service';
@@ -30,7 +30,8 @@ const FORM_WARNING = 'form-validation';
 })
 export class Login {
   protected mainForm: FormGroup;
-  protected loading = false;
+  // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
+  protected loading = signal(false);
 
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
@@ -55,13 +56,13 @@ export class Login {
       return;
     }
 
-    this.loading = true;
+    this.loading.set(true);
 
     this.authService.login(this.bodybuilder())
       .pipe(takeUntil(this.destroy))
       .subscribe({
       next: (data) => {
-        this.loading = false;
+        this.loading.set(false);
 
         localStorage.setItem('auth-token', data.token);
         localStorage.setItem('user-name', data.user.name);
@@ -71,7 +72,7 @@ export class Login {
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        this.loading = false;
+        this.loading.set(false);
         this.notify.apiError(error, {
           fallback: 'Não foi possível entrar agora.',
           byStatus: {

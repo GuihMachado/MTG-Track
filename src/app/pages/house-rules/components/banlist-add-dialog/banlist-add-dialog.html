@@ -1,0 +1,51 @@
+<div class="grid gap-4 sm:min-w-[26rem] sm:grid-cols-[10rem_1fr]">
+  <!-- Preview da carta escolhida -->
+  <div class="mx-auto aspect-[63/88] w-40 overflow-hidden rounded-card-art bg-surface-2 sm:mx-0 sm:w-full">
+    @if (previewUrl()) {
+      <img class="h-full w-full object-cover" [src]="previewUrl()" alt="Carta escolhida" />
+    } @else {
+      <div class="flex h-full w-full items-center justify-center p-3 text-center">
+        <span class="text-xs text-foreground-subtle">Busque e escolha a carta na lista.</span>
+      </div>
+    }
+  </div>
+
+  <div class="grid content-start gap-3">
+    <h3 class="title-section">Adicionar à banlist</h3>
+
+    <div class="grid gap-1.5">
+      <label hlmLabel for="ban-name">Carta</label>
+      <app-card-picker [control]="nameControl"
+                       placeholder="Buscar carta na Scryfall..."
+                       (selected)="onCardSelected($event)" />
+      @if (nameControl.touched && nameControl.invalid) {
+        <p class="text-xs text-danger">Escolha uma carta na lista de sugestões.</p>
+      }
+    </div>
+
+    <div class="grid gap-1.5">
+      <span class="text-sm font-medium">Categoria</span>
+      <div class="flex flex-wrap gap-1.5">
+        @for (cat of categories; track cat) {
+          <button type="button"
+                  class="rounded-full px-3 py-1 text-xs font-semibold transition-colors"
+                  [class.bg-primary]="category() === cat"
+                  [class.text-white]="category() === cat"
+                  [class.bg-surface-2]="category() !== cat"
+                  [class.text-foreground-muted]="category() !== cat"
+                  (click)="category.set(cat)">{{ cat }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-1.5">
+      <label hlmLabel for="ban-reason">Motivo</label>
+      <textarea hlmTextarea id="ban-reason" rows="3" [formControl]="reasonControl"></textarea>
+    </div>
+
+    <div class="mt-1 flex justify-end gap-2">
+      <button hlmBtn variant="outline" type="button" (click)="cancel()">Cancelar</button>
+      <button hlmBtn type="button" (click)="save()">Adicionar</button>
+    </div>
+  </div>
+</div>

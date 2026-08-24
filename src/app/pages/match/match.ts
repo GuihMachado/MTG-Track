@@ -8,25 +8,43 @@ import { HlmDialogImports, HlmDialog } from '@spartan-ng/helm/dialog';
 import { HlmRadioGroupImports } from '@spartan-ng/helm/radio-group';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
+import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { LifeGrid, POISON_LETHAL, SeatPlayer } from './life-grid/life-grid';
 import { SEAT_COLOR_ORDER, SEAT_COLORS, SeatColorCode } from './seat-colors';
+import { CounterMap, CounterType, emptyCounters, normalizeCounters } from './counters';
+import { RadialItem, RadialMenu } from './radial-menu/radial-menu';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { HlmIcon } from '@spartan-ng/helm/icon';
+import { MTG_ICONS } from '../../shared/icons/mtg-icons';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { MatchService } from '../../services/match-service';
 import { MatchDto } from '../../models/match.models';
 
 const SEATS_KEY = 'match-seats';
+/** Vida escolhida na tela de nova partida; ausente cai no padrão de Commander. */
+const STARTING_LIFE_KEY = 'match-starting-life';
 const STARTING_LIFE = 40;
+/** Vidas iniciais oferecidas no submenu da rosca. */
+const LIFE_PRESETS = [20, 30, 40, 50] as const;
 
-/** Estado da mesa (ordem, cor, vida e veneno), preso à partida que o gerou. */
+/** Estado da mesa (ordem, cor, vida, veneno e contadores), preso à partida que o gerou. */
 interface StoredSeats {
   matchId: number;
-  seats: { userId: number; seatColor: SeatColorCode; life: number; poison: number }[];
+  // `counters` é opcional na leitura: saves gravados antes da feature não têm o campo.
+  seats: {
+    userId: number;
+    seatColor: SeatColorCode;
+    life: number;
+    poison: number;
+    counters?: CounterMap;
+  }[];
 }
 
 /** Assento da mesa + o usuário real por trás dele. */
 interface MatchSeat extends SeatPlayer {
   userId: number;
   poison: number;
+  counters: CounterMap;
 }
 
 @Component({
@@ -34,14 +52,16 @@ interface MatchSeat extends SeatPlayer {
   standalone: true,
   imports: [
     LifeGrid,
-    BrnSheetImports,
-    HlmSheetImports,
+    RadialMenu,
     BrnDialogImports,
     HlmDialogImports,
     HlmRadioGroupImports,
     HlmButtonImports,
-    HlmSeparatorImports,
+    HlmSkeletonImports,
+    NgIcon,
+    HlmIcon,
   ],
+  providers: [provideIcons({ mtgPoison: MTG_ICONS['mtgPoison']! })],
   templateUrl: './match.html',
   styleUrls: ['./match.css'],
 })
@@ -58,13 +78,57 @@ export class Match implements OnInit {
   /** Modo de trocar assentos de lugar. */
   protected arranging = signal(false);
   protected pickedSeatId = signal<number | null>(null);
+  /** Menu em rosca aberto pelo hub central da mesa. */
+  protected radialOpen = signal(false);
+  /** Resultado de dado/sorteio mostrado no centro da rosca. */
+  protected diceResult = signal<string | null>(null);
   private matchId: number | null = null;
 
-  protected readonly seatColors = SEAT_COLORS;
 
   protected playersByLife = computed(() =>
     [...this.players()].sort((a, b) => b.life - a.life)
   );
+
+  /** Árvore do menu em rosca; "Cores" tem uma fatia por jogador da mesa. */
+  protected radialItems = computed<RadialItem[]>(() => [
+    {
+      id: 'life',
+      icon: 'life',
+      label: 'Vidas',
+      children: LIFE_PRESETS.map(value => ({
+        id: `life-${value}`,
+        icon: null,
+        label: String(value),
+      })),
+    },
+    { id: 'seats', icon: 'swap', label: 'Assentos' },
+    {
+      id: 'colors',
+      icon: 'colors',
+      label: 'Cores',
+      children: this.players().map(player => ({
+        id: `color-${player.id}`,
+        icon: null,
+        label: player.name,
+        // Lei 2: na fatia a cor de mana entra como tinta fraca, não como fill
+        // chapado — é o que mantém o rótulo branco legível em qualquer cor.
+        fill: `rgb(var(${SEAT_COLORS[player.seatColor].rgbVarName}) / 0.22)`,
+        labelColor: '#EDEAF5',
+      })),
+    },
+    {
+      id: 'dice',
+      icon: 'dice',
+      label: 'Dado',
+      children: [
+        { id: 'dice-d20', icon: null, label: 'd20' },
+        { id: 'dice-d6', icon: null, label: 'd6' },
+        { id: 'dice-coin', icon: null, label: 'Moeda' },
+        { id: 'dice-first', icon: null, label: 'Quem começa' },
+      ],
+    },
+    { id: 'finish', icon: 'finish', label: 'Encerrar', danger: true },
+  ]);
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -120,11 +184,19 @@ export class Match implements OnInit {
         id: mp.user.id,
         userId: mp.user.id,
         name: mp.user.name,
-        life: saved?.life ?? STARTING_LIFE,
+        life: saved?.life ?? this.startingLife(),
         poison: saved?.poison ?? 0,
+        counters: normalizeCounters(saved?.counters),
         seatColor: saved?.seatColor ?? SEAT_COLOR_ORDER[i % SEAT_COLOR_ORDER.length]!,
       };
     });
+  }
+
+  /** Vida inicial da mesa: o que a tela de nova partida escolheu, ou 40. */
+  private startingLife(): number {
+    if (!isPlatformBrowser(this.platformId)) return STARTING_LIFE;
+    const raw = Number(localStorage.getItem(STARTING_LIFE_KEY));
+    return Number.isFinite(raw) && raw > 0 ? raw : STARTING_LIFE;
   }
 
   private getStoredSeats(matchId: number): StoredSeats | null {
@@ -149,6 +221,7 @@ export class Match implements OnInit {
         seatColor: p.seatColor,
         life: p.life,
         poison: p.poison,
+        counters: p.counters,
       })),
     };
     localStorage.setItem(SEATS_KEY, JSON.stringify(payload));
@@ -188,6 +261,26 @@ export class Match implements OnInit {
         description: `Chegou a ${after.poison} marcadores de veneno.`
       });
     }
+  }
+
+  /** Toque de ± num assento cujo contador ativo não é a vida. */
+  protected onCounterChange(event: { id: number; kind: 'poison' | CounterType; delta: number }): void {
+    if (event.kind === 'poison') {
+      this.updatePoison(event.id, event.delta);
+      return;
+    }
+    this.updateCounter(event.id, event.kind, event.delta);
+  }
+
+  protected updateCounter(id: number, type: CounterType, delta: number): void {
+    this.players.update(players =>
+      players.map(p =>
+        p.id === id
+          ? { ...p, counters: { ...p.counters, [type]: Math.max(0, p.counters[type] + delta) } }
+          : p,
+      ),
+    );
+    this.persistSeats();
   }
 
   /** Cicla a cor do assento entre os 6 tokens de mana — repetição permitida. */
@@ -239,10 +332,67 @@ export class Match implements OnInit {
     this.persistSeats();
   }
 
-  protected resetLives(): void {
-    this.players.update(players => players.map(p => ({ ...p, life: STARTING_LIFE, poison: 0 })));
+  /** Reinicia a mesa no valor escolhido na rosca, zerando veneno e contadores. */
+  protected setAllLife(value: number): void {
+    this.players.update(players =>
+      players.map(p => ({ ...p, life: value, poison: 0, counters: emptyCounters() })),
+    );
     this.persistSeats();
-    this.notify.info(`Vidas reiniciadas em ${STARTING_LIFE}, veneno zerado.`);
+    this.notify.info(`Vidas reiniciadas em ${value}, veneno e contadores zerados.`);
+  }
+
+  /** Despacha a fatia escolhida na rosca. */
+  protected onRadialAction(id: string, dialog: HlmDialog): void {
+    if (id.startsWith('life-')) {
+      this.setAllLife(Number(id.slice('life-'.length)));
+      this.closeRadial();
+      return;
+    }
+
+    if (id.startsWith('color-')) {
+      // Fica no submenu: dá para ciclar a cor de vários jogadores em sequência.
+      this.cycleSeatColor(Number(id.slice('color-'.length)));
+      return;
+    }
+
+    if (id.startsWith('dice-')) {
+      this.diceResult.set(this.roll(id));
+      return;
+    }
+
+    if (id === 'seats') {
+      this.closeRadial();
+      this.startArranging();
+      return;
+    }
+
+    if (id === 'finish') {
+      this.closeRadial();
+      this.openEndDialog(dialog);
+    }
+  }
+
+  protected closeRadial(): void {
+    this.radialOpen.set(false);
+    this.diceResult.set(null);
+  }
+
+  private roll(id: string): string {
+    switch (id) {
+      case 'dice-d20':
+        return String(1 + Math.floor(Math.random() * 20));
+      case 'dice-d6':
+        return String(1 + Math.floor(Math.random() * 6));
+      case 'dice-coin':
+        return Math.random() < 0.5 ? 'Cara' : 'Coroa';
+      case 'dice-first': {
+        const seats = this.players();
+        if (seats.length === 0) return '—';
+        return seats[Math.floor(Math.random() * seats.length)]!.name;
+      }
+      default:
+        return '—';
+    }
   }
 
   protected openEndDialog(dialog: HlmDialog): void {
@@ -293,6 +443,7 @@ export class Match implements OnInit {
     localStorage.removeItem('matchId');
     localStorage.removeItem('match-start');
     localStorage.removeItem(SEATS_KEY);
+    localStorage.removeItem(STARTING_LIFE_KEY);
     localStorage.removeItem('players');
   }
 }

@@ -1,0 +1,285 @@
+/* Nova partida — a mesa se monta em placas. Cada assento é tingido pela cor
+   escolhida (luz, nunca fill), e a única ação da tela levita no rodapé. */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--background-deep);
+}
+
+/* Brilho arcano no topo: assina a tela de fluxo. */
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(70% 26% at 50% 0%, rgba(124, 92, 255, 0.18), transparent);
+}
+
+.seat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl, 1.25rem);
+  padding: 16px;
+  background-color: var(--surface-plate-bottom);
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-2);
+  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+/* Com cor escolhida, a placa ganha borda e sombra da mana. */
+.seat-card.tinted {
+  border-color: rgb(var(--mana-rgb) / 0.4);
+  box-shadow: 0 22px 38px -22px rgb(var(--mana-rgb) / 0.7),
+    0 12px 24px -14px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Mancha de luz no canto — o que faz a placa parecer iluminada de fora. */
+.seat-card .blob {
+  position: absolute;
+  top: -60px;
+  left: -30px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--mana-rgb) / 0.3), transparent 70%);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+}
+
+.seat-card.tinted .blob {
+  opacity: 1;
+}
+
+.remove {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: -6px -6px -6px 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground-subtle);
+  cursor: pointer;
+  transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.remove:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* Avatar do assento: 46px, gradiente da mana, inicial em branco. */
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 14px;
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--mana-rgb, 154 163 174)),
+    color-mix(in oklab, rgb(var(--mana-rgb, 154 163 174)) 58%, black)
+  );
+  box-shadow: 0 12px 22px -10px rgb(var(--mana-rgb, 154 163 174) / 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* Orbe de mana: apagada é placa fria a 35%; acesa é luz. */
+.orb {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  background-image: linear-gradient(180deg, #26221c, #171420);
+  border: 1px solid var(--hairline);
+  opacity: 0.35;
+  transition: opacity 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
+}
+
+.orb.on {
+  background-image: radial-gradient(circle at 50% 30%, rgb(var(--mana-rgb) / 0.55), #141223);
+  border-color: rgb(var(--mana-rgb) / 0.75);
+  box-shadow: 0 0 20px -3px rgb(var(--mana-rgb) / 0.9);
+  opacity: 1;
+}
+
+.orb:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Adicionar jogador: contorno tracejado, o único da tela — é um lugar vazio. */
+.add-seat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 54px;
+  margin-top: 12px;
+  border-radius: var(--radius-lg, 1.125rem);
+  border: 1px dashed var(--hairline-strong);
+  background: transparent;
+  color: var(--foreground-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.add-seat:hover {
+  color: var(--foreground);
+  border-color: var(--foreground-subtle);
+}
+
+.add-seat:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.fun-plate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg, 1.125rem);
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid rgba(230, 199, 127, 0.28);
+  box-shadow: 0 16px 28px -18px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Switch 50×29: ligado é ouro com glow, o botão é o furo escuro. */
+.switch {
+  position: relative;
+  width: 50px;
+  height: 29px;
+  flex: none;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: background-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.switch.on {
+  background: rgba(230, 199, 127, 0.9);
+  border-color: transparent;
+  box-shadow: 0 0 20px -4px rgba(230, 199, 127, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.switch .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: var(--color-ink-850);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+  transition: translate 150ms ease-out;
+}
+
+.switch.on .knob {
+  translate: 21px 0;
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Ajuste rápido: placa rebaixada dentro da tela, não placa suspensa. */
+.quick {
+  flex: 1;
+  padding: 12px;
+  text-align: left;
+  border-radius: var(--radius-md, 0.875rem);
+  background: color-mix(in oklab, var(--foreground) 3%, transparent);
+  border: 1px solid var(--hairline);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: border-color 150ms ease-out;
+}
+
+.quick:hover {
+  border-color: var(--hairline-strong);
+}
+
+.quick:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* CTA: o único elemento roxo da tela, e o único que levita. */
+.cta {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1.125rem;
+  z-index: var(--z-fab);
+  height: 58px;
+  border: 0;
+  border-radius: var(--radius-lg, 1.125rem);
+  background-image: linear-gradient(180deg, #8a6bff, #6242de);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--elev-float);
+  animation: floaty 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.cta:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  animation: none;
+  cursor: not-allowed;
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+  .cta {
+    left: 50%;
+    right: auto;
+    translate: -50% 0;
+    width: 360px;
+  }
+}
+
+:root.light .orb {
+  background-image: linear-gradient(180deg, #f1eef9, #e4e0ee);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta {
+    animation: none;
+  }
+}

@@ -1,0 +1,68 @@
+<div class="grid gap-4">
+  @if (proxyList.totalModels() === 0) {
+    <hlm-empty>
+      <hlm-empty-header>
+        <hlm-empty-media>
+          <ng-icon hlm size="xl" name="mtgPrinter" class="text-foreground-subtle" />
+        </hlm-empty-media>
+        <h3 hlmEmptyTitle>Lista de impressão vazia</h3>
+        <p hlmEmptyDescription>
+          Busque cartas na aba "Buscar" e toque em Adicionar — elas ficam salvas aqui até você imprimir.
+        </p>
+      </hlm-empty-header>
+    </hlm-empty>
+  } @else {
+    <div class="flex items-center justify-between gap-3">
+      <p class="font-data text-sm text-foreground-muted">
+        {{ proxyList.totalModels() }} {{ proxyList.totalModels() === 1 ? 'modelo' : 'modelos' }}
+        ({{ proxyList.totalCards() }} {{ proxyList.totalCards() === 1 ? 'carta' : 'cartas' }} no total)
+      </p>
+      <button hlmBtn size="sm" variant="outline" type="button" (click)="clearAll()">Limpar lista</button>
+    </div>
+
+    <div class="grid gap-2">
+      @for (card of proxyList.list(); track card.id) {
+        <div class="plate-alt flex items-center gap-3 rounded-md p-2">
+          <div class="h-16 w-[2.9rem] shrink-0 overflow-hidden rounded bg-surface-2">
+            @if (!failedImages().has(card.id)) {
+              <img class="h-full w-full object-cover" [src]="card.imageUrl" [alt]="card.name"
+                   loading="lazy" (error)="onImageError(card.id)" />
+            }
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold" [title]="card.name">{{ card.name }}</p>
+            @if (card.setName) {
+              <p class="truncate font-data text-[0.65rem] text-foreground-subtle">
+                {{ card.setName }}@if (card.setCode) { · {{ card.setCode }}}
+              </p>
+            }
+            @if (card.typeLine) {
+              <p class="truncate text-xs text-foreground-muted">{{ card.typeLine }}</p>
+            }
+          </div>
+
+          <div class="flex shrink-0 items-center gap-1">
+            <button hlmBtn variant="outline" size="icon-sm" type="button"
+                    [disabled]="card.quantity <= 1"
+                    [attr.aria-label]="'Diminuir quantidade de ' + card.name"
+                    (click)="proxyList.decrement(card.id)">
+              <ng-icon hlm size="sm" name="lucideMinus" />
+            </button>
+            <span class="w-8 text-center font-data text-sm font-bold">{{ card.quantity }}</span>
+            <button hlmBtn variant="outline" size="icon-sm" type="button"
+                    [attr.aria-label]="'Aumentar quantidade de ' + card.name"
+                    (click)="proxyList.increment(card.id)">
+              <ng-icon hlm size="sm" name="lucidePlus" />
+            </button>
+            <button hlmBtn variant="ghost" size="icon-sm" type="button" class="text-danger"
+                    [attr.aria-label]="'Remover ' + card.name"
+                    (click)="proxyList.remove(card.id)">
+              <ng-icon hlm size="sm" name="lucideTrash2" />
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

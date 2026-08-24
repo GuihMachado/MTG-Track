@@ -1,26 +1,47 @@
-<div class="container-page flex flex-col">
-  <h2 class="my-3 text-h2 font-semibold">Partidas</h2>
+<div class="container-page flex flex-col pt-4">
+  <h1 class="title-screen">Partidas</h1>
+  <p class="mt-1 text-[13px] text-foreground-muted">
+    Todo o histórico da mesa, do mais recente para o mais antigo.
+  </p>
+
+  <!-- Faixa de filtros: a pílula ativa vira placa arcana. -->
+  <div class="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
+    @for (option of filters; track option.id) {
+      <button type="button" class="chip-filter" [class.on]="filter() === option.id"
+              [attr.aria-pressed]="filter() === option.id"
+              (click)="filter.set(option.id)">
+        {{ option.label }}
+      </button>
+    }
+  </div>
 
   @if (loading()) {
-    <div class="flex flex-col gap-2">
+    <div class="mt-4 flex flex-col gap-2">
       @for (i of [1, 2, 3, 4, 5]; track i) {
-        <hlm-skeleton class="h-16 w-full" />
+        <hlm-skeleton class="h-[62px] w-full rounded-md" />
       }
     </div>
-  } @else if (matches().length === 0) {
-    <hlm-empty class="border border-border rounded-lg py-10">
+  } @else if (filtered().length === 0) {
+    <hlm-empty class="plate mt-4 rounded-lg py-10">
       <hlm-empty-header>
-        <h3 hlmEmptyTitle>Nenhuma partida ainda</h3>
-        <p hlmEmptyDescription class="text-foreground-muted">Que tal começar uma?</p>
+        <h3 hlmEmptyTitle class="title-section">
+          {{ matches().length === 0 ? 'Nenhuma partida ainda' : 'Nada neste filtro' }}
+        </h3>
+        <p hlmEmptyDescription class="text-foreground-muted">
+          {{ matches().length === 0 ? 'Que tal começar uma?' : 'Tente outro recorte do histórico.' }}
+        </p>
       </hlm-empty-header>
-      <hlm-empty-content>
-        <a hlmBtn routerLink="/play">Nova partida</a>
-      </hlm-empty-content>
+      @if (matches().length === 0) {
+        <hlm-empty-content>
+          <a hlmBtn routerLink="/play">Nova partida</a>
+        </hlm-empty-content>
+      }
     </hlm-empty>
   } @else {
-    <div class="flex flex-col">
-      @for (match of matches(); track match.id) {
-        <app-match-card [match]="match" [currentUserId]="currentUserId()" (finished)="loadMatches()" />
+    <div class="mt-4 flex flex-col gap-2">
+      @for (match of filtered(); track match.id) {
+        <app-match-card [match]="match" [currentUserId]="currentUserId()" [showFinish]="true"
+                        (finished)="loadMatches()" />
       }
     </div>
   }

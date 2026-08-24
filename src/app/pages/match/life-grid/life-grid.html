@@ -1,3 +1,10 @@
+<!-- Dois brilhos ambientes tirados das duas primeiras cores da mesa: dão
+     direção de luz ao fundo sem competir com as placas. -->
+<div class="ambient"
+     [style.--amb-1]="ambient().first"
+     [style.--amb-2]="ambient().second"
+     aria-hidden="true"></div>
+
 <div class="table" [style.grid-template-rows]="rowsTemplate()">
   @for (seat of seats(); track seat.player.id) {
     <div class="seat"
@@ -5,9 +12,16 @@
          [class.low]="seat.low"
          [class.out]="seat.out"
          [class.picked]="pickedId() === seat.player.id"
-         [style.background]="seat.fill"
-         [style.--seat-bg]="seat.fill"
-         [style.--seat-fg]="seat.fg">
+         [style.--mana-rgb]="seat.paint.rgb"
+         [style.--seat-top]="seat.paint.plateTop"
+         [style.--seat-ink]="seat.paint.ink"
+         [style.--halo-a]="seat.paint.halo"
+         [style.--border-a]="seat.paint.border"
+         [style.--shadow-a]="seat.paint.shadow"
+         [style.--glow-a]="seat.paint.glow"
+         (pointerdown)="onPointerDown($event, seat)"
+         (pointerup)="onPointerUp($event, seat)"
+         (pointercancel)="onPointerCancel()">
 
       @if (arranging()) {
         <button type="button" class="tap zone-full"
@@ -15,26 +29,66 @@
                 (click)="pick.emit(seat.player.id)"></button>
       } @else {
         <button type="button" class="tap" [ngClass]="seat.slot.minusZone"
-                [attr.aria-label]="'Subtrair vida de ' + seat.player.name"
+                [attr.aria-label]="'Subtrair ' + seat.kindLabel + ' de ' + seat.player.name"
                 (click)="change(seat.player.id, -1)">−</button>
 
         <button type="button" class="tap" [ngClass]="seat.slot.plusZone"
-                [attr.aria-label]="'Somar vida de ' + seat.player.name"
+                [attr.aria-label]="'Somar ' + seat.kindLabel + ' de ' + seat.player.name"
                 (click)="change(seat.player.id, 1)">+</button>
       }
 
       <div class="content" [style.transform]="seat.transform">
-        <span class="name">
-          {{ seat.player.name }}
-          @if (seat.pip; as pip) {
-            <span class="pip">{{ pip }}</span>
+        <span class="name">{{ seat.player.name }}</span>
+
+        @if (!seat.lifeMode) {
+          <span class="mode">
+            <svg class="mode-icon" [attr.viewBox]="iconViewBox" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="seat.kindIconPath" />
+            </svg>
+            {{ seat.kindLabel }}
+          </span>
+        }
+
+        <span class="life-wrap">
+          <span class="life"
+                [class.out-life]="seat.out && seat.lifeMode"
+                [class.lethal]="seat.lethal"
+                [style.font-size.vmin]="lifeSize()">{{ seat.value }}</span>
+
+          @for (f of floatsFor(seat.player.id); track f.key) {
+            <span class="delta-float" aria-hidden="true"
+                  [class.pos]="f.amount > 0"
+                  [class.neg]="f.amount < 0"
+                  [class.leaving]="f.leaving"
+                  (animationend)="f.leaving && onFloatDone(f.key)">
+              {{ f.amount > 0 ? '+' + f.amount : f.amount }}
+            </span>
           }
         </span>
 
-        <span class="life" [style.font-size.vmin]="lifeSize()">{{ seat.player.life }}</span>
+        @if (seat.out) {
+          <span class="out-label">Fora</span>
+        } @else {
+          <!-- Pip + contadores dividem a mesma linha: com 6 assentos cada
+               linha extra come corpo do numeral. -->
+          <span class="chips">
+            <span class="color-pip">
+              <span class="dot" aria-hidden="true"></span>{{ seat.pip }}
+            </span>
 
-        @if (seat.poison > 0) {
-          <span class="psn" [class.lethal]="seat.poison >= 10">☠ {{ seat.poison }}</span>
+            @if (!arranging()) {
+              @for (b of seat.badges; track b.kind) {
+                <button type="button" class="chip" [class.lethal]="b.lethal"
+                        [attr.aria-label]="'Mostrar ' + b.label + ' de ' + seat.player.name"
+                        (click)="setKind(seat.player.id, b.kind)">
+                  <svg class="chip-icon" [attr.viewBox]="iconViewBox" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="b.iconPath" />
+                  </svg>
+                  {{ b.value }}
+                </button>
+              }
+            }
+          </span>
         }
 
         @if (arranging()) {
@@ -48,5 +102,6 @@
 </div>
 
 <button type="button" class="hub" (click)="menu.emit()" aria-label="Abrir menu da partida">
-  <span class="hub-icon">&#xe623;</span>
+  <span class="hub-halo" aria-hidden="true"></span>
+  <img class="hub-icon" src="mtg-icon.png" alt="" width="24" height="24" />
 </button>

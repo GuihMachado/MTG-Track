@@ -1,9 +1,9 @@
-<div class="container-page">
+<div class="container-page pt-4">
     <div class="flex items-center gap-2">
         <app-back-button />
-        <h1 class="text-h1 font-display">Cards</h1>
+        <h1 class="title-screen">Buscar carta</h1>
     </div>
-    <p class="ml-11 text-foreground-muted pt-1">Obtenha detalhe dos cards.</p>
+    <p class="ml-[3.125rem] pt-1 text-sm text-foreground-muted">Nome em português quando existe; texto traduzido quando não.</p>
 
     <hlm-separator class="my-4" />
 
@@ -15,10 +15,10 @@
     </div>
 
     @if (card$ | async; as card) {
-        <div class="border border-border rounded-(--radius-card-art) overflow-hidden w-full max-w-sm mt-6 mx-auto shadow-elev-2">
+        <div class="mx-auto mt-6 w-full max-w-sm overflow-hidden rounded-(--radius-card-art) shadow-[0_18px_30px_-18px_rgba(0,0,0,.95)]">
             <img src="{{ card.imageUrl }}" alt="{{ card.name }}" class="w-full" />
         </div>
-        <div class="flex flex-col items-center mt-6 max-w-[60ch] mx-auto border border-border rounded-xl bg-surface shadow-elev-1">
+        <div class="plate mx-auto mt-6 flex max-w-[60ch] flex-col items-center rounded-lg">
             <p class="whitespace-pre-wrap p-4 text-body-lg" [innerHTML]="(card.descriptionTranslated ?? card.description) | manaSymbol"></p>
         </div>
     }

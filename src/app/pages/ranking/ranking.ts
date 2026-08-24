@@ -1,10 +1,9 @@
 import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCrown } from '@ng-icons/lucide';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
-import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { HlmEmptyImports } from '@spartan-ng/helm/empty';
 import { MatchService } from '../../services/match-service';
@@ -14,10 +13,8 @@ import { RankingEntry } from '../../models/match.models';
   selector: 'app-ranking',
   standalone: true,
   imports: [
-    CommonModule,
     NgIcon,
     HlmIconImports,
-    HlmTableImports,
     HlmSkeletonImports,
     HlmEmptyImports
   ],
@@ -53,9 +50,9 @@ export class Ranking implements OnInit {
 
   crownClass(position: number): string {
     switch (position) {
-      case 0: return 'text-accent';
-      case 1: return 'text-foreground-subtle';
-      case 2: return 'text-warning';
+      case 0: return 'text-gold-300';
+      case 1: return 'text-gold-500';
+      case 2: return 'text-gold-700';
       default: return '';
     }
   }

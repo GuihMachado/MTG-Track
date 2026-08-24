@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { AuthService } from '../../services/auth-service';
 import { Subject, takeUntil } from 'rxjs';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -32,7 +32,8 @@ const FORM_WARNING = 'form-validation';
 })
 export class Register {
   protected mainForm: FormGroup;
-  protected loading = false;
+  // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
+  protected loading = signal(false);
 
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
@@ -58,18 +59,18 @@ export class Register {
       return;
     }
 
-    this.loading = true;
+    this.loading.set(true);
 
     this.authService.register(this.bodybuilder())
       .pipe(takeUntil(this.destroy))
       .subscribe({
       next: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.notify.success('Cadastro realizado!', { description: 'Faça login para começar a registrar suas partidas.' });
         this.router.navigate(['/']);
       },
       error: (error) => {
-        this.loading = false;
+        this.loading.set(false);
         this.notify.apiError(error, {
           fallback: 'Não foi possível concluir o cadastro.',
           byStatus: { 409: 'Esse e-mail já está cadastrado. Tente fazer login.' }

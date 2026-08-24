@@ -4,6 +4,8 @@ export interface CreateMatchPayload {
     colors: string;
     commander: string;
   }[];
+  /** Partida casual: conta no histórico, fica fora do ranking. */
+  isFun?: boolean;
 }
 
 export interface StartMatchResponse {
@@ -31,6 +33,7 @@ export interface MatchDto {
   id: number;
   matchDate: string;
   matchTime: number;
+  isFun: boolean;
   winner: UserSummary | null;
   playersConnection: MatchPlayerDto[];
 }

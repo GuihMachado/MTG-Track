@@ -25,9 +25,13 @@ export class App {
   // O toast usa a paleta clara ou escura junto com o resto do app.
   protected theme = inject(ThemeService);
   
-  private hiddenRoutes = ['/', '/register', '/match'];
-  
+  // Telas que desenham o próprio cabeçalho: login, cadastro, mesa e o fluxo de
+  // nova partida (botão voltar, título e contador de lugares na própria tela).
+  private hiddenRoutes = ['/', '/register', '/match', '/play'];
+
   showHeader = signal(true);
+  /** Só na home o header fica sobre a arte do commander, sem barra. */
+  overArt = signal(false);
 
   constructor() {
     this.router.events.pipe(
@@ -43,6 +47,7 @@ export class App {
       });
 
       this.showHeader.set(!shouldHide);
+      this.overArt.set(currentUrl.startsWith('/dashboard'));
     });
   } 
 }

@@ -1,11 +1,10 @@
+<!-- Voltar é uma placa de 38px, não um fantasma: nas telas de fluxo ele é o
+     único ponto de saída, e placa é o que o sistema usa para "objeto tocável". -->
 <button
-  hlmBtn
   type="button"
-  variant="ghost"
-  size="icon"
-  class="shrink-0"
+  class="plate-btn"
   [attr.aria-label]="label()"
   [title]="label()"
   (click)="goBack()">
-  <ng-icon hlm size="base" name="lucideChevronLeft" />
+  <ng-icon hlm size="sm" name="lucideChevronLeft" />
 </button>

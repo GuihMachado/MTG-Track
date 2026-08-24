@@ -2,13 +2,12 @@ import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft } from '@ng-icons/lucide';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { NavigationHistoryService } from '../navigation/navigation-history.service';
 
 @Component({
   selector: 'app-back-button',
-  imports: [HlmButtonImports, NgIcon, HlmIcon],
+  imports: [NgIcon, HlmIcon],
   providers: [provideIcons({ lucideChevronLeft })],
   templateUrl: './back-button.html',
 })

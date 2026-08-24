@@ -1,0 +1,30 @@
+<hlm-autocomplete
+  class="w-full"
+  [formControl]="control()"
+  [filteredOptions]="options()"
+  [loading]="loading()"
+  [debounceTime]="350"
+  [requireSelection]="true"
+  [transformOptionToString]="cardToLabel"
+  [transformOptionToValue]="cardToName"
+  [displayWith]="nameToSearch"
+  [optionTemplate]="cardOption"
+  [searchPlaceholderText]="placeholder()"
+  emptyText="Nenhuma carta encontrada"
+  loadingText="Buscando na Scryfall..."
+  ariaLabelToggleButton="Mostrar sugestões de carta"
+  (searchChange)="onSearch($event)"
+  (valueChange)="onValueChange($event)" />
+
+<ng-template #cardOption let-card>
+  <span class="flex w-full items-center gap-2">
+    @if (imagesOf(card); as images) {
+      <img [src]="images.small" alt="" loading="lazy"
+           class="h-10 w-7 shrink-0 rounded object-cover" />
+    }
+    <span class="min-w-0 flex-1 truncate">{{ card.name }}</span>
+    <span class="shrink-0 font-data text-[0.65rem] text-foreground-subtle">
+      {{ card.set.toUpperCase() }}
+    </span>
+  </span>
+</ng-template>

@@ -1,0 +1,95 @@
+<div class="grid gap-4">
+  <!-- Busca + alternância grid/lista -->
+  <div class="flex items-center gap-2">
+    <div class="relative flex-1">
+      <ng-icon hlm size="sm" name="lucideSearch"
+               class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-subtle" />
+      <input hlmInput class="w-full pl-9" type="search"
+             placeholder="Buscar por nome ou motivo..."
+             [value]="search()" (input)="onSearch($any($event.target).value)" />
+    </div>
+
+    <div class="plate-quiet flex overflow-hidden rounded-sm">
+      <button type="button" class="px-2.5 py-2 transition-colors"
+              [class.bg-surface-3]="viewMode() === 'grid'"
+              [class.text-foreground-subtle]="viewMode() !== 'grid'"
+              aria-label="Ver em grade" (click)="viewMode.set('grid')">
+        <ng-icon hlm size="sm" name="lucideLayoutGrid" />
+      </button>
+      <button type="button" class="px-2.5 py-2 transition-colors border-l border-border"
+              [class.bg-surface-3]="viewMode() === 'list'"
+              [class.text-foreground-subtle]="viewMode() !== 'list'"
+              aria-label="Ver em lista" (click)="viewMode.set('list')">
+        <ng-icon hlm size="sm" name="lucideList" />
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtro por categoria -->
+  <div class="flex flex-wrap gap-1.5">
+    <button type="button"
+            class="chip-filter h-8 text-xs" [class.on]="category() === 'all'"
+            (click)="category.set('all')">Todas</button>
+    @for (cat of categories; track cat) {
+      <button type="button"
+              class="chip-filter h-8 text-xs" [class.on]="category() === cat"
+              (click)="category.set(cat)">{{ cat }}</button>
+    }
+  </div>
+
+  @if (filtered().length === 0) {
+    <p class="py-6 text-center text-sm text-foreground-muted">
+      {{ banlist().length === 0
+          ? 'Nenhuma carta banida — a mesa está em paz.'
+          : 'Nenhuma carta corresponde à busca.' }}
+    </p>
+  } @else if (viewMode() === 'grid') {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      @for (item of filtered(); track item.id) {
+        <button type="button" class="group grid gap-1.5 text-left"
+                [attr.aria-label]="'Ver ' + item.cardName"
+                (click)="openPreview(item)">
+          <div class="relative aspect-[63/88] overflow-hidden rounded-card-art bg-surface-2 shadow-elev-1">
+            @if (!failedImages().has(item.id)) {
+              <img class="h-full w-full object-cover transition-transform group-hover:scale-105"
+                   [src]="imageUrl(item)" [alt]="item.cardName" loading="lazy"
+                   (error)="onImageError(item.id)" />
+            } @else {
+              <div class="flex h-full w-full items-center justify-center p-3 text-center">
+                <span class="text-sm font-semibold text-foreground-muted">{{ item.cardName }}</span>
+              </div>
+            }
+            <span class="absolute left-1.5 top-1.5 rounded-full bg-danger px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-widest text-white">
+              Banida
+            </span>
+          </div>
+          <span class="w-fit rounded-full px-2 py-0.5 text-[0.65rem] font-semibold"
+                [class]="categoryClass(item.category)">{{ item.category }}</span>
+          <span class="line-clamp-2 text-xs text-foreground-muted">{{ item.reason }}</span>
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="grid gap-2">
+      @for (item of filtered(); track item.id) {
+        <button type="button"
+                class="plate-alt flex items-center gap-3 rounded-md p-2 text-left transition-colors hover:border-border-strong"
+                [attr.aria-label]="'Ver ' + item.cardName"
+                (click)="openPreview(item)">
+          <div class="h-14 w-10 shrink-0 overflow-hidden rounded bg-surface-2">
+            @if (!failedImages().has(item.id)) {
+              <img class="h-full w-full object-cover" [src]="imageUrl(item)" [alt]="item.cardName"
+                   loading="lazy" (error)="onImageError(item.id)" />
+            }
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold">{{ item.cardName }}</p>
+            <p class="truncate text-xs text-foreground-muted">{{ item.reason }}</p>
+          </div>
+          <span class="shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold"
+                [class]="categoryClass(item.category)">{{ item.category }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>

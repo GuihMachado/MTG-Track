@@ -3,7 +3,9 @@ import { hlm } from '@spartan-ng/helm/utils';
 import { type VariantProps, cva } from 'class-variance-authority';
 import type { ClassValue } from 'clsx';
 
-export const cardVariants = cva('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm', {
+// Grimório: a escala de elevação do app no lugar das sombras genéricas do
+// Tailwind, que são rgba(0,0,0,.1) e desaparecem sobre o fundo escuro.
+export const cardVariants = cva('plate text-card-foreground flex flex-col gap-6 rounded-lg py-6', {
 	variants: {},
 	defaultVariants: {},
 });

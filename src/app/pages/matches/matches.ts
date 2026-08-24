@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
@@ -9,11 +9,12 @@ import { MatchService } from '../../services/match-service';
 import { MatchDto } from '../../models/match.models';
 import { MatchCardComponent } from '../../shared/match-card/match-card.component';
 
+type MatchFilter = 'all' | 'wins' | 'losses' | 'fun' | 'open';
+
 @Component({
   selector: 'app-matches',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     HlmSkeletonImports,
     HlmEmptyImports,
@@ -28,9 +29,35 @@ export class Matches implements OnInit {
   private matchService = inject(MatchService);
   private notify = inject(NotificationService);
 
+  protected readonly filters: { id: MatchFilter; label: string }[] = [
+    { id: 'all', label: 'Todas' },
+    { id: 'wins', label: 'Vitórias' },
+    { id: 'losses', label: 'Derrotas' },
+    { id: 'fun', label: '4Fun' },
+    { id: 'open', label: 'Em andamento' },
+  ];
+
   protected matches = signal<MatchDto[]>([]);
   protected loading = signal(true);
   protected currentUserId = signal(0);
+  protected filter = signal<MatchFilter>('all');
+
+  protected filtered = computed(() => {
+    const userId = this.currentUserId();
+
+    switch (this.filter()) {
+      case 'wins':
+        return this.matches().filter(m => m.winner?.id === userId);
+      case 'losses':
+        return this.matches().filter(m => m.winner !== null && m.winner.id !== userId);
+      case 'fun':
+        return this.matches().filter(m => m.isFun);
+      case 'open':
+        return this.matches().filter(m => m.winner === null);
+      default:
+        return this.matches();
+    }
+  });
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;

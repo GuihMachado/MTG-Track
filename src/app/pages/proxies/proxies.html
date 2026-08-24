@@ -1,0 +1,37 @@
+<div class="container-page py-6">
+  <app-back-button fallbackRoute="/dashboard" />
+
+  <header class="mt-2 mb-5 grid gap-1">
+    <h1 class="title-screen">Proxies</h1>
+    <p class="text-sm text-foreground-muted">
+      Busque cartas, monte a lista e gere um PDF com cartas em tamanho real para imprimir e recortar.
+    </p>
+  </header>
+
+  <hlm-tabs tab="buscar" class="w-full">
+    <hlm-tabs-list class="grid h-12 w-full grid-cols-3" aria-label="Etapas do módulo de proxies">
+      <button hlmTabsTrigger="buscar">Buscar</button>
+      <button hlmTabsTrigger="lista">
+        Lista
+        @if (proxyList.totalCards() > 0) {
+          <span class="ml-1 rounded-full bg-arcane-600 px-1.5 py-0.5 font-data text-[0.65rem] font-bold text-white">
+            {{ proxyList.totalCards() }}
+          </span>
+        }
+      </button>
+      <button hlmTabsTrigger="imprimir">Imprimir</button>
+    </hlm-tabs-list>
+
+    <div hlmTabsContent="buscar" class="pt-4">
+      <app-proxy-search (add)="onAdd($event)" (addManual)="onAddManual($event)" />
+    </div>
+
+    <div hlmTabsContent="lista" class="pt-4">
+      <app-proxy-list />
+    </div>
+
+    <div hlmTabsContent="imprimir" class="pt-4">
+      <app-print-studio />
+    </div>
+  </hlm-tabs>
+</div>

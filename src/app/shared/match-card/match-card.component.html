@@ -1,67 +1,46 @@
-<div class="flex w-full mb-1 bg-surface-2 border border-border rounded-lg overflow-hidden shadow-elev-1 shrink-0">
-    <div class="flex items-center justify-center w-10 font-data font-bold text-lg shrink-0"
-         [ngClass]="resultClass">
-        {{ result === 'E' ? '•' : result }}
-    </div>
+<!-- Linha de partida: o resultado é palavra e trilho de cor, não a letra V/D.
+     O fundo puxa a identidade do deck usado, esmaecendo para a direita. -->
+<div class="row" [class.open]="result === 'E'" [style.--deck-rgb]="deckRgb">
+  <span class="rail" [class]="railClass" aria-hidden="true"></span>
 
-    @if (commanderImage) {
-        <img [src]="commanderImage"
-             (error)="onImageError()"
-             alt=""
-             loading="lazy"
-             class="w-16 h-full object-cover shrink-0" />
-    }
-
-    <div class="flex-1 p-3 flex flex-col justify-center min-w-0">
-
-        <div class="flex justify-between items-start mb-1">
-        <h3 class="font-semibold text-sm leading-tight truncate">
-            @if (opponentNames) {
-                vs. {{ opponentNames }}
-            } @else {
-                Partida solo
-            }
-        </h3>
-        <span class="text-foreground-subtle font-data text-xs shrink-0 ml-2">
-            @if (result === 'E') {
-                <span class="text-warning font-semibold">Em andamento</span>
-            } @else {
-                {{ match.matchDate | timeAgo }}
-            }
-        </span>
-        </div>
-
-        <p class="text-foreground-muted text-xs flex items-center gap-1 truncate">
-            @if (myPlayer?.commander) {
-                <span class="truncate">Usando: {{ myPlayer?.commander }}</span>
-            } @else {
-                <span>Sem commander</span>
-            }
-            @if (manaColors) {
-                <span [innerHTML]="manaColors | manaSymbol"></span>
-            }
-            @if (match.matchTime > 0) {
-                <span class="shrink-0 font-data">| {{ match.matchTime }}min</span>
-            }
-        </p>
-
-    </div>
+  <div class="min-w-0 flex-1">
+    <p class="truncate text-sm font-semibold">{{ title }}</p>
 
     @if (result === 'E') {
-        <div class="flex items-center pr-3 shrink-0">
-            <button hlmBtn size="sm" variant="outline" type="button"
-                    class="text-warning border-warning/40 hover:bg-warning-bg hover:text-warning"
-                    (click)="openEndDialog(endDialog)">
-                Encerrar
-            </button>
-        </div>
+      <p class="mt-[3px] flex items-center gap-1.5 text-xs text-warning">
+        <span class="animate-pip size-1.5 rounded-full bg-warning"></span>
+        Em andamento · {{ elapsedMinutes }} min
+      </p>
+    } @else {
+      <p class="mt-[3px] flex items-center gap-1.5 truncate text-xs text-foreground-muted">
+        @if (manaColors) {
+          <span class="flex gap-1" [innerHTML]="manaColors | manaSymbol"></span>
+        }
+        <span class="truncate">{{ commanderName }}</span>
+        @if (match.matchTime > 0) {
+          <span class="shrink-0 font-data">· {{ match.matchTime }} min</span>
+        }
+      </p>
     }
+  </div>
+
+  @if (result === 'E') {
+    @if (showFinish) {
+      <button type="button" class="ghost-action" (click)="openEndDialog(endDialog)">Encerrar</button>
+    } @else {
+      <button type="button" class="ghost-action" (click)="resume()">Voltar</button>
+    }
+  } @else if (match.isFun) {
+    <span class="badge-fun">4Fun</span>
+  } @else {
+    <span class="shrink-0 font-data text-[11px] text-faint">{{ match.matchDate | timeAgo }}</span>
+  }
 </div>
 
 <hlm-dialog #endDialog>
   <hlm-dialog-content class="sm:max-w-md" *brnDialogContent="let ctx">
     <hlm-dialog-header>
-      <h3 hlmDialogTitle class="font-display text-h3">Encerrar partida</h3>
+      <h3 hlmDialogTitle class="title-section">Encerrar partida</h3>
       <p hlmDialogDescription>
         Selecione quem venceu esta partida.
       </p>
@@ -69,14 +48,14 @@
 
     <hlm-radio-group class="my-2" [value]="selectedWinnerId()" (valueChange)="onWinnerChange($event)">
       @for (player of match.playersConnection; track player.user.id) {
-        <label class="flex items-center justify-between rounded-lg border border-border bg-surface-2 px-4 py-3 cursor-pointer hover:border-primary transition-colors"
+        <label class="plate-quiet flex cursor-pointer items-center justify-between rounded-sm px-4 py-3 transition-colors hover:border-primary"
                [class.border-primary]="selectedWinnerId() === player.user.id">
           <hlm-radio [value]="player.user.id">
             <hlm-radio-indicator indicator />
             <span class="ml-2 font-semibold">{{ player.user.name }}</span>
           </hlm-radio>
           @if (player.commander) {
-            <span class="text-foreground-muted text-sm truncate ml-3">{{ player.commander }}</span>
+            <span class="ml-3 truncate text-sm text-foreground-muted">{{ player.commander }}</span>
           }
         </label>
       }

@@ -1,3 +1,16 @@
+/*
+ * Mesa de vidas — Levitação.
+ *
+ * A geometria (2 colunas, célula larga no ímpar, rotações, zonas) não muda:
+ * só a pintura do assento. A cor de mana chega em quatro camadas derivadas de
+ * `--mana-rgb`, todas escritas pelo template a partir de `seatPaint()`:
+ *   --halo-a    halo no topo da placa
+ *   --border-a  borda tingida
+ *   --shadow-a  sombra colorida
+ *   --glow-a    glow do numeral
+ * Nenhuma delas preenche área: com a placa escura por baixo, o numeral é
+ * branco em qualquer cor — foi o que resolveu o contraste do verde e do branco.
+ */
 :host {
   display: block;
   position: relative;
@@ -6,10 +19,20 @@
   user-select: none;
 }
 
+/* Brilho ambiente do fundo, nas duas primeiras cores da mesa. */
+.ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(60% 30% at 20% 12%, rgb(var(--amb-1) / 0.18), transparent),
+    radial-gradient(60% 30% at 82% 88%, rgb(var(--amb-2) / 0.14), transparent);
+}
+
 .table {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   height: 100%;
 }
@@ -17,13 +40,36 @@
 .seat {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-card-art, 1rem);
-  color: var(--seat-fg);
+  border-radius: var(--radius-plate, 1.375rem);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  touch-action: manipulation;
-  transition: opacity 120ms ease, box-shadow 120ms ease;
+  /* O halo nasce no topo da célula, não do conteúdo girado: a luz vem da mesma
+     direção para todos os assentos, o que os lê como objeto físico. */
+  background-color: var(--seat-plate-bottom);
+  background-image: radial-gradient(
+      130% 80% at 50% 0%,
+      rgb(var(--mana-rgb) / var(--halo-a)),
+      rgb(var(--mana-rgb) / 0.05) 60%,
+      transparent
+    ),
+    linear-gradient(180deg, var(--seat-top), var(--seat-plate-bottom));
+  border: 1px solid rgb(var(--mana-rgb) / var(--border-a));
+  box-shadow: 0 18px 34px -18px rgb(var(--mana-rgb) / var(--shadow-a)),
+    0 12px 28px -14px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  /* none (não manipulation): o deslize que troca o contador precisa chegar
+     como pointerup, sem o navegador reivindicar o gesto como pan. */
+  touch-action: none;
+  transition: transform 120ms ease-out, filter 120ms ease-out, opacity 240ms ease-out,
+    border-color 240ms ease-out;
+}
+
+/* Toque na zona de vida: a placa afunda um fio e acende. Sai por :has() em vez
+   de estado no componente — a sombra não anima, então nada engasga. */
+.seat:has(.tap:active) {
+  transform: scale(0.985);
+  filter: brightness(1.12);
 }
 
 .seat.wide {
@@ -36,7 +82,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 6px;
   z-index: 1;
   pointer-events: none;
   /* Girado ±90°, a "largura" do texto corre pela altura da célula. */
@@ -46,32 +92,44 @@
 .name {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 0.7rem;
-  letter-spacing: 1.4px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
-  opacity: 0.72;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.pip {
+/* Rótulo do contador ativo quando não é a vida (ícone + nome). */
+.mode {
   display: inline-flex;
   align-items: center;
+  gap: 0.28rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.mode-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+}
+
+/* Âncora do delta flutuante: ele vive na folga lateral do numeral,
+   sem cobrir nome, número ou chips. */
+.life-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 999px;
-  background: currentColor;
-  /* A letra herda o fundo da célula para contrastar com o círculo. */
-  color: var(--seat-bg);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0;
 }
 
 .life {
@@ -79,25 +137,159 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  color: var(--seat-ink);
+  text-shadow: 0 0 26px rgb(var(--mana-rgb) / var(--glow-a));
 }
 
-.psn {
-  font-family: var(--font-sans);
+.life.lethal {
+  color: #ffe9c4;
+  text-shadow: 0 0 26px rgba(245, 180, 84, 0.7);
+}
+
+.life.out-life {
+  color: #4a3550;
+  text-shadow: none;
+}
+
+/* Chip de dano/cura: acumula os toques da janela e sai flutuando. */
+.delta-float {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  translate: 0.45rem -50%;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 999px;
+  animation: delta-in 160ms ease-out;
 }
 
-.psn.lethal {
+.delta-float.pos {
+  color: #d6ffea;
+  background: rgba(52, 211, 158, 0.9);
+  box-shadow: 0 6px 16px -4px rgba(52, 211, 158, 0.9);
+}
+
+.delta-float.neg {
+  color: #ffd9d4;
+  background: rgba(214, 59, 47, 0.9);
+  box-shadow: 0 6px 16px -4px rgba(214, 59, 47, 0.9);
+}
+
+.delta-float.leaving {
+  animation: delta-out 1.2s ease-out forwards;
+}
+
+@keyframes delta-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 0.95;
+    scale: 1;
+  }
+}
+
+/* Sobe pouco de propósito: fica na folga lateral, sem sobrepor nada. */
+@keyframes delta-out {
+  0% {
+    opacity: 0.95;
+    translate: 0.45rem -50%;
+  }
+  100% {
+    opacity: 0;
+    translate: 0.45rem calc(-50% - 14px);
+  }
+}
+
+/* Pip de cor + contadores na mesma linha. */
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+/* Ponto na cor da mana com glow + letra: é o que identifica o assento agora
+   que a cor virou luz, e o que separa dois jogadores da mesma cor. */
+.color-pip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.color-pip .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(var(--mana-rgb));
+  box-shadow: 0 0 8px rgb(var(--mana-rgb) / 0.9);
+}
+
+.chip {
+  pointer-events: auto;
+  z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chip.lethal {
+  color: var(--warning);
+  background: rgba(245, 180, 84, 0.14);
+  border-color: rgba(245, 180, 84, 0.4);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.chip-icon {
+  width: 0.72rem;
+  height: 0.72rem;
+  flex: none;
+}
+
+.out-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--danger);
 }
 
 .arrange-hint {
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .tap {
@@ -105,12 +297,11 @@
   z-index: 2;
   display: flex;
   border: 0;
-  padding: 0.75rem 1rem;
+  padding: 10px;
   background: transparent;
-  color: inherit;
-  opacity: 0.34;
+  color: rgba(255, 255, 255, 0.32);
   font-family: var(--font-sans);
-  font-size: 1.4rem;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   touch-action: manipulation;
@@ -118,7 +309,7 @@
 }
 
 .tap:active {
-  background: rgb(0 0 0 / 0.1);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .tap:focus-visible {
@@ -159,60 +350,117 @@
   opacity: 0;
 }
 
+/* Vida baixa: a cor do assento sai de cena e entra o âmbar de alerta — mesma
+   receita de placa, outra luz. */
 .seat.low {
-  box-shadow: inset 0 0 0 4px var(--warning);
+  background-image: radial-gradient(130% 80% at 50% 0%, rgba(245, 180, 84, 0.2), transparent 60%),
+    linear-gradient(180deg, #171320, var(--seat-plate-bottom));
+  border-color: rgba(245, 180, 84, 0.55);
+  box-shadow: 0 18px 34px -18px rgba(245, 180, 84, 0.55),
+    0 12px 28px -14px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(245, 180, 84, 0.18);
 }
 
+.seat.low .life {
+  color: #ffe9c4;
+  text-shadow: 0 0 30px rgba(245, 180, 84, 0.7);
+}
+
+/* Fora: a placa perde a cor e a sombra colorida. Continua placa — nada encosta
+   no fundo, nem quem já morreu. */
 .seat.out {
-  opacity: 0.45;
+  background-image: linear-gradient(180deg, #100e19, #0a0912);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.seat.out .name {
+  color: rgba(255, 255, 255, 0.28);
 }
 
 .seat.out .life {
-  color: var(--danger);
+  color: #4a3550;
+  text-shadow: none;
 }
 
 .seat.picked {
-  box-shadow: inset 0 0 0 4px var(--accent);
+  box-shadow: inset 0 0 0 3px var(--accent), 0 0 30px -6px rgba(230, 199, 127, 0.7);
 }
 
+/* Hub central: o único elemento da mesa que levita de verdade. */
 .hub {
   position: absolute;
   top: 50%;
   left: 50%;
   translate: -50% -50%;
-  z-index: 3;
-  width: 3.25rem;
-  height: 3.25rem;
+  z-index: 4;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--background-deep);
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--color-ink-950);
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f6e3b4, #d8b368);
   cursor: pointer;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
-  transition: scale 120ms ease;
+  /* O anel de 6px na cor do fundo recorta o hub da mesa sem borda sólida. */
+  box-shadow: 0 16px 30px -10px rgba(0, 0, 0, 0.95), 0 0 0 6px rgba(8, 6, 14, 0.9),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  animation: floaty 5s ease-in-out infinite;
+  will-change: transform;
+  transition: rotate 200ms ease-out;
 }
 
 .hub:active {
-  scale: 0.94;
+  rotate: 90deg;
 }
 
 .hub:focus-visible {
   outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  outline-offset: 4px;
+}
+
+.hub-halo {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 199, 127, 0.35), transparent 70%);
+  animation: halo 3.4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .hub-icon {
-  font-family: 'Mana', var(--font-display);
-  font-size: 1.6rem;
-  line-height: 1;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .seat,
   .hub {
     transition: none;
+  }
+
+  .seat:has(.tap:active) {
+    transform: none;
+  }
+
+  .hub,
+  .hub-halo {
+    animation: none;
+  }
+
+  .delta-float {
+    animation: none;
+  }
+
+  .delta-float.leaving {
+    animation: delta-fade 400ms ease-out forwards;
+  }
+
+  @keyframes delta-fade {
+    to {
+      opacity: 0;
+    }
   }
 }

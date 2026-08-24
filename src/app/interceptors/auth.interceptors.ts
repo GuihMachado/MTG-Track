@@ -4,8 +4,15 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { markSessionExpired } from '../shared/http/session-expired';
 import { NotificationService } from '../shared/notification/notification.service';
+import { environment } from '../../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // Só a nossa API leva o token; chamadas externas (ex.: Scryfall) passam
+  // limpas — anexar o Bearer nelas vazaria o JWT para terceiros.
+  if (!req.url.startsWith(environment.apiUrl)) {
+    return next(req);
+  }
+
   const router = inject(Router);
   const notify = inject(NotificationService);
   const token = localStorage.getItem('auth-token');

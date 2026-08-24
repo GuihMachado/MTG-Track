@@ -1,7 +1,7 @@
 <div class="flex justify-center items-center h-screen px-4">
 	<section class="w-full max-w-sm" hlmCard>
 		<div hlmCardHeader>
-			<h3 hlmCardTitle class="text-center font-display text-h3">Login</h3>
+			<h3 hlmCardTitle class="title-section text-center">Login</h3>
 			<p hlmCardDescription>Digite seu email abaixo para fazer login na sua conta</p>
 		</div>
 
@@ -27,8 +27,8 @@
 		</div>
 
 		<div hlmCardFooter class="flex-col gap-2">
-			<button hlmBtn type="button" class="w-full" [disabled]="loading" (click)="login()">
-				{{ loading ? 'Entrando...' : 'Login' }}
+			<button hlmBtn type="button" class="w-full" [disabled]="loading()" (click)="login()">
+				{{ loading() ? 'Entrando...' : 'Login' }}
 			</button>
 			<button [routerLink]="['','register']" hlmBtn variant="secondary" class="w-full">Cadastre-se</button>
 		</div>

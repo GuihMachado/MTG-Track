@@ -3,13 +3,25 @@ import { gridRows, lifeFontSize, MAX_SEATS, seatSlots } from './grid-layout';
 import { paintSeats } from '../seat-colors';
 
 describe('grid-layout', () => {
-  it('usa 2 colunas e ceil(n/2) linhas', () => {
+  it('usa 2 colunas e ceil(n/2) linhas, exceto na mesa de 2', () => {
     expect(gridRows(1)).toBe(1);
-    expect(gridRows(2)).toBe(1);
+    // Mesa de 2 empilha: duas linhas de largura cheia.
+    expect(gridRows(2)).toBe(2);
     expect(gridRows(3)).toBe(2);
     expect(gridRows(4)).toBe(2);
     expect(gridRows(5)).toBe(3);
     expect(gridRows(6)).toBe(3);
+  });
+
+  it('mesa de 2 fica frente a frente, empilhada', () => {
+    const slots = seatSlots(2);
+    // Os dois ocupam a linha inteira, um em cima e outro embaixo.
+    expect(slots.every(s => s.wide)).toBe(true);
+    expect(slots.map(s => s.orientation)).toEqual(['up', 'down']);
+    expect(slots.map(s => s.rotation)).toEqual([180, 0]);
+    // Cada um tem o − à sua própria esquerda: espelhado entre os dois.
+    expect(slots[0]!.minusZone).toBe('zone-right');
+    expect(slots[1]!.minusZone).toBe('zone-left');
   });
 
   it('cria uma célula por jogador, de 1 a 6', () => {
@@ -25,8 +37,8 @@ describe('grid-layout', () => {
     }
   });
 
-  it('com número par, nenhuma célula é larga', () => {
-    for (const n of [2, 4, 6]) {
+  it('com número par acima de 2, nenhuma célula é larga', () => {
+    for (const n of [4, 6]) {
       expect(seatSlots(n).some(s => s.wide)).toBe(false);
     }
   });
@@ -51,7 +63,8 @@ describe('grid-layout', () => {
   });
 
   it('mantém o "−" à esquerda e o "+" à direita de quem senta na célula', () => {
-    const [left, right] = seatSlots(2);
+    // Mesa de 4: duas colunas de verdade (a de 2 é empilhada, caso próprio).
+    const [left, right] = seatSlots(4);
     // Sentado à esquerda da tela: a sua esquerda é o topo do celular.
     expect(left!.minusZone).toBe('zone-top');
     expect(left!.plusZone).toBe('zone-bottom');
@@ -86,8 +99,13 @@ describe('grid-layout', () => {
   it('segue usando a pintura de assentos da mesa', () => {
     const paints = paintSeats(['U', 'U', 'R']);
     expect(paints).toHaveLength(3);
-    // Cor repetida ganha pip de letra para diferenciar os dois assentos.
-    expect(paints[0]!.needsPip).toBe(true);
-    expect(paints[2]!.needsPip).toBe(false);
+    // Cor repetida pinta igual: o que diferencia os dois assentos é o pip de
+    // letra, sempre visível, não um deslocamento de tom.
+    expect(paints[0]).toEqual(paints[1]);
+    expect(paints[2]!.rgb).not.toBe(paints[0]!.rgb);
+    // A cor entra como luz: canais soltos e alfas por cor, nunca fill chapado.
+    expect(paints[0]!.rgb).toBe('var(--mana-u-rgb)');
+    expect(paints[0]!.halo).toBeGreaterThan(0);
+    expect(paints[0]!.halo).toBeLessThan(1);
   });
 });

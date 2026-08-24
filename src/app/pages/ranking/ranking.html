@@ -1,54 +1,59 @@
-<div class="container-page flex flex-col">
-  <h2 class="my-3 text-h2 font-semibold">Ranking de Vitórias</h2>
+<div class="container-page flex flex-col pt-4">
+  <h1 class="title-screen">Ranking</h1>
+  <p class="mt-1 text-[13px] text-foreground-muted">
+    Vitórias da mesa. Partidas 4Fun ficam fora da conta.
+  </p>
 
   @if (loading()) {
-    <div class="flex flex-col gap-2">
+    <div class="mt-4 flex flex-col gap-2">
       @for (i of [1, 2, 3, 4, 5]; track i) {
-        <hlm-skeleton class="h-12 w-full" />
+        <hlm-skeleton class="h-[68px] w-full rounded-md" />
       }
     </div>
   } @else if (ranking().length === 0) {
-    <hlm-empty class="border border-border rounded-lg py-10">
+    <hlm-empty class="plate mt-4 rounded-lg py-10">
       <hlm-empty-header>
-        <h3 hlmEmptyTitle>Ranking vazio</h3>
-        <p hlmEmptyDescription class="text-foreground-muted">Encerre partidas para começar a pontuar.</p>
+        <h3 hlmEmptyTitle class="title-section">Ranking vazio</h3>
+        <p hlmEmptyDescription class="text-foreground-muted">
+          Encerre partidas para começar a pontuar.
+        </p>
       </hlm-empty-header>
     </hlm-empty>
   } @else {
-    <div hlmTableContainer class="bg-surface-2 border border-border rounded-lg">
-      <table hlmTable>
-        <thead hlmTHead>
-          <tr hlmTr>
-            <th hlmTh class="w-12">#</th>
-            <th hlmTh>Jogador</th>
-            <th hlmTh class="text-right">Vitórias</th>
-            <th hlmTh class="text-right">Partidas</th>
-            <th hlmTh class="text-right">Winrate</th>
-          </tr>
-        </thead>
-        <tbody hlmTBody>
-          @for (entry of ranking(); track entry.userId; let i = $index) {
-            <tr hlmTr [class.bg-surface-3]="entry.userId === currentUserId()">
-              <td hlmTd class="font-data font-bold">
-                @if (i < 3 && entry.wins > 0) {
-                  <ng-icon hlm size="sm" name="lucideCrown" [class]="crownClass(i)" />
-                } @else {
-                  {{ i + 1 }}
-                }
-              </td>
-              <td hlmTd class="font-medium">
-                {{ entry.userName }}
-                @if (entry.userId === currentUserId()) {
-                  <span class="text-primary-text text-xs ml-1">(você)</span>
-                }
-              </td>
-              <td hlmTd class="text-right font-data font-bold">{{ entry.wins }}</td>
-              <td hlmTd class="text-right font-data text-foreground-muted">{{ entry.totalMatches }}</td>
-              <td hlmTd class="text-right font-data text-foreground-muted">{{ entry.winRate }}%</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <!-- A tabela saiu: no celular uma linha de cinco colunas não se lê. Cada
+         jogador é uma placa, com o winrate como barra fina sob o nome. -->
+    <ol class="mt-4 flex flex-col gap-2.5">
+      @for (entry of ranking(); track entry.userId; let i = $index) {
+        <li class="plate-alt row" [class.mine]="entry.userId === currentUserId()">
+          <span class="pos">
+            @if (i < 3 && entry.wins > 0) {
+              <ng-icon hlm size="sm" name="lucideCrown" [class]="crownClass(i)" />
+            } @else {
+              {{ i + 1 }}
+            }
+          </span>
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-[15px] font-semibold">
+              {{ entry.userName }}
+              @if (entry.userId === currentUserId()) {
+                <span class="ml-1 text-xs text-arcane-300">(você)</span>
+              }
+            </p>
+            <div class="mt-2 flex items-center gap-2">
+              <span class="meter">
+                <span class="meter-fill" [style.width.%]="entry.winRate"></span>
+              </span>
+              <span class="font-data text-[11px] text-faint">{{ entry.winRate }}%</span>
+            </div>
+          </div>
+
+          <div class="shrink-0 text-right">
+            <p class="font-numeral text-[26px] leading-none font-bold tabular-nums">{{ entry.wins }}</p>
+            <p class="mt-1 font-data text-[11px] text-faint">{{ entry.totalMatches }} jogos</p>
+          </div>
+        </li>
+      }
+    </ol>
   }
 </div>

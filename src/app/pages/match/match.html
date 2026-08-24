@@ -1,19 +1,33 @@
-<div class="w-screen h-screen bg-background-deep overflow-hidden flex items-center justify-center p-2">
+<div class="table-shell relative w-full h-[100dvh] bg-background-deep overflow-hidden flex items-center justify-center p-2.5">
   @if (loading()) {
-    <p class="text-foreground-muted text-sm">Carregando partida...</p>
+    <!-- Espelha a grade da mesa: 2 colunas de assentos. -->
+    <div class="grid h-full w-full grid-cols-2 grid-rows-2 gap-2.5">
+      @for (seat of [1, 2, 3, 4]; track seat) {
+        <hlm-skeleton class="h-full w-full rounded-plate" />
+      }
+    </div>
   } @else {
     <app-life-grid
       [players]="players()"
       [arranging]="arranging()"
       [pickedId]="pickedSeatId()"
       (lifeChange)="onLifeChange($event)"
+      (counterChange)="onCounterChange($event)"
       (pick)="onSeatPick($event)"
-      (menu)="menu_sheet.open()" />
+      (menu)="radialOpen.set(true)" />
+
+    <app-radial-menu
+      [open]="radialOpen()"
+      [items]="radialItems()"
+      [result]="diceResult()"
+      (action)="onRadialAction($event, endDialog)"
+      (closed)="closeRadial()"
+      (resultDismissed)="diceResult.set(null)" />
   }
 </div>
 
 @if (arranging()) {
-  <div class="fixed inset-x-0 top-0 z-50 flex items-center justify-between gap-3 bg-surface/95 border-b border-border px-4 py-3 backdrop-blur">
+  <div class="fixed inset-x-3 top-3 z-50 flex items-center justify-between gap-3 rounded-lg plate px-4 py-3 backdrop-blur-[12px]">
     <p class="text-sm text-foreground-muted">
       {{ pickedSeatId() === null
           ? 'Toque em dois jogadores para trocá-los de lugar.'
@@ -23,64 +37,10 @@
   </div>
 }
 
-<hlm-sheet side="bottom" #menu_sheet>
-  <hlm-sheet-content *brnSheetContent="let ctx">
-    <hlm-sheet-header>
-      <h3 hlmSheetTitle class="font-display text-h3">Partida</h3>
-      <p hlmSheetDescription>Cores dos assentos e controles da mesa.</p>
-      <hlm-separator class="my-2" />
-    </hlm-sheet-header>
-
-    <div class="grid gap-3 px-4 pb-4">
-      @for (player of players(); track player.id) {
-        <div class="flex items-center justify-between gap-3">
-          <span class="text-sm font-medium truncate">{{ player.name }}</span>
-
-          <div class="flex items-center gap-2 shrink-0">
-            <div class="flex items-center gap-1">
-              <button hlmBtn variant="outline" size="sm" type="button"
-                      [disabled]="player.poison === 0"
-                      (click)="updatePoison(player.id, -1)"
-                      [attr.aria-label]="'Remover veneno de ' + player.name">−</button>
-              <span class="font-data text-sm w-9 text-center"
-                    [class.text-danger]="player.poison >= 10">☠ {{ player.poison }}</span>
-              <button hlmBtn variant="outline" size="sm" type="button"
-                      (click)="updatePoison(player.id, 1)"
-                      [attr.aria-label]="'Adicionar veneno a ' + player.name">+</button>
-            </div>
-
-            <button hlmBtn variant="outline" size="sm" type="button"
-                    (click)="cycleSeatColor(player.id)"
-                    [attr.aria-label]="'Trocar cor de ' + player.name + ': ' + seatColors[player.seatColor].label">
-              <span class="inline-block w-4 h-4 rounded-full border border-border"
-                    [style.background]="'var(' + seatColors[player.seatColor].cssVarName + ')'"></span>
-              <span class="font-data text-xs">{{ player.seatColor }}</span>
-            </button>
-          </div>
-        </div>
-      }
-
-      <hlm-separator class="my-1" />
-
-      <button hlmBtn type="button" (click)="ctx.close(); openEndDialog(endDialog)">
-        Encerrar Partida
-      </button>
-
-      <button hlmBtn variant="secondary" type="button" (click)="ctx.close(); startArranging()">
-        Reorganizar assentos
-      </button>
-
-      <button hlmBtn variant="secondary" type="button" (click)="resetLives()">
-        Reiniciar vidas
-      </button>
-    </div>
-  </hlm-sheet-content>
-</hlm-sheet>
-
 <hlm-dialog #endDialog>
   <hlm-dialog-content class="sm:max-w-md" *brnDialogContent="let ctx">
     <hlm-dialog-header>
-      <h3 hlmDialogTitle class="font-display text-h3">Encerrar partida</h3>
+      <h3 hlmDialogTitle class="title-section">Encerrar partida</h3>
       <p hlmDialogDescription>
         Selecione o vencedor. A vida atual de cada jogador é mostrada como referência.
       </p>
@@ -94,8 +54,15 @@
             <hlm-radio-indicator indicator />
             <span class="ml-2 font-semibold">{{ player.name }}</span>
           </hlm-radio>
-          <span class="text-foreground-muted font-data text-sm">
-            {{ player.life }} de vida@if (player.poison > 0) {<span [class.text-danger]="player.poison >= 10"> · ☠ {{ player.poison }}</span>}
+          <span class="text-foreground-muted font-data text-sm flex items-center gap-1">
+            {{ player.life }} de vida
+            @if (player.poison > 0) {
+              <span class="flex items-center gap-0.5" [class.text-danger]="player.poison >= 10">
+                ·
+                <ng-icon hlm size="xs" name="mtgPoison" />
+                {{ player.poison }}
+              </span>
+            }
           </span>
         </label>
       }

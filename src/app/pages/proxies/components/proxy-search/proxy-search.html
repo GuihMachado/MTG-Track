@@ -1,0 +1,107 @@
+<div class="grid gap-4">
+  <!-- Busca + filtros -->
+  <div class="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+    <div class="relative">
+      <ng-icon hlm size="sm" name="lucideSearch"
+               class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-subtle" />
+      <input hlmInput class="w-full pl-9 pr-9" type="text"
+             placeholder="Buscar carta na Scryfall..."
+             [formControl]="queryControl" />
+      @if (queryControl.value) {
+        <button type="button" aria-label="Limpar busca"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-subtle hover:text-foreground"
+                (click)="clearQuery()">
+          <ng-icon hlm size="sm" name="lucideX" />
+        </button>
+      }
+    </div>
+
+    <select hlmInput class="w-full sm:w-44" aria-label="Filtrar por cor"
+            [value]="color()" (change)="setColor($any($event.target).value)">
+      @for (option of colorFilters; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+
+    <select hlmInput class="w-full sm:w-52" aria-label="Filtrar por tipo"
+            [value]="type()" (change)="setType($any($event.target).value)">
+      @for (option of typeFilters; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Estados -->
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-foreground-muted">Buscando cartas...</p>
+  } @else if (searched() && results().length === 0) {
+    <p class="py-8 text-center text-sm text-foreground-muted">
+      Nenhuma carta encontrada para "{{ queryControl.value }}".
+    </p>
+  } @else if (results().length > 0) {
+    <p class="font-data text-xs text-foreground-subtle">
+      {{ totalCards() }} {{ totalCards() === 1 ? 'carta' : 'cartas' }} — mostrando {{ results().length }}
+    </p>
+
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      @for (card of results(); track card.id) {
+        <div class="grid gap-1.5">
+          <button type="button" class="group relative aspect-[63/88] overflow-hidden rounded-card-art bg-surface-2 shadow-[0_18px_30px_-18px_rgba(0,0,0,.95)] transition-transform active:scale-[1.03]"
+                  [attr.aria-label]="'Ver ' + card.name"
+                  (click)="openPreview(card)">
+            <img class="h-full w-full object-cover transition-transform group-hover:scale-105"
+                 [src]="extractImages(card)?.normal" [alt]="card.name" loading="lazy" />
+          </button>
+          <p class="truncate text-xs font-semibold" [title]="card.name">{{ card.name }}</p>
+          <p class="truncate font-data text-[0.65rem] text-foreground-subtle">
+            {{ card.set_name }} · {{ card.set.toUpperCase() }}
+          </p>
+          <button hlmBtn size="sm" variant="secondary" type="button" (click)="add.emit(card)">
+            <ng-icon hlm size="sm" name="lucidePlus" />
+            Adicionar
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (nextPage()) {
+      <button hlmBtn variant="outline" type="button" class="justify-self-center"
+              [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Carregando...' : 'Carregar mais resultados' }}
+      </button>
+    }
+  } @else {
+    <p class="py-8 text-center text-sm text-foreground-muted">
+      Digite o nome de uma carta para começar — os filtros de cor e tipo refinam a busca.
+    </p>
+  }
+
+  <!-- Proxy manual -->
+  <div class="plate rounded-md p-3">
+    <button type="button" class="flex w-full items-center justify-between text-sm font-medium"
+            (click)="manualOpen.set(!manualOpen())">
+      Proxy manual (token ou carta customizada)
+      <ng-icon hlm size="sm" name="lucideChevronDown"
+               [class.rotate-180]="manualOpen()" class="transition-transform" />
+    </button>
+
+    @if (manualOpen()) {
+      <div class="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        <div class="grid gap-1.5">
+          <label hlmLabel for="manual-name">Nome</label>
+          <input hlmInput id="manual-name" type="text" placeholder="Ex.: Treasure Token"
+                 [value]="manualName()" (input)="manualName.set($any($event.target).value)" />
+        </div>
+        <div class="grid gap-1.5">
+          <label hlmLabel for="manual-url">URL da imagem</label>
+          <input hlmInput id="manual-url" type="url" placeholder="https://..."
+                 [value]="manualUrl()" (input)="manualUrl.set($any($event.target).value)" />
+        </div>
+        <button hlmBtn type="button" class="self-end" (click)="submitManual()">Adicionar</button>
+      </div>
+      <p class="mt-2 text-xs text-foreground-subtle">
+        Prefira imagens da Scryfall: hosts sem CORS entram no PDF como um retângulo com o nome.
+      </p>
+    }
+  </div>
+</div>

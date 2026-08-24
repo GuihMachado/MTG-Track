@@ -1,0 +1,35 @@
+<div class="flex flex-col gap-4 sm:max-w-sm">
+  <div class="aspect-[63/88] w-full overflow-hidden rounded-card-art bg-surface-2">
+    @if (!imageFailed()) {
+      <img class="h-full w-full object-cover" [src]="context.imageUrl" [alt]="context.name"
+           (error)="onImageError()" />
+    } @else {
+      <div class="flex h-full w-full items-center justify-center p-4 text-center">
+        <span class="title-section text-foreground-muted">{{ context.name }}</span>
+      </div>
+    }
+  </div>
+
+  <div class="grid gap-1">
+    <h3 class="title-section">{{ context.name }}</h3>
+    @if (context.subtitle) {
+      <p class="text-sm text-foreground-muted">{{ context.subtitle }}</p>
+    }
+    @if (context.note) {
+      <p class="text-sm text-foreground-muted">{{ context.note }}</p>
+    }
+    <a class="text-sm text-primary-text underline-offset-4 hover:underline"
+       [href]="scryfallLink" target="_blank" rel="noopener noreferrer">
+      Ver na Scryfall ↗
+    </a>
+  </div>
+
+  <div class="flex justify-end gap-2">
+    @if (context.removeLabel) {
+      <button hlmBtn variant="destructive" type="button" (click)="remove()">
+        {{ context.removeLabel }}
+      </button>
+    }
+    <button hlmBtn variant="outline" type="button" (click)="close()">Fechar</button>
+  </div>
+</div>

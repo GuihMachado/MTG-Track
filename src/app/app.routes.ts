@@ -9,6 +9,8 @@ import { NewMatch } from './pages/new-match/new-match';
 import { Match } from './pages/match/match';
 import { Matches } from './pages/matches/matches';
 import { Ranking } from './pages/ranking/ranking';
+import { Proxies } from './pages/proxies/proxies';
+import { Rules } from './pages/house-rules/house-rules';
 
 const authGuard: CanActivateFn = () => {
     const router = inject(Router);
@@ -77,6 +79,16 @@ export const routes: Routes = [
     {
         path: 'cards',
         component: Cards,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'rules',
+        component: Rules,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'proxies',
+        component: Proxies,
         canActivate: [authGuard]
     }
 ];

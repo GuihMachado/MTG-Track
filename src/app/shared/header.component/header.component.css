@@ -1,0 +1,83 @@
+/* Header da Levitação: nenhuma barra sólida. Sobre a arte da home ele é só o
+   par de botões em vidro; nas outras telas ganha um véu com desfoque para o
+   conteúdo não passar ilegível por baixo. */
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-fab);
+  height: 3.5rem;
+  color: var(--foreground);
+}
+
+.bar.solid {
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Botão de ação do header: 38px em vidro, 44px de alvo pelo padding do pai. */
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hairline-strong);
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+
+.icon-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+:host-context(:root.light) .icon-btn {
+  background: rgba(23, 19, 31, 0.05);
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  opacity: 0.9;
+}
+
+/* O PNG é um traço escuro: no tema escuro ele precisa inverter. */
+:host-context(:root:not(.light)) .avatar {
+  filter: invert(1);
+}
+
+/* Item do menu: 48px, ícone 18px, rótulo 15px. O ativo ganha placa — antes era
+   só cor de texto, que sobre placa escura quase não se lê. */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 48px;
+  padding-inline: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  color: var(--foreground-muted);
+  font-size: 15px;
+  transition: color 150ms ease-out, background-color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+.nav-item:hover {
+  color: var(--foreground);
+}
+
+.nav-item.active {
+  background: rgba(124, 92, 255, 0.14);
+  border-color: rgba(124, 92, 255, 0.4);
+  color: var(--color-arcane-200);
+}

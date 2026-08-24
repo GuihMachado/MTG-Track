@@ -1,0 +1,14 @@
+/* A mesa é uma tela fixa: nada rola em nenhuma direção. O overflow-hidden do
+   wrapper corta o conteúdo, mas só overscroll-behavior impede o rubber-band e
+   o pull-to-refresh; e o touch-action cobre as gutters entre assentos, que não
+   pertencem a nenhuma zona de toque. */
+:host {
+  display: block;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+.table-shell {
+  overscroll-behavior: none;
+  touch-action: none;
+}

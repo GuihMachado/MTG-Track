@@ -1,72 +1,101 @@
-<div class="container-page">
-  <section hlmCard class="min-h-64 mt-4 py-2">
-    <div hlmCardHeader class="px-3">
-      <h3 hlmCardTitle class="font-display text-h3">Resumo</h3>
+<!-- -mt-14 desfaz o respiro do header fixo: a arte do commander corre por baixo
+     dele, que aqui não tem barra. -->
+<div class="-mt-14 pb-28" [style.--deck-rgb]="heroRgb()">
+
+  <!-- ── Herói: o deck da vez é a manchete ───────────────────────── -->
+  <header class="hero">
+    @if (heroArt(); as art) {
+      <img class="hero-art" [src]="art" alt="" (error)="onArtError()" />
+    }
+    <div class="hero-veil" aria-hidden="true"></div>
+    <div class="hero-glow" aria-hidden="true"></div>
+
+    <div class="container-page relative pt-24">
+      @if (loadingDecks()) {
+        <hlm-skeleton class="h-3 w-24 rounded-full" />
+        <hlm-skeleton class="mt-3 h-8 w-3/4 rounded-md" />
+        <hlm-skeleton class="mt-3 h-4 w-40 rounded-full" />
+      } @else if (hero(); as deck) {
+        <span class="label-caps text-foreground-muted">Deck da vez</span>
+        <h1 class="mt-2 text-3xl leading-[1.1] font-bold tracking-[-0.02em] text-pretty">
+          {{ deck.commander }}
+        </h1>
+        <div class="mt-3 flex items-center gap-2.5">
+          <span class="flex gap-1.5 text-[17px]" [innerHTML]="heroSymbols() | manaSymbol"></span>
+          @if (heroRecord(); as record) {
+            <span class="size-1 rounded-full bg-ink-500"></span>
+            <span class="font-data text-[13px] text-ink-200">
+              {{ record.wins }}V · {{ record.losses }}D · {{ record.rate }}%
+            </span>
+          }
+        </div>
+      } @else {
+        <span class="label-caps text-foreground-muted">Nenhum deck ainda</span>
+        <h1 class="mt-2 text-3xl leading-[1.1] font-bold tracking-[-0.02em]">Sua primeira mesa</h1>
+        <p class="mt-3 text-[13px] text-foreground-muted">
+          Comece uma partida para o seu deck aparecer aqui.
+        </p>
+      }
     </div>
-    <div hlmCardContent>
+  </header>
+
+  <!-- ── Duas métricas em vidro ──────────────────────────────────── -->
+  <div class="container-page relative mt-6 flex gap-2.5">
+    <div class="glass flex-1 rounded-lg p-3.5">
+      <p class="label-caps">Win rate</p>
       @if (loadingStats()) {
-        <div class="flex justify-center items-center h-28">
-          <hlm-skeleton class="h-24 w-24 rounded-full" />
-        </div>
-      } @else if (stats(); as s) {
-        <div>
-          <app-win-rate-chart
-            [wins]="s.wins"
-            [losses]="s.losses">
-          </app-win-rate-chart>
-        </div>
+        <hlm-skeleton class="mt-2 h-7 w-16 rounded-md" />
+      } @else {
+        <p class="mt-2 text-[28px] leading-none font-bold text-success">
+          {{ stats()?.winRate ?? 0 }}%
+        </p>
       }
+      <div class="meter mt-2.5">
+        <span class="meter-fill" [style.width.%]="stats()?.winRate ?? 0"></span>
+      </div>
     </div>
-    <div hlmCardFooter class="flex justify-between font-data text-sm text-foreground-muted">
-      <p>Vitórias: {{ stats()?.wins ?? 0 }}</p>
-      <p>Derrotas: {{ stats()?.losses ?? 0 }}</p>
-      <p>Partidas: {{ stats()?.total ?? 0 }}</p>
-    </div>
-  </section>
-</div>
 
-<div class="container-page">
-  <h2 class="my-3 text-h2 font-semibold">Últimos decks:</h2>
-  @if (loadingDecks()) {
-    <div class="flex gap-2">
-      @for (i of [1, 2]; track i) {
-        <hlm-skeleton class="w-44 h-44 shrink-0 rounded-xl" />
-      }
+    <div class="glass flex-1 rounded-lg p-3.5">
+      <p class="label-caps">Sequência</p>
+      <p class="mt-2 text-[28px] leading-none font-bold">
+        {{ streak() }}<span class="text-sm font-medium text-foreground-muted">
+          {{ streak() === 1 ? ' vitória' : ' vitórias' }}</span>
+      </p>
+      <div class="mt-2.5 flex gap-1">
+        @for (slot of streakSlots; track slot) {
+          <span class="streak-seg" [class.on]="slot < streak()"></span>
+        }
+      </div>
     </div>
-  } @else if (decks().length === 0) {
-    <p class="text-foreground-muted text-sm py-4">Nenhum deck registrado ainda.</p>
-  } @else {
-    <div class="flex overflow-x-auto w-full snap-x snap-mandatory no-scrollbar gap-2">
-      @for (deck of decks(); track deck.commander) {
-        <app-deck-card
-          [name]="deck.commander"
-          [imageUrl]="deck.imageCard"
-          [colors]="deck.colors"
-        />
-      }
-    </div>
-  }
-</div>
+  </div>
 
-<div class="container-page flex flex-col">
-  <h2 class="my-3 text-h2 font-semibold">Últimas partidas:</h2>
-  <div class="max-h-56 overflow-y-auto no-scrollbar">
+  <!-- ── Últimas partidas ────────────────────────────────────────── -->
+  <section class="container-page relative mt-6">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="title-section">Últimas partidas</h2>
+      <a routerLink="/matchs" class="font-data text-[11px] text-foreground-subtle">tudo</a>
+    </div>
+
     @if (loadingMatches()) {
       <div class="flex flex-col gap-2">
         @for (i of [1, 2, 3]; track i) {
-          <hlm-skeleton class="h-16 w-full" />
+          <hlm-skeleton class="h-[62px] w-full rounded-md" />
         }
       </div>
     } @else if (matches().length === 0) {
-      <p class="text-foreground-muted text-sm py-4">Nenhuma partida ainda. Que tal começar uma?</p>
+      <p class="py-4 text-sm text-foreground-muted">Nenhuma partida ainda. Que tal começar uma?</p>
     } @else {
-      @for (match of matches(); track match.id) {
-        <app-match-card [match]="match" [currentUserId]="currentUserId()" (finished)="loadData()" />
-      }
+      <div class="flex flex-col gap-2">
+        @for (match of matches(); track match.id) {
+          <app-match-card [match]="match" [currentUserId]="currentUserId()" (finished)="loadData()" />
+        }
+      </div>
     }
-  </div>
-</div>
+  </section>
 
-<a [routerLink]="['/cards']" class="fab-btn" aria-label="Buscar cartas">
-    <ng-icon hlm size="sm" name="lucideSearch" />
-</a>
+  <!-- ── Rodapé fixo: a única ação da tela ───────────────────────── -->
+  <a routerLink="/play" class="cta-footer">
+    <ng-icon hlm size="sm" name="lucidePlay" />
+    <span class="text-base font-semibold">Nova partida</span>
+  </a>
+</div>

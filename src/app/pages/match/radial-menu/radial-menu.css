@@ -1,0 +1,143 @@
+/* Véu sobre a mesa: além de destacar a rosca, impede que o toque caia nas
+   zonas de vida dos assentos por acidente. */
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-modal, 30);
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(8px);
+  animation: veil-in 140ms ease-out;
+}
+
+.wheel {
+  width: min(88%, 340px);
+  height: auto;
+  /* A rosca também é placa: sombra longa embaixo para não encostar na mesa. */
+  filter: drop-shadow(0 26px 40px rgb(0 0 0 / 0.85));
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rim {
+  fill: none;
+  stroke: var(--hairline-strong);
+  stroke-width: 1;
+}
+
+.slice {
+  fill: var(--surface-plate-top);
+  stroke: var(--background-deep);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: fill 120ms ease;
+}
+
+.slice:hover,
+.slice:focus-visible {
+  fill: color-mix(in oklab, var(--surface-plate-top), white 8%);
+  outline: none;
+}
+
+.slice.danger:hover,
+.slice.danger:focus-visible {
+  fill: color-mix(in oklab, var(--danger) 35%, var(--surface-3));
+}
+
+/* Fatia com cor própria (assento): o hover clareia em vez de trocar a cor. */
+.slice.tinted:hover,
+.slice.tinted:focus-visible {
+  filter: brightness(1.18);
+}
+
+.label {
+  pointer-events: none;
+}
+
+.icon {
+  fill: var(--label-fg, var(--foreground));
+}
+
+.text {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--label-fg, var(--foreground));
+}
+
+.text.solo {
+  font-family: var(--font-numeral);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.center {
+  cursor: pointer;
+}
+
+.center circle {
+  fill: var(--accent);
+  stroke: var(--background-deep);
+  stroke-width: 2;
+}
+
+.center text {
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 700;
+  fill: var(--accent-foreground);
+  pointer-events: none;
+}
+
+.center:focus-visible circle {
+  stroke: var(--ring);
+  stroke-width: 3;
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  fill: var(--foreground-subtle);
+  pointer-events: none;
+}
+
+.result {
+  font-family: var(--font-numeral);
+  font-size: 46px;
+  font-weight: 700;
+  fill: var(--accent);
+  animation: result-in 200ms ease-out;
+}
+
+.result-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Só opacidade: escalar texto SVG deslocaria o glifo do centro. */
+@keyframes result-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .veil,
+  .result {
+    animation: none;
+  }
+
+  .slice {
+    transition: none;
+  }
+}

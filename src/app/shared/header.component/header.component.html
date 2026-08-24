@@ -1,19 +1,21 @@
-<header class="bg-surface border-b border-border shadow-elev-1 w-full h-14 text-foreground fixed top-0 z-50">
-    <div class="flex justify-between items-center px-2 h-full">
+<!-- Sem barra sólida: sobre a arte da home o header desaparece; nas demais
+     telas fica um vidro fino, só para o conteúdo não passar por baixo ilegível. -->
+<header class="bar" [class.solid]="!overArt()">
+    <div class="container-page flex h-full items-center justify-between">
+        <button id="edit-profile" type="button" class="icon-btn"
+                (click)="menu_sheet.open()" aria-label="Abrir menu">
+            <ng-icon hlm size="sm" name="lucideMenu" />
+        </button>
+
         <div class="flex items-center gap-2">
-            <button id="edit-profile" hlmBtn variant="ghost" size="icon" (click)="menu_sheet.open()" aria-label="Abrir menu">
-                <img src="/mtg-icon.png" alt="" class="h-9">
-            </button>
-
-            <p class="text-sm">Olá, <span class="font-medium">{{ userName }}</span></p>
-        </div>
-
-        <div class="flex items-center gap-1 pr-2">
-            <button hlmBtn variant="ghost" size="icon" type="button" (click)="theme.toggle()"
-                [attr.aria-label]="theme.theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'">
+            <button type="button" class="icon-btn"
+                    (click)="theme.toggle()"
+                    [attr.aria-label]="theme.theme() === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'">
                 <ng-icon hlm size="sm" [name]="theme.theme() === 'dark' ? 'lucideSun' : 'lucideMoon'" />
             </button>
-            <img src="/user.png" alt="" class="h-9">
+
+            <!-- O PNG é um traço escuro; no tema escuro ele precisa inverter. -->
+            <img src="user.png" alt="" width="38" height="38" class="avatar" />
         </div>
     </div>
 </header>
@@ -21,31 +23,21 @@
 <hlm-sheet side="left" #menu_sheet>
     <hlm-sheet-content *brnSheetContent="let ctx">
         <hlm-sheet-header class="pb-0">
-            <h3 hlmSheetTitle class="font-display text-h3">Menu</h3>
-            <p hlmSheetDescription>Selecione para onde quer ir.</p>
+            <h3 hlmSheetTitle class="title-section">Menu</h3>
+            <p hlmSheetDescription class="text-sm">Selecione para onde quer ir.</p>
             <hlm-separator class="my-4" />
         </hlm-sheet-header>
-        <div class="grid flex-1 auto-rows-min gap-6 px-4">
-            <a [routerLink]="['/dashboard']" routerLinkActive="text-primary-text"
-               class="text-foreground-muted hover:text-foreground transition-colors">
-                <ng-icon hlm size="sm" class="pr-6" name="lucideHome" />
-                Home
-            </a>
-            <a [routerLink]="['/play']" routerLinkActive="text-primary-text"
-               class="text-foreground-muted hover:text-foreground transition-colors">
-                <ng-icon hlm size="sm" class="pr-6" name="lucideJoystick" />
-                Jogar
-            </a>
-            <a [routerLink]="['/matchs']" routerLinkActive="text-primary-text"
-               class="text-foreground-muted hover:text-foreground transition-colors">
-                <ng-icon hlm size="sm" class="pr-6" name="lucideSwords" />
-                Partidas
-            </a>
-            <a [routerLink]="['/ranking']" routerLinkActive="text-primary-text"
-               class="text-foreground-muted hover:text-foreground transition-colors">
-                <ng-icon hlm size="sm" class="pr-6" name="lucideCrown" />
-                Ranking
-            </a>
-        </div>
+        <!-- Cada link fecha o sheet: sem isso a navegação acontece por baixo do
+             overlay e o menu fica aberto na tela nova. O item ativo ganha placa,
+             não só cor de texto. -->
+        <nav class="grid flex-1 auto-rows-min gap-1 px-3">
+            @for (item of navItems; track item.route) {
+                <a class="nav-item" [routerLink]="[item.route]" (click)="ctx.close()"
+                   routerLinkActive="active">
+                    <ng-icon hlm size="sm" [name]="item.icon" />
+                    <span>{{ item.label }}</span>
+                </a>
+            }
+        </nav>
     </hlm-sheet-content>
 </hlm-sheet>

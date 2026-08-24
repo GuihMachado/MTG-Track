@@ -1,0 +1,62 @@
+@if (open()) {
+  <div class="veil" (click)="onBackdrop($event)">
+    <svg class="wheel" [attr.viewBox]="viewBox" role="application"
+         [attr.aria-label]="title() ? 'Menu da partida: ' + title() : 'Menu da partida'">
+
+      <circle [attr.cx]="cx" [attr.cy]="cy" [attr.r]="rimR" class="rim" />
+
+      @for (slice of slices(); track slice.item.id) {
+        <g>
+          <path class="slice"
+                [class.danger]="slice.item.danger"
+                [class.tinted]="slice.item.fill"
+                [attr.d]="slice.path"
+                [style.fill]="slice.item.fill"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="slice.item.label"
+                (click)="select(slice.item)"
+                (keydown.enter)="select(slice.item)"
+                (keydown.space)="select(slice.item)"></path>
+
+          <g class="label" [style.--label-fg]="slice.item.labelColor">
+            @if (slice.iconPath; as iconPath) {
+              <g [attr.transform]="slice.iconTransform">
+                <path class="icon" fill-rule="evenodd" clip-rule="evenodd" [attr.d]="iconPath" />
+              </g>
+              <text class="text" [attr.x]="slice.labelX" [attr.y]="slice.labelY + 12"
+                    text-anchor="middle" dominant-baseline="central">{{ slice.text }}</text>
+            } @else {
+              <text class="text solo" [attr.x]="slice.labelX" [attr.y]="slice.labelY"
+                    text-anchor="middle" dominant-baseline="central">{{ slice.text }}</text>
+            }
+          </g>
+        </g>
+      }
+
+      @if (result(); as value) {
+        <text class="result" [attr.x]="cx" [attr.y]="cy"
+              text-anchor="middle" dominant-baseline="central">{{ value }}</text>
+        <text class="hint" [attr.x]="cx" [attr.y]="cy + 42" text-anchor="middle">toque para voltar</text>
+        <circle class="result-hit" [attr.cx]="cx" [attr.cy]="cy" [attr.r]="centerR + 20"
+                role="button" tabindex="0" aria-label="Fechar resultado"
+                (click)="onCenter()" (keydown.enter)="onCenter()"></circle>
+      } @else {
+        <g class="center" role="button" tabindex="0"
+           [attr.aria-label]="centerLabel() === '←' ? 'Voltar' : 'Fechar menu'"
+           (click)="onCenter()" (keydown.enter)="onCenter()" (keydown.space)="onCenter()">
+          <circle [attr.cx]="cx" [attr.cy]="cy" [attr.r]="centerR" />
+          <text [attr.x]="cx" [attr.y]="cy + 1" text-anchor="middle" dominant-baseline="central">
+            {{ centerLabel() }}
+          </text>
+        </g>
+
+        @if (title()) {
+          <text class="hint" [attr.x]="cx" [attr.y]="cy + centerR + 18" text-anchor="middle">
+            {{ title() }}
+          </text>
+        }
+      }
+    </svg>
+  </div>
+}

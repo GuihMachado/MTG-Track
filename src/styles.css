@@ -9,6 +9,10 @@
 
 @import 'mana-font/css/mana.min.css';
 
+/* Os componentes helm são vendorizados em libs/ui, fora de src/ — sem esta
+   linha o Tailwind não vê as classes usadas lá (plate, rounded-plate…). */
+@source '../libs/ui';
+
 /* Fontes self-hosted (Grimório §03: Grenze Gotisch + Inter + JetBrains Mono) */
 @import '@fontsource/grenze-gotisch/400.css';
 @import '@fontsource/grenze-gotisch/500.css';
@@ -97,12 +101,21 @@
   --text-data-lg: 1.5rem;
   --text-data-lg--line-height: 1.1;
 
-  /* Raios (md preserva o 0.625rem histórico do projeto) */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
+  /* Raios da Levitação: a escala sobe um degrau — placa suspensa pede canto
+     mais macio que superfície chapada. `plate` é o raio das placas grandes. */
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.125rem;
   --radius-xl: 1.25rem;
+  --radius-plate: 1.375rem;
   --radius-card-art: 4.75%;
+
+  /* Movimento: registrado no tema para gerar animate-floaty / animate-halo /
+     animate-pip. Os @keyframes ficam no fim do arquivo, globais, porque as
+     folhas de componente também os usam. */
+  --animate-floaty: floaty 6s ease-in-out infinite;
+  --animate-halo: halo 3.4s ease-in-out infinite;
+  --animate-pip: pip 1.8s ease-in-out infinite;
 }
 
 /* Semânticos que variam com o tema, expostos como utilitários
@@ -125,9 +138,15 @@
   --color-danger-bg: var(--danger-bg);
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
+  --color-skeleton: var(--skeleton);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-glass: var(--glass);
+  --color-faint: var(--text-faint);
   --shadow-elev-1: var(--elev-1);
   --shadow-elev-2: var(--elev-2);
   --shadow-elev-3: var(--elev-3);
+  --shadow-elev-float: var(--elev-float);
   --shadow-glow: var(--glow);
   --font-data: var(--font-data);
   --font-numeral: var(--font-numeral);
@@ -146,19 +165,55 @@
 
   --radius: 0.625rem;
 
-  --background: var(--color-ink-900);
-  --background-deep: var(--color-ink-950);
+  /* Canais RGB das cores de mana. A lei 2 do sistema ("cor de mana é luz, não
+     tinta") pede a mesma cor em várias opacidades — halo, borda, sombra, glow;
+     canais soltos deixam o alfa livre em rgb(var(--mana-rgb) / .34), sem
+     duplicar o hex em cada camada.
+     Ficam aqui e não no @theme porque quem os consome é style inline vindo do
+     TS (assento, orbe, linha de partida) — o @theme só emite a variável que
+     algum utilitário usa, e essas nenhum usa.
+     Preto é a exceção: #1E1C22 como luz não existe sobre placa escura, então o
+     canal de B sobe para o cinza-violeta do handoff; --color-mana-b segue
+     intacto para preenchimento e ícone.
+     Invariantes de tema: valem no dark e no light. */
+  --mana-w-rgb: 243 234 211;
+  --mana-u-rgb: 46 111 209;
+  --mana-b-rgb: 120 110 140;
+  --mana-r-rgb: 214 59 47;
+  --mana-g-rgb: 47 158 94;
+  --mana-c-rgb: 154 163 174;
+
+  /* Levitação: o fundo desce abaixo de qualquer placa para que a sombra longa
+     tenha onde cair. `background` é a home e as listas; `background-deep` são
+     as telas de fluxo e a mesa. */
+  --background: #06050B;
+  --background-deep: #08060E;
   --foreground: #EDEAF5;
   --foreground-muted: var(--color-ink-300);
   --foreground-subtle: var(--color-ink-400);
+  --text-faint: #5A5470;
 
   --surface: var(--color-ink-800);
   --surface-2: var(--color-ink-700);
   --surface-3: var(--color-ink-600);
   --card: var(--color-ink-800);
   --card-foreground: #EDEAF5;
-  --popover: var(--color-ink-700);
+  /* Superfície flutuante pequena (select, popover): o topo da placa, chapado
+     — num painel de 200px o gradiente não se lê. */
+  --popover: var(--surface-plate-top);
   --popover-foreground: #EDEAF5;
+
+  /* Lei 1 — nada encosta no fundo. Toda placa é o mesmo gradiente vertical
+     (claro em cima), a mesma borda fantasma e a mesma sombra longa. */
+  --surface-plate-top: #191527;
+  --surface-plate-bottom: #100E1B;
+  --surface-plate-alt-top: #171327;
+  --surface-plate-alt-bottom: #110F1C;
+  --seat-plate-top: #141224;
+  --seat-plate-bottom: #0D0B17;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --glass: rgba(255, 255, 255, 0.045);
 
   --primary: var(--color-arcane-600);
   --primary-hover: var(--color-arcane-500);
@@ -172,11 +227,20 @@
   --accent-foreground: var(--color-ink-950);
   --accent-line: rgba(230, 199, 127, 0.34);
 
-  --border: #2A2438;
-  --border-strong: #3A3350;
-  --input: var(--color-ink-700);
+  /* A borda padrão do app é a borda fantasma da Levitação: quem separa uma
+     placa da vizinha é 1px de luz, não uma linha cinza. */
+  --border: var(--hairline);
+  --border-strong: var(--hairline-strong);
+  /* Translúcido de propósito: o preset usa --input como borda (border-input) e
+     como fundo (bg-input/30), e 9% de branco a 30% cai nos 3% que o sistema
+     pede para o fundo de campo. */
+  --input: rgba(255, 255, 255, 0.09);
   --ring: var(--color-arcane-500);
   --destructive: #FF6B85;
+
+  /* Placeholder de carregamento: cinza claro sobre o fundo escuro (ink-500).
+     Nunca o ouro (--accent), que é acabamento e chapa a tela no loading. */
+  --skeleton: var(--color-ink-500);
 
   --success: #34D39E;
   --warning: #F5B454;
@@ -187,7 +251,9 @@
   --danger-bg: color-mix(in oklab, var(--danger) 12%, transparent);
   --info-bg: color-mix(in oklab, var(--info) 13%, transparent);
 
-  --sidebar: var(--color-ink-850);
+  /* O painel do menu é mais escuro que a placa: ele é o fundo de onde as
+     placas dos itens saem. */
+  --sidebar: var(--color-ink-950);
   --sidebar-foreground: #EDEAF5;
   --sidebar-primary: var(--color-arcane-600);
   --sidebar-primary-foreground: #FFFFFF;
@@ -196,9 +262,15 @@
   --sidebar-border: #2A2438;
   --sidebar-ring: var(--color-arcane-500);
 
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.55);
-  --elev-3: 0 12px 32px rgba(0, 0, 0, 0.6);
+  /* Sombra longa e difusa embaixo + fio de luz no topo: é o par que levanta a
+     placa do fundo. O fio vem como `inset`, não como anel, para não competir
+     com a borda tingida de mana. */
+  --elev-1: 0 10px 20px -12px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --elev-2: 0 20px 40px -20px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --elev-3: 0 26px 50px -22px rgba(0, 0, 0, 0.98), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* Exclusivo do botão primário flutuante (o único elemento que levita). */
+  --elev-float: 0 22px 38px -14px rgba(124, 92, 255, 0.9), 0 10px 20px -10px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   --glow: 0 0 0 1px rgba(124, 92, 255, 0.25), 0 8px 32px rgba(110, 79, 240, 0.2);
 
   /* Consumidos fora do CSS (chart.js) — cores planas, sem color-mix */
@@ -226,6 +298,19 @@
   --foreground: #16131F;
   --foreground-muted: #5C5570;
   --foreground-subtle: var(--color-ink-400);
+  --text-faint: #8A839B;
+
+  /* No papel a placa levita ao contrário: o gradiente clareia para baixo e o
+     fio de luz do topo dá lugar à sombra de contato. */
+  --surface-plate-top: #FFFFFF;
+  --surface-plate-bottom: #F4F1FB;
+  --surface-plate-alt-top: #FCFBFF;
+  --surface-plate-alt-bottom: #F0EDF8;
+  --seat-plate-top: #FFFFFF;
+  --seat-plate-bottom: #EFEBF8;
+  --hairline: rgba(23, 19, 31, 0.1);
+  --hairline-strong: rgba(23, 19, 31, 0.18);
+  --glass: rgba(255, 255, 255, 0.62);
 
   --surface: #FFFFFF;
   --surface-2: var(--color-ink-50);
@@ -247,11 +332,14 @@
   --accent-foreground: #FFFFFF;
   --accent-line: rgba(138, 106, 46, 0.3);
 
-  --border: var(--color-ink-100);
-  --border-strong: var(--color-ink-200);
-  --input: #FFFFFF;
+  --border: var(--hairline);
+  --border-strong: var(--hairline-strong);
+  --input: rgba(23, 19, 31, 0.14);
   --ring: var(--color-arcane-700);
   --destructive: #C4123B;
+
+  /* No papel o skeleton escurece, em vez de clarear (ink-200). */
+  --skeleton: var(--color-ink-200);
 
   --success: #0E7454;
   --warning: #9A6413;
@@ -271,9 +359,12 @@
   --sidebar-border: var(--color-ink-100);
   --sidebar-ring: var(--color-arcane-700);
 
-  --elev-1: 0 1px 2px rgba(23, 19, 31, 0.07);
-  --elev-2: 0 4px 14px rgba(23, 19, 31, 0.09);
-  --elev-3: 0 14px 36px rgba(23, 19, 31, 0.12);
+  /* No papel o fio de luz não existe: quem separa é a sombra de contato. */
+  --elev-1: 0 1px 2px rgba(23, 19, 31, 0.1), 0 0 0 1px rgba(23, 19, 31, 0.04);
+  --elev-2: 0 10px 22px -12px rgba(23, 19, 31, 0.22), 0 2px 6px rgba(23, 19, 31, 0.08);
+  --elev-3: 0 18px 38px -16px rgba(23, 19, 31, 0.28), 0 4px 10px rgba(23, 19, 31, 0.1);
+  --elev-float: 0 18px 30px -14px rgba(91, 58, 209, 0.5), 0 6px 14px -8px rgba(23, 19, 31, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   --glow: 0 0 0 1px rgba(91, 58, 209, 0.18), 0 8px 28px rgba(91, 58, 209, 0.1);
 
   --chart-win: #0E7454;
@@ -301,6 +392,13 @@
   }
   .font-data {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* O hlm-skeleton do spartan pinta com bg-accent — que no Grimório é ouro e
+     transforma o carregamento numa mancha dourada. Uma regra por data-slot
+     corrige todos os skeletons do app, presentes e futuros. */
+  [data-slot='skeleton'] {
+    background-color: var(--skeleton);
   }
 }
 
@@ -337,33 +435,6 @@
   scrollbar-width: none;
 }
 
-.fab-btn {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  z-index: var(--z-fab);
-
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: var(--elev-3);
-  text-decoration: none;
-  transition: transform 0.2s, background-color 0.2s;
-  cursor: pointer;
-}
-
-.fab-btn:hover {
-  background-color: var(--primary-hover);
-  transform: scale(1.06);
-}
-
 /* O ngx-sonner fixa top:20px em telas de até 600px e ignora o offset, o que joga
    o toast por cima do header fixo (h-14). O seletor extra sobe a especificidade
    para vencer o estilo que o próprio componente injeta. */
@@ -373,3 +444,233 @@
   }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   LEVITAÇÃO · as três leis como utilitários
+   1. Profundidade — nada encosta no fundo (placas).
+   2. Cor de mana é luz, não tinta (halo/borda/sombra/glow).
+   3. Tipografia sóbria, gótico reservado ao numeral.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Placa padrão: card, sheet, dialog, cabeçalho de tela, linha de lista. */
+@utility plate {
+  background-color: var(--surface-plate-bottom);
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-2);
+}
+
+/* Placa de overlay: dialog e sheet, um degrau acima da placa comum. */
+@utility plate-high {
+  background-color: var(--surface-plate-bottom);
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-3);
+}
+
+/* Placa secundária: linhas irmãs dentro de uma lista, para não repetir o
+   mesmo tom da placa que as contém. */
+@utility plate-alt {
+  background-color: var(--surface-plate-alt-bottom);
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-1);
+}
+
+/* Placa rebaixada: mini-cartão dentro de outra placa (ajustes rápidos, trilho
+   de segmented). Sem sombra — quem levita é a placa que a contém. */
+@utility plate-quiet {
+  background-color: color-mix(in oklab, var(--foreground) 3%, transparent);
+  border: 1px solid var(--hairline);
+}
+
+/* Superfície translúcida: só na home e nos overlays, no máximo 3 por tela
+   (backdrop-filter é caro em celular antigo). */
+@utility glass {
+  background-color: var(--glass);
+  border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+/* Rótulo em caixa alta com tracking (lei 3): JetBrains Mono, nunca Inter. */
+@utility label-caps {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Título de tela: Inter 24px/600. Substitui o gótico em caixa de título — a
+   display fica só no numeral de vida. */
+@utility title-screen {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility title-section {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Movimento ───────────────────────────────────────────────
+   Três curvas, e só três: levitar, pulsar luz, pulsar ponto. */
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes halo {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes pip {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.12);
+  }
+}
+
+/* prefers-reduced-motion desliga as três: o sistema promete movimento
+   discreto, não movimento obrigatório. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-floaty,
+  .animate-halo,
+  .animate-pip {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEVITAÇÃO · peças recorrentes
+   Classes de componente, não utilitários: têm estado (.on) e são
+   compostas de várias declarações. Ficam aqui porque aparecem em
+   três telas ou mais — o que aparece em uma vive na folha da tela.
+   ═══════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Pílula de filtro (Partidas, banlist). Ativa = placa arcana. */
+  .chip-filter {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    height: 38px;
+    padding-inline: 0.875rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline-strong);
+    background: color-mix(in oklab, var(--foreground) 4%, transparent);
+    color: var(--foreground-muted);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 150ms ease-out, background-color 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+
+  .chip-filter.on {
+    background: rgba(124, 92, 255, 0.16);
+    border-color: rgba(124, 92, 255, 0.5);
+    color: var(--color-arcane-200);
+  }
+
+  .chip-filter:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Botão quadrado em placa: voltar, ações de cabeçalho. */
+  .plate-btn {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 12px;
+    background-image: linear-gradient(180deg, #1b1729, #131020);
+    border: 1px solid var(--hairline);
+    color: var(--foreground);
+    cursor: pointer;
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: filter 150ms ease-out;
+  }
+
+  .plate-btn:active {
+    filter: brightness(1.2);
+  }
+
+  .plate-btn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  :root.light .plate-btn {
+    background-image: linear-gradient(180deg, #ffffff, #f1eef9);
+  }
+
+  /* Segmented em placa (abas de Proxies): trilho rebaixado, aba ativa em placa. */
+  .segmented {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-md, 0.875rem);
+    background: color-mix(in oklab, var(--foreground) 4%, transparent);
+    border: 1px solid var(--hairline);
+  }
+
+  .segmented-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 38px;
+    border-radius: var(--radius-sm, 0.625rem);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--foreground-muted);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 150ms ease-out, background-color 150ms ease-out;
+  }
+
+  .segmented-tab.on {
+    background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+    border-color: var(--hairline);
+    box-shadow: var(--elev-1);
+    color: var(--foreground);
+  }
+
+  .segmented-tab:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+}

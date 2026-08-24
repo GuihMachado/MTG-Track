@@ -5,7 +5,7 @@ import { type VariantProps, cva } from 'class-variance-authority';
 import type { ClassValue } from 'clsx';
 
 export const listVariants = cva(
-	'bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]',
+	'plate-quiet text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-md p-1',
 	{
 		variants: {
 			orientation: {
