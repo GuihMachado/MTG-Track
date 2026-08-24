@@ -11,6 +11,12 @@ import {
 const LIST_KEY = 'proxy-list-v1';
 const SETTINGS_KEY = 'proxy-print-settings-v1';
 
+/** Imagem da carta pelo nome exato, sem uma busca antes. */
+function namedImageUrl(name: string, version: 'normal' | 'large'): string {
+  const exact = encodeURIComponent(name);
+  return `https://api.scryfall.com/cards/named?format=image&version=${version}&exact=${exact}`;
+}
+
 /**
  * Lista de impressão + configurações do estúdio, globais e persistentes:
  * o fluxo real é buscar cartas em várias visitas e imprimir depois.
@@ -66,6 +72,46 @@ export class ProxyListService {
       ...list,
       { id: crypto.randomUUID(), name: name.trim(), imageUrl: imageUrl.trim(), quantity: 1 },
     ]);
+  }
+
+  /**
+   * Entra na lista pelo nome, com quantidade — é o atalho "proxiar as que
+   * faltam" da tela de deck, onde a carta que falta é conhecida por nome e
+   * `oracleId`, sem uma impressão escolhida.
+   *
+   * A imagem vem do endpoint `named` da Scryfall, que devolve a arte direto:
+   * assim o PDF sai com a versão `large` (a que dá ~271 DPI a 63mm) sem uma
+   * busca por carta antes.
+   */
+  addByName(name: string, quantity = 1): void {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const existing = this._list().find(
+      card => card.name.trim().toLowerCase() === trimmed.toLowerCase(),
+    );
+
+    if (existing) {
+      this.setQuantity(existing.id, existing.quantity + quantity);
+      return;
+    }
+
+    this._list.update(list => [
+      ...list,
+      {
+        id: crypto.randomUUID(),
+        name: trimmed,
+        imageUrl: namedImageUrl(trimmed, 'normal'),
+        largeImageUrl: namedImageUrl(trimmed, 'large'),
+        quantity: Math.max(1, quantity),
+      },
+    ]);
+  }
+
+  setQuantity(id: string, quantity: number): void {
+    this._list.update(list =>
+      list.map(card => (card.id === id ? { ...card, quantity: Math.max(1, quantity) } : card)),
+    );
   }
 
   increment(id: string): void {

@@ -9,7 +9,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import {
   lucideCrown,
+  lucideLibraryBig,
   lucideHouse,
+  lucideLogOut,
   lucideMenu,
   lucideMoon,
   lucidePrinter,
@@ -22,6 +24,7 @@ import {
 } from '@ng-icons/lucide';
 import { ThemeService } from '../theme/theme.service';
 import { ProfileService } from '../profile/profile.service';
+import { SessionService } from '../session/session.service';
 
 interface NavItem {
   route: string;
@@ -44,8 +47,10 @@ interface NavItem {
   providers: [
     provideIcons({
       lucideCrown,
+      lucideLibraryBig,
       lucideSwords,
       lucideHouse,
+      lucideLogOut,
       lucideSun,
       lucideMoon,
       lucidePrinter,
@@ -65,6 +70,9 @@ export class HeaderComponent {
 
   protected theme = inject(ThemeService);
   protected profile = inject(ProfileService);
+  // Template chama session.confirmSignOut() direto: o header não decide nada
+  // sobre a saída, só oferece o botão.
+  protected session = inject(SessionService);
   private router = inject(Router);
 
   /**
@@ -76,6 +84,7 @@ export class HeaderComponent {
     { route: '/dashboard', icon: 'lucideHouse', label: 'Home' },
     { route: '/matchs', icon: 'lucideSwords', label: 'Partidas' },
     { route: '/ranking', icon: 'lucideCrown', label: 'Ranking' },
+    { route: '/colecao', icon: 'lucideLibraryBig', label: 'Coleção' },
     { route: '/proxies', icon: 'lucidePrinter', label: 'Proxies' },
     { route: '/rules', icon: 'lucideScrollText', label: 'Regras da Casa' },
     { route: '/cards', icon: 'lucideSearch', label: 'Buscar carta' },

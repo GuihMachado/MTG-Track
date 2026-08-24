@@ -1,0 +1,204 @@
+<!-- Véu: a tela de trás continua visível, desfocada, para o usuário não perder
+     o lugar de onde veio. -->
+<div class="veil" (click)="close()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true"
+         [attr.aria-label]="isEditing() ? 'Editar carta da coleção' : 'Adicionar carta'">
+  <span class="handle" aria-hidden="true"></span>
+
+  @if (!print() && !isEditing()) {
+    <!-- Passo 1: achar a carta. -->
+    <label class="well">
+      <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
+      <input #searchField class="well-input" type="search" autocomplete="off"
+             placeholder="Buscar carta na Scryfall" [value]="query()"
+             (input)="onSearch($any($event.target).value)" aria-label="Buscar carta" />
+      @if (searching()) {
+        <ng-icon hlm name="lucideLoader" class="field-icon animate-spin !size-4" />
+      }
+    </label>
+
+    @if (loadingPrints()) {
+      <p class="mt-4 text-center font-data text-[11px] text-faint">carregando impressões…</p>
+    } @else if (results().length > 0) {
+      <ul class="results">
+        @for (card of results(); track card.id) {
+          <li>
+            <button type="button" class="result rise-stagger" (click)="choose(card)">
+              @if (imagesOf(card); as images) {
+                <img [src]="images.small" alt="" loading="lazy" class="result-art" />
+              }
+              <span class="min-w-0 flex-1 truncate text-left text-sm font-semibold">
+                {{ card.name }}
+              </span>
+              <span class="font-data text-[10px] text-foreground-subtle">
+                {{ card.set.toUpperCase() }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else if (query().trim().length >= 3 && !searching()) {
+      <p class="mt-6 text-center text-[13px] text-foreground-muted">Nenhuma carta com esse nome.</p>
+    } @else {
+      <p class="mt-6 text-center text-[13px] text-foreground-muted">
+        Digite o nome da carta, em português ou em inglês.
+      </p>
+    }
+  } @else if (print(); as chosen) {
+    <!-- Passo 2: a carta está escolhida; o que falta é como ela entra. -->
+    <div class="flex gap-3.5">
+      @if (chosen.artCropUrl; as art) {
+        <img class="identity-art" [src]="art" alt="" />
+      } @else {
+        <span class="identity-art identity-art-empty" aria-hidden="true"></span>
+      }
+
+      <div class="min-w-0 flex-1">
+        <h2 class="text-[19px] font-bold leading-tight">{{ chosen.name }}</h2>
+        <p class="mt-1 truncate text-[13px] text-foreground-muted">{{ chosen.typeLine }}</p>
+
+        <div class="mt-2 flex items-center gap-2">
+          @if (chosen.rarity) {
+            <span class="rarity" [class]="'rarity ' + chosen.rarity">{{ chosen.rarity }}</span>
+          }
+          @if (chosen.manaCost) {
+            <span class="flex gap-1 text-[14px]" [innerHTML]="chosen.manaCost | manaSymbol"></span>
+          }
+        </div>
+      </div>
+
+      <button type="button" class="close-btn" (click)="close()" aria-label="Fechar">
+        <ng-icon hlm name="lucideX" class="!size-4" />
+      </button>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Quantidade -->
+    <div class="flex items-center justify-between">
+      <span class="label-caps">Quantidade</span>
+
+      <div class="flex items-center gap-3">
+        <button type="button" class="step minus" (click)="step(-1)"
+                [disabled]="quantity() <= 1" aria-label="Menos uma cópia">
+          <ng-icon hlm name="lucideMinus" class="!size-[18px]" />
+        </button>
+        <span class="qty-value" aria-live="polite">{{ quantity() }}</span>
+        <button type="button" class="step plus" (click)="step(1)" aria-label="Mais uma cópia">
+          <ng-icon hlm name="lucidePlus" class="!size-[18px]" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Edição: mostrar o preço aqui é o que torna o campo útil, porque a
+         escolha de edição é quase sempre uma escolha de preço. -->
+    <div class="mt-4">
+      <span class="label-caps">Edição</span>
+
+      <button type="button" class="print-field" (click)="togglePrints()"
+              [class.static]="isEditing()" [attr.aria-expanded]="printsOpen()">
+        <span class="set-code">{{ chosen.setCode }}</span>
+        <span class="min-w-0 flex-1 truncate text-left text-[14.5px]">
+          {{ chosen.setName || 'Impressão' }}
+        </span>
+        <span class="font-data text-[12px] text-price-strong">
+          {{ priceLabel(foil() ? chosen.priceUsdFoil : chosen.priceUsd) }}
+        </span>
+        @if (!isEditing()) {
+          <ng-icon hlm name="lucideChevronDown" class="chevron !size-[15px]"
+                   [class.open]="printsOpen()" />
+        }
+      </button>
+
+      @if (!isEditing()) {
+        <p class="mt-1.5 font-data text-[10.5px] text-faint">{{ printsHint() }}</p>
+      }
+
+      @if (printsOpen()) {
+        <ul class="print-list">
+          @for (option of visiblePrints(); track option.scryfallId) {
+            <li>
+              <button type="button" class="print-option"
+                      [class.on]="option.scryfallId === chosen.scryfallId"
+                      (click)="selectPrint(option)">
+                <span class="set-code">{{ option.setCode }}</span>
+                <span class="min-w-0 flex-1 truncate text-left text-[13px]">
+                  {{ option.setName }}
+                </span>
+                <span class="font-data text-[10px] text-faint">
+                  {{ option.language.toUpperCase() }}
+                </span>
+                <span class="font-data text-[11.5px] text-foreground-muted">
+                  {{ priceLabel(option.priceUsd) }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <!-- Idioma -->
+    @if (!isEditing()) {
+      <div class="mt-4">
+        <span class="label-caps">Idioma</span>
+        <div class="segmented mt-2">
+          <button type="button" class="segmented-tab" [class.on]="language() === 'pt'"
+                  (click)="setLanguage('pt')">Português</button>
+          <button type="button" class="segmented-tab" [class.on]="language() === 'en'"
+                  (click)="setLanguage('en')">Inglês</button>
+          <button type="button" class="segmented-tab" [class.on]="language() === 'other'"
+                  (click)="setLanguage('other')">Outro</button>
+        </div>
+      </div>
+    }
+
+    <!-- Foil: o gradiente iridescente é a metáfora física do acabamento. -->
+    @if (chosen.hasFoil || foil()) {
+      <div class="foil-plate mt-4">
+        <ng-icon hlm name="lucideSparkles" class="!size-[19px] text-info" />
+
+        <span class="min-w-0 flex-1">
+          <span class="block text-sm font-semibold">Foil</span>
+          @if (foilDelta(); as delta) {
+            <span class="font-data text-[10.5px] text-foreground-muted">{{ delta }}</span>
+          }
+        </span>
+
+        <button type="button" class="switch" [class.on]="foil()" (click)="toggleFoil()"
+                [disabled]="isEditing()" role="switch" [attr.aria-checked]="foil()"
+                aria-label="Carta foil">
+          <span class="knob" aria-hidden="true"></span>
+        </button>
+      </div>
+    }
+
+    <!-- Ações -->
+    <div class="mt-5 flex items-center gap-3">
+      <button type="button" class="btn-primary action" (click)="save()"
+              [disabled]="!canSave()" [attr.aria-busy]="saving()">
+        <ng-icon hlm name="lucideCheck" class="!size-[18px]" />
+        {{ isEditing() ? 'Salvar' : 'Adicionar' }}
+      </button>
+
+      @if (isEditing()) {
+        <button type="button" class="round-btn danger" (click)="remove()"
+                [disabled]="saving()" aria-label="Tirar da coleção">
+          <ng-icon hlm name="lucideTrash2" class="!size-[19px]" />
+        </button>
+      } @else {
+        <button type="button" class="round-btn" (click)="saveAndContinue()"
+                [disabled]="!canSave()" aria-label="Adicionar e buscar outra">
+          <ng-icon hlm name="lucideCirclePlus" class="!size-[19px]" />
+        </button>
+      }
+    </div>
+
+    @if (!isEditing()) {
+      <p class="mt-2.5 text-center font-data text-[10.5px] text-faint">
+        o segundo botão adiciona e já abre a busca de novo
+      </p>
+    }
+  }
+</section>

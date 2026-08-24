@@ -1,0 +1,113 @@
+/* Célula da grade: a arte é o conteúdo, o véu existe para o nome se ler em
+   cima dela. Duas cópias ou mais tingem a borda de ouro — a mesma gramática da
+   badge, para a resposta "tenho de sobra" ser a mesma nas duas visões. */
+:host {
+  display: block;
+}
+
+.tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  box-shadow: 0 14px 24px -14px rgba(0, 0, 0, 0.95);
+  background: var(--surface-plate-bottom);
+  cursor: pointer;
+  transition: scale 120ms ease-out;
+}
+
+.tile.plenty {
+  border-color: rgba(230, 199, 127, 0.4);
+}
+
+.tile:active {
+  scale: 1.03;
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: 132px;
+  object-fit: cover;
+}
+
+.art-empty {
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(6, 5, 11, 0.94) 20%, transparent 62%);
+  pointer-events: none;
+}
+
+:root.light .veil {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.96) 20%, transparent 62%);
+}
+
+.name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--foreground);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Na grade a badge encolhe e vira selo de canto. */
+.tile-qty {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 0;
+  height: auto;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  background: rgba(6, 5, 11, 0.8);
+  border-color: var(--hairline);
+}
+
+:root.light .tile-qty {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.tile-qty.plenty {
+  background: var(--color-gold-300);
+  border-color: var(--color-gold-300);
+  color: #12100a;
+}
+
+/* O foil vive no canto oposto ao da quantidade: dois selos no mesmo canto
+   viriam a competir e nenhum seria lido de longe. */
+.tile-foil {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+
+  .tile:active {
+    scale: 1;
+  }
+}

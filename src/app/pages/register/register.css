@@ -1,0 +1,58 @@
+/* Cadastro — mesma gramática do login, marca menor porque o formulário é maior.
+   O halo é mais discreto e não respira: aqui a atenção é do formulário. */
+:host {
+  display: block;
+}
+
+.entry {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.brand-halo {
+  position: absolute;
+  top: -160px;
+  left: 50%;
+  translate: -50% 0;
+  width: 480px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 199, 127, 0.16), transparent 66%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.brand-icon {
+  box-shadow: 0 14px 28px -12px rgba(0, 0, 0, 0.95), 0 0 28px -6px rgba(230, 199, 127, 0.3);
+}
+
+/* Régua de senha: espelha o minLength(6) do formulário, não valida nada. O
+   terceiro segmento é elogio — acende só com comprimento e variedade. */
+.meter-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 99px;
+  background: color-mix(in oklab, var(--foreground) 9%, transparent);
+  transition: background-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.meter-seg.on {
+  background: var(--success);
+  box-shadow: 0 0 10px rgb(var(--success-rgb) / 0.6);
+}
+
+.meter-seg.on.weak {
+  background: var(--danger);
+  box-shadow: 0 0 10px rgb(var(--danger-rgb) / 0.6);
+}
+
+:host-context(:root.light) .brand-halo {
+  opacity: 0.45;
+}
+
+:host-context(:root.light) .brand-icon {
+  box-shadow: 0 12px 22px -14px rgba(23, 19, 31, 0.5), 0 0 22px -8px rgba(138, 106, 46, 0.22);
+}

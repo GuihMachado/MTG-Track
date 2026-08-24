@@ -8,10 +8,14 @@
     </div>
   }
 
+  <!-- O offset acompanha o header: nas telas que desenham o próprio cabeçalho
+       (login, cadastro, mesa, nova partida) o toast sobe para a borda. Abaixo de
+       600px o ngx-sonner ignora este offset — quem manda ali é a regra de
+       `top` em styles.css, que segue a mesma condição. -->
   <hlm-toaster
     [theme]="theme.theme()"
     position="top-center"
-    offset="72px"
+    [offset]="showHeader() ? '72px' : '18px'"
     visibleToasts="3"
     richColors
     closeButton

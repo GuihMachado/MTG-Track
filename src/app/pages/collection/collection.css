@@ -1,0 +1,207 @@
+/* Coleção: tela de fluxo com cabeçalho próprio. O fundo é o `--background` das
+   listas, e a luz do topo diz em que modo a tela está. */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.halo {
+  position: absolute;
+  top: -140px;
+  left: 50%;
+  translate: -50% 0;
+  width: 460px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--accent-rgb) / 0.13), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+/* Na grade o halo troca para roxo: é o sinal de que o modo mudou, sem precisar
+   de rótulo. */
+.page.grid-mode .halo {
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.14), transparent 70%);
+}
+
+/* ─── Resumo ────────────────────────────────────────────────── */
+.summary {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 13px 14px;
+  border-radius: 18px;
+}
+
+.summary.value {
+  border-color: rgb(var(--accent-rgb) / 0.26);
+}
+
+.value-blob {
+  position: absolute;
+  top: -46px;
+  right: -30px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--accent-rgb) / 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+/* O gótico no valor é deliberado e é o único da tela: ele marca o número como
+   troféu, o que a lei 3 reserva a "numerais grandes". */
+.value-number {
+  margin-left: 4px;
+  font-family: var(--font-numeral);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--price-strong);
+}
+
+/* ─── Busca ─────────────────────────────────────────────────── */
+.clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  color: var(--foreground-muted);
+  cursor: pointer;
+}
+
+/* ─── Listas ────────────────────────────────────────────────── */
+/* A região que rola é só a lista: cabeçalho, resumo, abas e filtros ficam
+   parados, que é como o desenho mostra a tela. */
+.viewport {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Respiro para a pílula fixa não cobrir a última linha. */
+  padding-bottom: 92px;
+}
+
+.viewport.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 9px;
+  align-content: start;
+}
+
+.viewport.decks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* O virtual scroll precisa do espaçamento dentro do slot: `gap` não existe
+   dentro do viewport, que posiciona cada item por transform. */
+.row-slot {
+  display: block;
+  padding-bottom: 5px;
+}
+
+.new-deck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  border-radius: 16px;
+  border: 1px dashed var(--hairline-strong);
+  background: transparent;
+  color: var(--foreground-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.new-deck:active {
+  filter: brightness(1.2);
+}
+
+.new-deck:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Vazio ─────────────────────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 34px 22px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding-inline: 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 6px 4px;
+  color: var(--primary-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link:focus-visible,
+.pill:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Carregando ────────────────────────────────────────────── */
+.skeleton-row,
+.skeleton-deck {
+  border-radius: 14px;
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  animation: halo 1.6s ease-in-out infinite;
+}
+
+.skeleton-row {
+  height: 62px;
+}
+
+.skeleton-deck {
+  height: 92px;
+  border-radius: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-row,
+  .skeleton-deck {
+    animation: none;
+  }
+}

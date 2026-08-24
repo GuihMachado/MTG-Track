@@ -1,61 +1,93 @@
-import { Component, inject, signal } from '@angular/core';
-import { AuthService } from '../../services/auth-service';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { AuthService, RegisterPayload } from '../../services/auth-service';
 import { Subject, takeUntil } from 'rxjs';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HlmCardImports } from '@spartan-ng/helm/card';
-import { HlmLabelImports } from '@spartan-ng/helm/label';
-import { HlmInputImports } from '@spartan-ng/helm/input';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { Router, RouterLink } from '@angular/router';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronDown } from '@ng-icons/lucide';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideEye, lucideEyeOff, lucideLock, lucideMail, lucideUser } from '@ng-icons/lucide';
+import { HlmIcon } from '@spartan-ng/helm/icon';
+import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
-
-/** Id fixo: um novo aviso de validação substitui o anterior em vez de empilhar. */
-const FORM_WARNING = 'form-validation';
+import { FieldName, fieldMessage } from '../../shared/forms/validation-messages';
+import { MIN_PASSWORD_LENGTH, passwordStrength } from './password-strength';
 
 @Component({
   selector: 'app-register',
-  imports: [ 
-    HlmCardImports, 
-    HlmLabelImports, 
-    HlmInputImports, 
-    HlmButtonImports, 
+  imports: [
+    NgIcon,
+    HlmIcon,
+    HlmSpinnerImports,
     RouterLink,
     ReactiveFormsModule,
     BackButton
   ],
-  providers: [provideIcons({ lucideCheck, lucideChevronDown })],
+  providers: [provideIcons({ lucideUser, lucideMail, lucideLock, lucideEye, lucideEyeOff })],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
 export class Register {
-  protected mainForm: FormGroup;
+  // Tipado e nonNullable porque a régua de senha lê o valor do controle como
+  // signal: sem isso o `string | null` vaza para dentro do medidor.
+  protected readonly mainForm = new FormGroup({
+    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)],
+    }),
+  });
+
   // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
   protected loading = signal(false);
+  /** Olho de mostrar/ocultar senha. */
+  protected showPassword = signal(false);
+
+  /** Os três segmentos da régua, para o @for do template. */
+  protected readonly METER_SEGMENTS = [1, 2, 3] as const;
+
+  private readonly passwordValue = toSignal(this.mainForm.controls.password.valueChanges, {
+    initialValue: '',
+  });
+
+  /** Espelha o minLength(6) do formulário — não valida nada por conta própria. */
+  protected readonly strength = computed(() => passwordStrength(this.passwordValue()));
 
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
   private router = inject(Router);
   private readonly destroy = new Subject<void>();
 
-  constructor() {
-    this.mainForm = new FormGroup({});
-    this.mainForm.addControl('name', new FormControl('', [Validators.required]));
-    this.mainForm.addControl('email', new FormControl('', [Validators.required, Validators.email]));
-    this.mainForm.addControl('password', new FormControl('', [Validators.required, Validators.minLength(6)]));
-  }
-
   ngOnDestroy() {
     this.destroy.next();
     this.destroy.complete();
   }
 
+  protected togglePassword() {
+    this.showPassword.update((shown) => !shown);
+  }
+
+  protected nameError(): string | null {
+    return this.errorOf('name');
+  }
+
+  protected emailError(): string | null {
+    return this.errorOf('email');
+  }
+
+  protected passwordError(): string | null {
+    return this.errorOf('password');
+  }
+
   protected signUp() {
     if (this.mainForm.invalid) {
+      // Sem toast: o erro de validação é resolvido no campo, e as duas camadas
+      // de erro não competem. O toast fica para a resposta da API.
       this.mainForm.markAllAsTouched();
-      this.notify.warning(this.firstValidationMessage(), { id: FORM_WARNING });
       return;
     }
 
@@ -79,32 +111,23 @@ export class Register {
     });
   }
 
-  /** Aponta o primeiro problema do formulário, em vez de um aviso genérico. */
-  private firstValidationMessage(): string {
-    const name = this.mainForm.get('name');
-    const email = this.mainForm.get('email');
-    const password = this.mainForm.get('password');
+  /**
+   * Mensagem só depois que o usuário passou pelo campo (ou tentou enviar): erro
+   * em campo que ninguém tocou ainda é acusação, não ajuda.
+   */
+  private errorOf(field: FieldName): string | null {
+    const control = this.mainForm.get(field);
 
-    if (name?.invalid) {
-      return 'Informe o seu nome.';
-    }
-    if (email?.hasError('required')) {
-      return 'Informe o seu e-mail.';
-    }
-    if (email?.hasError('email')) {
-      return 'Esse e-mail não parece válido.';
-    }
-    if (password?.hasError('required')) {
-      return 'Crie uma senha para continuar.';
-    }
-    if (password?.hasError('minlength')) {
-      return 'A senha precisa ter ao menos 6 caracteres.';
+    if (!control || !control.touched) {
+      return null;
     }
 
-    return 'Revise os campos antes de continuar.';
+    return fieldMessage(field, control.errors, 'signup');
   }
 
-  private bodybuilder() {
-    return this.mainForm.value;
+  private bodybuilder(): RegisterPayload {
+    const { name, email, password } = this.mainForm.getRawValue();
+
+    return { name: name.trim(), email: email.trim(), password };
   }
 }

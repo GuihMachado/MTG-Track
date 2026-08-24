@@ -109,33 +109,8 @@
 }
 
 /* Raridade: comum e incomum em cinza, rara e mítica em ouro (a mítica com fio). */
-.rarity {
-  padding: 2px 7px;
-  border-radius: 5px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.14);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--foreground-muted);
-}
-
-.rarity.uncommon {
-  color: var(--color-ink-200);
-}
-
-.rarity.rare {
-  background: transparent;
-  color: var(--accent);
-}
-
-.rarity.mythic {
-  background: transparent;
-  border-color: rgb(var(--accent-rgb) / 0.45);
-  color: var(--accent);
-}
+/* O chip de raridade virou classe compartilhada em styles.css: a folha de
+   adicionar carta usa o mesmo. */
 
 /* Trilho do seletor de idioma. */
 .lang-track {

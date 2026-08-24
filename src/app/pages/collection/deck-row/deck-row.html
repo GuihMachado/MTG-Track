@@ -1,0 +1,41 @@
+<button type="button" class="deck" [class.tinted]="rgb() !== null" [style.--mana-rgb]="rgb()"
+        (click)="open.emit(deck().id)">
+  <span class="blob" aria-hidden="true"></span>
+
+  @if (deck().commanderArtUrl; as art) {
+    <img class="art" [src]="art" alt="" loading="lazy" decoding="async" />
+  } @else {
+    <span class="art art-empty" aria-hidden="true"></span>
+  }
+
+  <span class="relative min-w-0 flex-1">
+    <span class="flex items-start gap-2">
+      <span class="min-w-0 flex-1 truncate text-left text-[15px] font-semibold">
+        {{ deck().name }}
+      </span>
+      @if (symbols()) {
+        <span class="flex flex-none gap-1 text-[13px]" [innerHTML]="symbols() | manaSymbol"></span>
+      }
+    </span>
+
+    <!-- A barra é o elemento principal do cartão. A cor não é a única
+         portadora do estado: o `87/100` está sempre visível ao lado. -->
+    <span class="mt-2 flex items-center gap-2.5" role="progressbar"
+          [attr.aria-valuenow]="deck().ownedCards" aria-valuemin="0"
+          [attr.aria-valuemax]="deck().totalCards"
+          [attr.aria-label]="deck().ownedCards + ' de ' + deck().totalCards + ' cartas na sua coleção'">
+      <span class="track">
+        <span class="fill" [class.glow]="progress().glow"
+              [style.width.%]="progress().percent"
+              [style.background]="progress().color"></span>
+      </span>
+      <span class="flex-none font-data text-[11px] font-bold" [style.color]="progress().color">
+        {{ deck().ownedCards }}/{{ deck().totalCards }}
+      </span>
+    </span>
+
+    <span class="mt-2 block text-left font-data text-[10.5px] text-foreground-subtle">
+      {{ context() }}
+    </span>
+  </span>
+</button>

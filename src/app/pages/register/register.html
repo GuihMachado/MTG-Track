@@ -1,43 +1,153 @@
-<div class="flex justify-center items-center h-screen px-4">
-	<section class="w-full max-w-sm" hlmCard>
-		<div hlmCardHeader>
-			<div class="flex items-center gap-2">
-				<app-back-button fallbackRoute="/" label="Voltar para o login" />
-				<h3 hlmCardTitle class="title-section flex-1 text-center">Cadastro</h3>
-				<span class="size-9 shrink-0"></span>
-			</div>
-			<p hlmCardDescription>Digite seus dados abaixo para fazer o seu cadastro!</p>
-		</div>
+<div class="entry">
+  <div class="brand-halo" aria-hidden="true"></div>
 
-		<div hlmCardContent>
-			<form [formGroup]="mainForm">
-				<div class="flex flex-col gap-6">
-					<div class="grid gap-2">
-						<label hlmLabel for="name">Nome</label>
-						<input type="text" id="name" formControlName="name" placeholder="Seu nome" required hlmInput />
-					</div>
+  <!-- ── Saída: nas telas de fluxo o voltar é o único ponto de saída ── -->
+  <div class="relative flex h-[58px] items-center px-4">
+    <app-back-button fallbackRoute="/" label="Voltar para o login" />
+  </div>
 
-					<div class="grid gap-2">
-						<label hlmLabel for="email">Email</label>
-						<input type="email" id="email" formControlName="email" placeholder="m@exemplo.com" required hlmInput />
-					</div>
+  <!-- ── Marca em linha: o ícone cede o palco ao título ──────────── -->
+  <header class="relative flex items-center gap-4 px-6 pt-3.5">
+    <img
+      class="brand-icon size-[60px] shrink-0 rounded-2xl object-cover"
+      src="icons/icon-192x192.png"
+      alt="" />
+    <div>
+      <h1 class="text-[26px] leading-[1.1] font-bold tracking-[-0.02em]">Criar conta</h1>
+      <p class="mt-[5px] text-[13.5px] leading-[1.5] text-foreground-muted">
+        Depois disso, é só chamar a mesa.
+      </p>
+    </div>
+  </header>
 
-					<div class="grid gap-2">
-						<div class="flex items-center">
-							<label hlmLabel for="password">Senha</label>
-						</div>
-						<input type="password" id="password" formControlName="password" hlmInput />
-					</div>
-				</div>
-			</form>
-		</div>
+  <!-- ── Campos: o poço afunda, o botão levita ──────────────────── -->
+  <!-- <label> sem hlmLabel de propósito: a diretiva traz text-sm, que empata
+       com o label-caps na camada de utilitários e vence por ordem de emissão. -->
+  <form class="relative flex flex-1 flex-col" [formGroup]="mainForm" (ngSubmit)="signUp()">
+    <div class="flex flex-col gap-3.5 px-6 pt-[30px]">
+      <div>
+        <label class="label-caps mb-[7px] block" for="name">Nome na mesa</label>
+        <div class="field-well" [class.invalid]="!!nameError()">
+          <ng-icon hlm size="17px" class="field-icon" name="lucideUser" aria-hidden="true" />
+          <input
+            class="field-input"
+            id="name"
+            type="text"
+            autocomplete="nickname"
+            placeholder="Machadao"
+            formControlName="name"
+            [attr.aria-invalid]="!!nameError()"
+            [attr.aria-describedby]="nameError() ? 'name-error' : 'name-help'" />
+        </div>
+        @if (nameError(); as message) {
+          <p id="name-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+            {{ message }}
+          </p>
+        } @else {
+          <!-- Dizer isso na hora do cadastro evita gente se registrando como "asdf". -->
+          <p id="name-help" class="mx-0.5 mt-[7px] text-[12px] leading-[1.45] text-faint">
+            É esse nome que aparece no assento e no ranking.
+          </p>
+        }
+      </div>
 
-		<div hlmCardFooter class="flex-col gap-2">
-			<button hlmBtn type="button" class="w-full" [disabled]="loading()" (click)="signUp()">
-				{{ loading() ? 'Cadastrando...' : 'Cadastrar-se' }}
-			</button>
-			<p class="text-sm text-foreground-muted">ou</p>
-			<button [routerLink]="['']" hlmBtn variant="secondary" class="w-full">Faça seu login</button>
-		</div>
-	</section>
+      <div>
+        <label class="label-caps mb-[7px] block" for="email">E-mail</label>
+        <div class="field-well" [class.invalid]="!!emailError()">
+          <ng-icon hlm size="17px" class="field-icon" name="lucideMail" aria-hidden="true" />
+          <input
+            class="field-input"
+            id="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="voce@exemplo.com"
+            formControlName="email"
+            [attr.aria-invalid]="!!emailError()"
+            [attr.aria-describedby]="emailError() ? 'email-error' : null" />
+        </div>
+        @if (emailError(); as message) {
+          <p id="email-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+            {{ message }}
+          </p>
+        }
+      </div>
+
+      <div>
+        <label class="label-caps mb-[7px] block" for="password">Senha</label>
+        <div class="field-well" [class.invalid]="!!passwordError()">
+          <ng-icon hlm size="17px" class="field-icon" name="lucideLock" aria-hidden="true" />
+          <input
+            class="field-input"
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="new-password"
+            formControlName="password"
+            [attr.aria-invalid]="!!passwordError()"
+            [attr.aria-describedby]="passwordError() ? 'password-error' : 'password-meter'" />
+          <button
+            class="field-eye"
+            type="button"
+            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+            [attr.aria-pressed]="showPassword()"
+            (click)="togglePassword()">
+            <ng-icon
+              hlm
+              size="18px"
+              [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'"
+              aria-hidden="true" />
+          </button>
+        </div>
+
+        @if (passwordError(); as message) {
+          <p id="password-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+            {{ message }}
+          </p>
+        } @else {
+          <!-- Régua de senha: os segmentos são decoração, quem o leitor de tela
+               anuncia é o texto ao lado. -->
+          <div class="mt-[9px] flex items-center gap-2.5">
+            <div class="flex flex-1 gap-1" aria-hidden="true">
+              @for (segment of METER_SEGMENTS; track segment) {
+                <span
+                  class="meter-seg"
+                  [class.on]="strength().filled >= segment"
+                  [class.weak]="!strength().valid"></span>
+              }
+            </div>
+            <span
+              id="password-meter"
+              class="font-data text-[10.5px]"
+              role="status"
+              aria-live="polite"
+              [class.text-faint]="strength().level === 'empty'"
+              [class.text-danger]="strength().level === 'short'"
+              [class.text-success]="strength().valid">
+              {{ strength().text }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Rodapé: uma tela, um botão — o resto é link ─────────────── -->
+    <footer class="mt-auto flex flex-col gap-4 px-6 pt-10 pb-[26px]">
+      <button
+        class="btn-primary flex h-[54px] items-center justify-center gap-2.5 rounded-full text-base font-semibold"
+        type="submit"
+        [disabled]="loading()">
+        @if (loading()) {
+          <!-- Sob prefers-reduced-motion o giro para: o texto sozinho basta. -->
+          <hlm-spinner class="text-[18px] motion-reduce:hidden" aria-label="Cadastrando" />
+          Cadastrando…
+        } @else {
+          Criar conta
+        }
+      </button>
+      <p class="text-center text-[13.5px] text-foreground-subtle">
+        Já tem conta?
+        <a class="font-semibold text-primary-text" [routerLink]="['']">Entrar</a>
+      </p>
+    </footer>
+  </form>
 </div>

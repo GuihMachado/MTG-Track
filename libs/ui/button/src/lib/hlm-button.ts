@@ -10,12 +10,13 @@ export const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				// Levitação: a ação principal é vidro branco, não retângulo roxo — a mesma
-				// peça da pílula "Nova partida" da home, em tamanho de linha. Sólidos
-				// flutuam (sobem no hover, afundam no clique);
+				// Levitação: a ação principal é a pílula escura, não retângulo roxo nem
+				// vidro branco — a mesma tinta da CTA de rodapé, em tamanho de linha.
+				// Sólidos flutuam (sobem no hover, afundam no clique);
 				// ghost e link seguem chapados, porque são ação secundária.
-				default:
-					'btn-glass shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
+				// Sem `shadow-elev-*` aqui: utilitário do Tailwind entra sem camada e
+				// venceria a sombra que a própria .btn-primary desenha.
+				default: 'btn-primary hover:-translate-y-px active:translate-y-0',
 				destructive:
 					'bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white shadow-elev-1 hover:shadow-elev-2 hover:-translate-y-px active:translate-y-0 active:shadow-elev-1',
 				// Grimório: o hover é neutro (surface-3), nunca o ouro. O padrão do

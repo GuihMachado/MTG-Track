@@ -12,6 +12,9 @@ import { Ranking } from './pages/ranking/ranking';
 import { Proxies } from './pages/proxies/proxies';
 import { Rules } from './pages/house-rules/house-rules';
 import { Profile } from './pages/profile/profile';
+import { Collection } from './pages/collection/collection';
+import { CollectionImport } from './pages/collection/import/import';
+import { DeckDetail } from './pages/decks/deck-detail/deck-detail';
 
 const authGuard: CanActivateFn = () => {
     const router = inject(Router);
@@ -95,6 +98,21 @@ export const routes: Routes = [
     {
         path: 'profile',
         component: Profile,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'colecao',
+        component: Collection,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'colecao/importar',
+        component: CollectionImport,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'decks/:id',
+        component: DeckDetail,
         canActivate: [authGuard]
     }
 ];

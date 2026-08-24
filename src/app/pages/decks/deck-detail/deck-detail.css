@@ -1,0 +1,220 @@
+/* Deck: a arte do commander é o herói, e a tela desce dela para a pergunta
+   ("quanto falta") e para a ação ("proxiar o que falta"). */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: var(--background);
+}
+
+.hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.hero-veil {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 260px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 5, 11, 0.68) 0%,
+    rgba(6, 5, 11, 0.2) 32%,
+    rgba(6, 5, 11, 0.95) 86%,
+    var(--background) 100%
+  );
+}
+
+:root.light .hero-veil {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.25) 32%,
+    rgba(250, 248, 255, 0.95) 86%,
+    var(--background) 100%
+  );
+}
+
+/* Sobre a arte, o botão é de vidro: placa sólida aqui apagaria a imagem. */
+.glass-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--foreground);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+:root.light .glass-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(23, 19, 31, 0.14);
+}
+
+.glass-btn:active {
+  filter: brightness(1.2);
+}
+
+.glass-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Progresso ─────────────────────────────────────────────── */
+.progress {
+  padding: 14px;
+  border-radius: 18px;
+}
+
+/* Gótico no numeral do que se tem: é o troféu da tela. */
+.owned {
+  font-family: var(--font-numeral);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 300ms ease-out;
+}
+
+.fill.glow {
+  box-shadow: 0 0 12px currentColor;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.chevron {
+  transition: rotate 150ms ease-out;
+}
+
+.chevron.open {
+  rotate: 180deg;
+}
+
+/* ─── Linhas ────────────────────────────────────────────────── */
+/* A linha do que falta é tingida de vermelho na origem do gradiente: o problema
+   entra pela esquerda, junto da quantidade. */
+.missing-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background-image: linear-gradient(
+    90deg,
+    rgb(var(--danger-rgb) / 0.11),
+    color-mix(in oklab, var(--foreground) 2.8%, transparent) 60%
+  );
+  border: 1px solid rgb(var(--danger-rgb) / 0.24);
+}
+
+.print-one {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.print-one:active {
+  filter: brightness(1.2);
+}
+
+.print-one:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.more {
+  margin-top: 10px;
+  background: none;
+  border: 0;
+  padding: 4px 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.owned-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--foreground) 2.5%, transparent);
+  border: 1px solid var(--hairline);
+}
+
+/* ─── Carregando ────────────────────────────────────────────── */
+.skeleton {
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  animation: halo 1.6s ease-in-out infinite;
+}
+
+.hero-skeleton {
+  height: 150px;
+  border-radius: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .chevron {
+    transition: none;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+}

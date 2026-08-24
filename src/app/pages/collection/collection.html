@@ -1,0 +1,227 @@
+<div class="page" [class.grid-mode]="view() === 'grid' && tab() === 'cards'">
+  <!-- Halo do topo: dourado na lista (o valor é o assunto), roxo na grade e
+       ciano nos decks — a luz diz em que modo a tela está. -->
+  <div class="halo" aria-hidden="true"></div>
+
+  <div class="container-page relative flex min-h-0 flex-1 flex-col pt-3">
+    <!-- Cabeçalho próprio: esta tela não usa o header do app. -->
+    <header class="flex flex-none items-center gap-3">
+      <app-back-button fallbackRoute="/dashboard" />
+      <h1 class="flex-1 text-[22px] font-semibold tracking-[-0.01em]">Coleção</h1>
+
+      <button type="button" class="plate-btn" (click)="goToImport('collection')"
+              aria-label="Importar lista">
+        <ng-icon hlm name="lucideDownload" class="!size-[17px] text-foreground-muted" />
+      </button>
+
+      <button type="button" class="plate-btn" [hlmDropdownMenuTrigger]="sortMenu" align="end"
+              aria-label="Ordenar a coleção">
+        <ng-icon hlm name="lucideArrowUpDown" class="!size-[17px] text-foreground-muted" />
+      </button>
+    </header>
+
+    @if (tab() === 'cards') {
+      <!-- Painel de resumo: cartas à esquerda, valor à direita. -->
+      <div class="mt-3.5 flex flex-none gap-2.5">
+        <div class="summary plate">
+          <span class="label-caps">Cartas</span>
+          <span class="mt-1 block text-[26px] font-bold leading-none">{{ totalCards() }}</span>
+          <span class="mt-1.5 block font-data text-[11px] text-foreground-subtle">
+            {{ uniqueCards() }} únicas
+          </span>
+        </div>
+
+        <div class="summary plate value">
+          <span class="value-blob" aria-hidden="true"></span>
+          <span class="label-caps relative">Valor</span>
+          <span class="relative mt-1 block leading-none">
+            <span class="font-data text-[13px] text-[#9A8C6A]">US$</span>
+            <span class="value-number">{{ totalValue() }}</span>
+          </span>
+          <span class="relative mt-1.5 block truncate font-data text-[11px] text-foreground-subtle">
+            {{ mostValuable() }}
+          </span>
+        </div>
+      </div>
+
+      @if (summary().withoutPrice > 0) {
+        <p class="mt-1.5 flex-none font-data text-[10px] text-faint">
+          {{ summary().withoutPrice }} carta{{ summary().withoutPrice > 1 ? 's' : '' }} sem preço,
+          fora do total
+        </p>
+      }
+    }
+
+    <!-- Abas -->
+    <div class="segmented mt-3.5 flex-none">
+      <button type="button" class="segmented-tab" [class.on]="tab() === 'cards'"
+              (click)="setTab('cards')">
+        Cartas
+        @if (summary().uniqueCards > 0) {
+          <span class="font-data text-[11px] text-faint">{{ summary().uniqueCards }}</span>
+        }
+      </button>
+      <button type="button" class="segmented-tab" [class.on]="tab() === 'decks'"
+              (click)="setTab('decks')">
+        Decks
+        @if (decks().length > 0) {
+          <span class="font-data text-[11px] text-faint">{{ decks().length }}</span>
+        }
+      </button>
+    </div>
+
+    @if (tab() === 'cards') {
+      <!-- Busca local: casa nome impresso e nome em inglês, sem acento nem
+           caixa, e sem ida à rede. -->
+      <div class="mt-3 flex flex-none items-center gap-2">
+        <label class="well flex-1">
+          <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
+          <input class="well-input" type="search" autocomplete="off"
+                 placeholder="Buscar na coleção" [value]="query()"
+                 (input)="query.set($any($event.target).value)" aria-label="Buscar na coleção" />
+          @if (query()) {
+            <button type="button" class="clear" (click)="clearQuery()" aria-label="Limpar busca">
+              <ng-icon hlm name="lucideX" class="!size-[14px]" />
+            </button>
+          }
+        </label>
+
+        <button type="button" class="well-btn" [class.on]="activeFilters() > 0"
+                [attr.aria-pressed]="filtersOpen()" (click)="filtersOpen.set(!filtersOpen())"
+                aria-label="Filtrar a coleção">
+          <ng-icon hlm name="lucideSlidersHorizontal" class="!size-[17px]" />
+        </button>
+
+        <button type="button" class="well-btn" (click)="toggleView()"
+                [attr.aria-label]="view() === 'list' ? 'Ver em grade' : 'Ver em lista'">
+          <ng-icon hlm [name]="view() === 'list' ? 'lucideLayoutGrid' : 'lucideList'"
+                   class="!size-[17px]" />
+        </button>
+      </div>
+
+      @if (filtersOpen() || activeFilters() > 0) {
+        <div class="mt-2.5 flex flex-none flex-wrap gap-1.5">
+          @for (chip of chips; track chip.axis + chip.value) {
+            @if (filtersOpen() || isChipOn(chip)) {
+              <button type="button" class="chip-small" [class.on]="isChipOn(chip)"
+                      [attr.aria-pressed]="isChipOn(chip)" (click)="toggleChip(chip)">
+                {{ chip.label }}
+                @if (isChipOn(chip)) {
+                  <ng-icon hlm name="lucideX" class="!size-[11px]" />
+                }
+              </button>
+            }
+          }
+        </div>
+      }
+    }
+
+    <!-- Conteúdo -->
+    @if (tab() === 'cards') {
+      @if (loading() && entries().length === 0) {
+        <div class="mt-3 flex flex-col gap-2">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="skeleton-row"></div>
+          }
+        </div>
+      } @else if (emptyReason(); as reason) {
+        <div class="empty plate mt-4">
+          <ng-icon hlm name="lucideLibraryBig" class="!size-7 text-faint" />
+
+          @switch (reason) {
+            @case ('query') {
+              <p class="mt-3 text-base font-semibold">Nenhuma carta com esse nome</p>
+              <p class="mt-1 text-[13.5px] text-foreground-muted">
+                Ela pode não estar na sua coleção ainda.
+              </p>
+              <button type="button" class="btn-primary pill mt-4" (click)="searchOnScryfall()">
+                Buscar na Scryfall
+              </button>
+            }
+            @case ('filters') {
+              <p class="mt-3 text-base font-semibold">Nenhuma carta com esses filtros</p>
+              <button type="button" class="link mt-3" (click)="clearFilters()">
+                Limpar filtros
+              </button>
+            }
+            @default {
+              <p class="mt-3 text-base font-semibold">Sua coleção está vazia</p>
+              <p class="mt-1 text-[13.5px] text-foreground-muted">
+                Adicione carta por carta ou importe uma lista.
+              </p>
+              <button type="button" class="btn-primary pill mt-4" (click)="openAdd()">
+                Adicionar carta
+              </button>
+              <button type="button" class="link mt-3" (click)="goToImport('collection')">
+                Importar lista
+              </button>
+            }
+          }
+        </div>
+      } @else if (view() === 'list') {
+        <!-- Virtual scroll desde o começo: 412 linhas com sombra de 26px de
+             desfoque é o cenário que engasga celular antigo. -->
+        <cdk-virtual-scroll-viewport [itemSize]="rowSize" class="viewport mt-3">
+          <app-entry-row *cdkVirtualFor="let entry of visible(); trackBy: trackById"
+                         class="row-slot" [entry]="entry" (edit)="openEdit($event)" />
+        </cdk-virtual-scroll-viewport>
+      } @else {
+        <div class="viewport tiles mt-3">
+          @for (entry of visible(); track entry.id) {
+            <app-entry-tile [entry]="entry" (edit)="openEdit($event)" />
+          }
+        </div>
+      }
+    } @else {
+      @if (loadingDecks() && decks().length === 0) {
+        <div class="mt-3 flex flex-col gap-2.5">
+          @for (i of [1, 2, 3]; track i) {
+            <div class="skeleton-deck"></div>
+          }
+        </div>
+      } @else {
+        <div class="viewport decks mt-3">
+          @for (deck of decks(); track deck.id) {
+            <app-deck-row class="rise-stagger" [deck]="deck" (open)="openDeck($event)" />
+          }
+
+          <button type="button" class="new-deck" (click)="goToImport('deck')">
+            <ng-icon hlm name="lucideCirclePlus" class="!size-4" />
+            Novo deck
+          </button>
+
+          @if (decks().length === 0) {
+            <p class="mt-1 text-center font-data text-[10.5px] text-faint">
+              ou importe do Archidekt, Deckstats ou TappedOut
+            </p>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  @if (tab() === 'cards' && entries().length > 0) {
+    <button type="button" class="cta-pill" (click)="openAdd()">
+      <ng-icon hlm name="lucidePlus" class="!size-[18px]" />
+      Adicionar carta
+    </button>
+  }
+</div>
+
+<ng-template #sortMenu>
+  <div hlmDropdownMenu class="w-56">
+    @for (option of sortOptions; track option) {
+      <button hlmDropdownMenuItem (click)="setSort(option)">
+        {{ sortLabels[option] }}
+        @if (sort() === option) {
+          <span class="ml-auto font-data text-[10px] text-accent">agora</span>
+        }
+      </button>
+    }
+  </div>
+</ng-template>
+
+@if (sheet()) {
+  <app-add-card [editing]="editingEntry()" (closed)="closeSheet()"
+                (changed)="onCollectionChanged()" />
+}

@@ -46,6 +46,15 @@
             <ng-icon hlm size="sm" [name]="theme.theme() === 'dark' ? 'lucideSun' : 'lucideMoon'" />
             {{ theme.theme() === 'dark' ? 'Modo Light' : 'Modo Dark' }}
         </button>
+
+        <!-- Separado do resto: sair é a única ação daqui que não dá para desfazer
+             com outro toque. Com mesa aberta, ainda pergunta antes. -->
+        <hlm-dropdown-menu-separator />
+
+        <button hlmDropdownMenuItem variant="destructive" (click)="session.confirmSignOut()">
+            <ng-icon hlm size="sm" name="lucideLogOut" />
+            Sair
+        </button>
     </div>
 </ng-template>
 

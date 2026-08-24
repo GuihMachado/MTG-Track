@@ -115,6 +115,9 @@
      folhas de componente também os usam. */
   --animate-floaty: floaty 6s ease-in-out infinite;
   --animate-halo: halo 3.4s ease-in-out infinite;
+  /* A luz de fundo do login respira mais devagar que o halo do hub: ela é o
+     fundo da tela, não um objeto tocável. */
+  --animate-halo-slow: halo 5s ease-in-out infinite;
   --animate-pip: pip 1.8s ease-in-out infinite;
 }
 
@@ -139,6 +142,7 @@
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
   --color-skeleton: var(--skeleton);
+  --color-price-strong: var(--price-strong);
   --color-hairline: var(--hairline);
   --color-hairline-strong: var(--hairline-strong);
   --color-glass: var(--glass);
@@ -259,6 +263,10 @@
   --warning: #F5B454;
   --danger: #FF6B85;
   --info: #5FC8F5;
+  /* Valor de troféu da coleção (painel de valor, preço alto, quantidade de
+     sobra). Mais claro que o ouro de acento porque é numeral grande sobre placa
+     escura — o --accent a 26px some. */
+  --price-strong: #F2DCA8;
   --success-bg: color-mix(in oklab, var(--success) 12%, transparent);
   --warning-bg: color-mix(in oklab, var(--warning) 12%, transparent);
   --danger-bg: color-mix(in oklab, var(--danger) 12%, transparent);
@@ -285,6 +293,24 @@
   --elev-float: 0 22px 38px -14px rgba(124, 92, 255, 0.9), 0 10px 20px -10px rgba(0, 0, 0, 0.9),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   --glow: 0 0 0 1px rgba(124, 92, 255, 0.25), 0 8px 32px rgba(110, 79, 240, 0.2);
+
+  /* Botão primário (handoff de login/cadastro): pílula escura, não roxa nem em
+     vidro. São tokens e não uma classe só porque duas peças usam a mesma
+     tinta — `.btn-primary` (botão de linha) e `.cta-pill` (ação de tela
+     cheia) — e o tema claro precisa trocar as duas de uma vez.
+     O contorno escuro (`0 0 0 1px`) é o que separa a pílula do fundo quando
+     ela cai sobre outra placa; o fio de luz no topo é o que a levanta. */
+  --btn-primary-bg: linear-gradient(180deg, #1e1b29, #121019);
+  --btn-primary-bg-hover: linear-gradient(180deg, #262233, #171420);
+  --btn-primary-bg-off: linear-gradient(180deg, #17151f, #0f0d16);
+  --btn-primary-border: rgba(255, 255, 255, 0.12);
+  --btn-primary-border-off: rgba(255, 255, 255, 0.08);
+  --btn-primary-fg: #edeaf5;
+  --btn-primary-fg-off: rgba(255, 255, 255, 0.8);
+  --btn-primary-shadow: 0 18px 30px -10px rgba(0, 0, 0, 0.95), 0 6px 14px -4px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --btn-primary-shadow-off: 0 12px 24px -14px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   /* Consumidos fora do CSS (chart.js) — cores planas, sem color-mix */
   --chart-win: #34D39E;
@@ -358,6 +384,8 @@
   --warning: #9A6413;
   --danger: #C4123B;
   --info: #0E6F98;
+  /* No papel o ouro claro é invisível: o troféu vira o ouro escuro. */
+  --price-strong: var(--color-gold-700);
   --success-bg: color-mix(in oklab, var(--success) 9%, transparent);
   --warning-bg: color-mix(in oklab, var(--warning) 10%, transparent);
   --danger-bg: color-mix(in oklab, var(--danger) 8%, transparent);
@@ -379,6 +407,20 @@
   --elev-float: 0 18px 30px -14px rgba(91, 58, 209, 0.5), 0 6px 14px -8px rgba(23, 19, 31, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   --glow: 0 0 0 1px rgba(91, 58, 209, 0.18), 0 8px 28px rgba(91, 58, 209, 0.1);
+
+  /* No papel a pílula escura continua escura: é a única forma de a ação
+     principal se ler sobre uma folha branca. O que muda é a sombra, que deixa
+     de ser um poço preto e vira sombra de contato. */
+  --btn-primary-bg: linear-gradient(180deg, #2a2438, #16131f);
+  --btn-primary-bg-hover: linear-gradient(180deg, #352d47, #201b2c);
+  --btn-primary-bg-off: linear-gradient(180deg, #6d6780, #514c63);
+  --btn-primary-border: rgba(255, 255, 255, 0.14);
+  --btn-primary-border-off: rgba(255, 255, 255, 0.1);
+  --btn-primary-fg: #f6f4fb;
+  --btn-primary-fg-off: rgba(255, 255, 255, 0.85);
+  --btn-primary-shadow: 0 14px 24px -12px rgba(23, 19, 31, 0.55),
+    0 4px 10px -4px rgba(23, 19, 31, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --btn-primary-shadow-off: 0 6px 14px -10px rgba(23, 19, 31, 0.4);
 
   --chart-win: #0E7454;
   --chart-loss: #E4E0EE;
@@ -442,13 +484,127 @@
   scrollbar-width: none;
 }
 
+/* ─── Toast (ngx-sonner) ──────────────────────────────────────────
+   Duas camadas de erro que não competem: validação vive no campo, resposta da
+   API vive aqui. Este bloco é o "aqui" vestido de placa do sistema.
+
+   Nada disso pode entrar em @layer: o ngx-sonner injeta a própria folha sem
+   camada, e regra sem camada vence qualquer @layer. Por isso as regras abaixo
+   sobem a especificidade com `body` em vez de morar em @layer components. */
+
 /* O ngx-sonner fixa top:20px em telas de até 600px e ignora o offset, o que joga
    o toast por cima do header fixo (h-14). O seletor extra sobe a especificidade
    para vencer o estilo que o próprio componente injeta. */
 @media (max-width: 600px) {
-  body [data-sonner-toaster][data-y-position="top"] {
+  body:has(app-header) [data-sonner-toaster][data-y-position='top'] {
     top: 4.5rem;
   }
+
+  /* Login, cadastro, mesa e nova partida não têm header: o toast sobe para a
+     borda da tela em vez de flutuar num vão de 72px. */
+  body:not(:has(app-header)) [data-sonner-toaster][data-y-position='top'] {
+    top: 1.125rem;
+  }
+
+  /* O gutter do toast é o gutter da tela de entrada (20px), não os 16px do
+     componente — a largura do toast é fixada em código, então os dois valores
+     mudam juntos. */
+  body [data-sonner-toaster] {
+    --mobile-offset: 20px;
+  }
+
+  body [data-sonner-toaster] [data-sonner-toast] {
+    width: calc(100% - 40px);
+  }
+}
+
+/* Geometria e tipografia valem para os dois temas. O `[data-styled=true]` não é
+   enfeite: é o seletor que o ngx-sonner usa para o padding/raio/sombra dele, e
+   sem ele a nossa regra perde a conta de especificidade. */
+body [data-sonner-toast][data-styled='true'] {
+  gap: 11px;
+  padding: 13px 15px;
+  border-radius: 16px;
+  box-shadow: 0 20px 38px -18px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+body [data-sonner-toast] [data-title] {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+body [data-sonner-toast] [data-description] {
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+body [data-sonner-toast] [data-close-button] {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* A tinta de cada estado só troca no tema escuro: no papel as cores próprias do
+   sonner (cartão claro tingido) já se leem, e uma placa escura ali seria um
+   buraco na folha. O título fica claro, a descrição rebaixa e o ícone é o
+   único lugar onde a cor do estado aparece cheia. */
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='error'] {
+  background: linear-gradient(180deg, #26161c, #1a1017);
+  border-color: rgba(255, 107, 133, 0.42);
+  color: #ffd3db;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='success'] {
+  background: linear-gradient(180deg, #12241e, #0e1a16);
+  border-color: rgba(52, 211, 158, 0.38);
+  color: #cff7e7;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='warning'] {
+  background: linear-gradient(180deg, #262016, #1a1610);
+  border-color: rgba(245, 180, 84, 0.38);
+  color: #fce7c4;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='info'] {
+  background: linear-gradient(180deg, #14202a, #0f181f);
+  border-color: rgba(95, 200, 245, 0.38);
+  color: #d2ecfa;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='error'] [data-description] {
+  color: #b99aa4;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='success'] [data-description] {
+  color: #97b7ac;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='warning'] [data-description] {
+  color: #b9a98a;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='info'] [data-description] {
+  color: #93a9b6;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='error'] [data-icon] {
+  color: #ff6b85;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='success'] [data-icon] {
+  color: #34d39e;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='warning'] [data-icon] {
+  color: #f5b454;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast][data-type='info'] [data-icon] {
+  color: #5fc8f5;
+}
+
+body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast] [data-close-button] {
+  color: #8a6f78;
 }
 
 
@@ -571,6 +727,7 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-floaty,
   .animate-halo,
+  .animate-halo-slow,
   .animate-pip {
     animation: none;
   }
@@ -686,29 +843,37 @@
     outline-offset: -2px;
   }
 
-  /* Ação principal em linha: o mesmo vidro da pílula, em tamanho de botão.
-     Existe como classe (e não como utilitário de cor) porque precisa virar
-     tinta escura no papel — 8% de branco sobre papel não é nada. */
-  .btn-glass {
-    background: rgba(255, 255, 255, 0.09);
-    border: 1px solid var(--hairline-strong);
-    color: var(--foreground);
+  /* Ação principal em linha: a pílula escura do handoff de login, em tamanho de
+     botão. Existe como classe (e não como utilitário de cor) porque precisa
+     trocar de tinta no papel e porque o estado desligado muda quatro
+     propriedades de uma vez.
+     A sombra vive aqui e NÃO como `shadow-elev-*` no variant do hlmBtn:
+     utilitário do Tailwind entra sem camada e venceria esta regra. */
+  .btn-primary {
+    background-image: var(--btn-primary-bg);
+    border: 1px solid var(--btn-primary-border);
+    color: var(--btn-primary-fg);
+    box-shadow: var(--btn-primary-shadow);
   }
 
-  .btn-glass:hover {
-    background: rgba(255, 255, 255, 0.15);
+  .btn-primary:hover:not(:disabled) {
+    background-image: var(--btn-primary-bg-hover);
   }
 
-  :root.light .btn-glass {
-    background: rgba(23, 19, 31, 0.06);
+  .btn-primary:disabled,
+  .btn-primary[aria-busy='true'] {
+    background-image: var(--btn-primary-bg-off);
+    border-color: var(--btn-primary-border-off);
+    color: var(--btn-primary-fg-off);
+    box-shadow: var(--btn-primary-shadow-off);
+    animation: none;
   }
 
-  :root.light .btn-glass:hover {
-    background: rgba(23, 19, 31, 0.11);
-  }
-
-  /* Ação principal de tela cheia: a pílula em vidro da home. É a mesma peça em
-     "Nova partida" e em "Começar partida" — duas telas, um só gesto. */
+  /* Ação principal de tela cheia: a mesma pílula, fixa no rodapé. É a mesma
+     peça em "Nova partida" e em "Começar partida" — duas telas, um só gesto.
+     Levita de verdade (`floaty`) porque é o único elemento solto no rodapé.
+     `scale` e não `transform` no :active: o toque precisa conviver com a
+     flutuação, e animação de `transform` venceria a declaração do :active. */
   .cta-pill {
     position: fixed;
     left: 1rem;
@@ -720,36 +885,36 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border: 1px solid var(--hairline-strong);
+    border: 1px solid var(--btn-primary-border);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
-    color: var(--foreground);
+    background-image: var(--btn-primary-bg);
+    color: var(--btn-primary-fg);
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 18px 34px -16px rgba(0, 0, 0, 0.9);
-    transition: transform 120ms ease-out, background-color 150ms ease-out;
+    box-shadow: var(--btn-primary-shadow);
+    animation: floaty 6s ease-in-out infinite;
+    will-change: transform;
+    transition: scale 120ms ease-out, background-color 150ms ease-out;
   }
 
   .cta-pill:active {
-    transform: scale(0.99);
-    background: rgba(255, 255, 255, 0.12);
+    scale: 0.99;
+    background-image: var(--btn-primary-bg-hover);
   }
 
   .cta-pill:disabled {
-    opacity: 0.45;
-    box-shadow: none;
+    background-image: var(--btn-primary-bg-off);
+    border-color: var(--btn-primary-border-off);
+    color: var(--btn-primary-fg-off);
+    box-shadow: var(--btn-primary-shadow-off);
+    animation: none;
     cursor: not-allowed;
   }
 
   .cta-pill:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-  }
-
-  :root.light .cta-pill {
-    background: rgba(255, 255, 255, 0.75);
   }
 
   @media (min-width: 640px) {
@@ -763,12 +928,327 @@
 
   @media (prefers-reduced-motion: reduce) {
     .cta-pill {
+      animation: none;
       transition: none;
+      will-change: auto;
     }
 
     .cta-pill:active {
-      transform: none;
+      scale: 1;
     }
+  }
+
+  /* ─── Poço de campo (login, cadastro) ─────────────────────────
+     O campo afunda e o botão levita: é o par que dá a hierarquia das telas de
+     entrada. Classe de componente porque tem três estados (repouso, foco,
+     inválido) e porque o mesmo poço serve e-mail, senha e nome.
+     Tudo — altura, raio, fundo, sombra — mora aqui: utilitário de fundo ou de
+     sombra no template venceria esta camada e desmancharia o estado. */
+  .field-well {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    height: 50px;
+    padding-inline: 14px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--foreground) 3%, transparent);
+    border: 1px solid var(--input);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out,
+      background-color 150ms ease-out;
+  }
+
+  .field-well:focus-within {
+    border-color: var(--color-arcane-500);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Ícone do campo. Pintamos `--ng-icon__color` e não `color`: o próprio
+     ng-icon traz `:host { color: var(--ng-icon__color, currentColor) }`, que é
+     estilo de componente e entra SEM camada — e regra sem camada vence qualquer
+     @layer, por mais específica que a nossa seja. Escrever na variável que ele
+     lê é o único jeito de mandar na cor daqui. */
+  .field-well .field-icon {
+    --ng-icon__color: var(--text-faint);
+  }
+
+  /* O roxo continua existindo, só não em botão: o anel de foco é dele. */
+  .field-well:focus-within .field-icon {
+    --ng-icon__color: var(--color-arcane-300);
+  }
+
+  .field-well.invalid {
+    background: color-mix(in oklab, var(--danger) 5%, transparent);
+    border-color: color-mix(in oklab, var(--danger) 55%, transparent);
+  }
+
+  .field-well.invalid .field-icon {
+    --ng-icon__color: var(--danger);
+  }
+
+  .field-icon {
+    flex: none;
+    transition: color 150ms ease-out;
+  }
+
+  /* O input não tem pintura própria: quem desenha é o poço. */
+  .field-well .field-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--foreground);
+    font-size: 15px;
+  }
+
+  .field-well .field-input::placeholder {
+    color: var(--text-faint);
+  }
+
+  /* Senha mascarada em mono: o ponto sai do mesmo tamanho em qualquer
+     navegador. Volta a Inter 15px sozinho quando o olho troca o type. */
+  .field-well .field-input[type='password'] {
+    font-family: var(--font-mono);
+    font-size: 17px;
+    letter-spacing: 0.22em;
+  }
+
+  /* Alvo de 44px sem engordar a caixa: o padding sai para fora do poço. */
+  .field-eye {
+    flex: none;
+    display: grid;
+    place-items: center;
+    margin-inline: 0 -13px;
+    padding: 13px;
+    color: var(--foreground-subtle);
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+  }
+
+  .field-eye:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -4px;
+    border-radius: 10px;
+  }
+
+  /* Chip de raridade. Usado na tela de carta e na folha de adicionar da
+     coleção — a mesma carta, dois lugares, um só desenho. Comum e incomum são
+     neutros; raro e mítico ganham o ouro, e só o mítico ganha borda. */
+  .rarity {
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.14);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--foreground-muted);
+  }
+
+  .rarity.uncommon {
+    color: var(--color-ink-200);
+  }
+
+  .rarity.rare {
+    background: transparent;
+    color: var(--accent);
+  }
+
+  .rarity.mythic {
+    background: transparent;
+    border-color: rgb(var(--accent-rgb) / 0.45);
+    color: var(--accent);
+  }
+
+  /* ─── Coleção ─────────────────────────────────────────────────
+     Três peças aparecem em mais de uma tela (linha da lista, célula da grade,
+     folha de adicionar), então moram aqui em vez de em cada componente.
+
+     O gradiente iridescente de três paradas é o único do app: é a metáfora
+     física do foil, não decoração — e é por isso que ele não vira token de
+     cor, que seria convite a usá-lo em outro lugar. */
+  .foil-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 17px;
+    padding-inline: 6px;
+    border-radius: 999px;
+    background-image: linear-gradient(
+      110deg,
+      rgba(124, 92, 255, 0.3),
+      rgba(95, 200, 245, 0.3),
+      rgba(52, 211, 158, 0.3)
+    );
+    border: 1px solid var(--hairline-strong);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--foreground);
+  }
+
+  /* Na grade não cabe rótulo: o foil vira selo de canto, só com o ícone. */
+  .foil-square {
+    display: grid;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 5px;
+    opacity: 0.75;
+    background-image: linear-gradient(
+      110deg,
+      rgba(124, 92, 255, 1),
+      rgba(95, 200, 245, 1),
+      rgba(52, 211, 158, 1)
+    );
+    color: #ffffff;
+  }
+
+  /* Quantidade. O dourado a partir de duas cópias é a resposta rápida da
+     pergunta "eu tenho essa carta?": ouro quer dizer "tenho de sobra". */
+  .qty-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 22px;
+    padding-inline: 7px;
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--foreground) 7%, transparent);
+    border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--foreground);
+  }
+
+  .qty-badge.plenty {
+    background: var(--color-gold-300);
+    border-color: var(--color-gold-300);
+    color: #12100a;
+  }
+
+  /* Poço de campo em tamanho de linha (busca, seletor de edição, área de
+     colar). O `.field-well` do login tem 50px e serve a formulário de entrada;
+     este tem 42–46px e serve a controle dentro de tela cheia. */
+  .well {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 42px;
+    padding-inline: 12px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--foreground) 3%, transparent);
+    border: 1px solid var(--input);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+  }
+
+  .well:focus-within {
+    border-color: var(--color-arcane-500);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  .well .well-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--foreground);
+    font-size: 14.5px;
+  }
+
+  .well .well-input::placeholder {
+    color: var(--text-faint);
+  }
+
+  :root.light .well {
+    box-shadow: inset 0 1px 2px rgba(23, 19, 31, 0.12);
+  }
+
+  /* Botão quadrado ao lado de um poço (filtro, alternância, colar). Mesma
+     altura do poço, para a linha não desalinhar. */
+  .well-btn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--foreground) 3%, transparent);
+    border: 1px solid var(--input);
+    color: var(--foreground-muted);
+    cursor: pointer;
+    transition: color 150ms ease-out, background-color 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+
+  .well-btn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Ligado é o único lugar onde o roxo volta: filtro ativo não é ação, é
+     estado — e o handoff guardou o arcano justamente para isso. */
+  .well-btn.on {
+    background: rgba(124, 92, 255, 0.14);
+    border-color: rgba(124, 92, 255, 0.42);
+    color: var(--color-arcane-200);
+  }
+
+  /* Chip de filtro pequeno (30px), para caber em duas linhas de eixos sem
+     empurrar a lista para fora da tela. O `.chip-filter` de Partidas tem 38px
+     e é a faixa única daquela tela. */
+  .chip-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding-inline: 11px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--foreground) 3.5%, transparent);
+    border: 1px solid var(--input);
+    color: var(--foreground-muted);
+    font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 150ms ease-out, background-color 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+
+  .chip-small.on {
+    background: rgba(124, 92, 255, 0.16);
+    border-color: rgba(124, 92, 255, 0.45);
+    color: var(--color-arcane-200);
+    font-weight: 500;
+  }
+
+  .chip-small:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  :root.light .chip-small.on,
+  :root.light .well-btn.on {
+    background: rgba(91, 58, 209, 0.12);
+    border-color: rgba(91, 58, 209, 0.4);
+    color: var(--color-arcane-800);
+  }
+
+  :root.light .field-well {
+    box-shadow: inset 0 1px 2px rgba(23, 19, 31, 0.12);
+  }
+
+  :root.light .field-well:focus-within {
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18), inset 0 1px 2px rgba(23, 19, 31, 0.12);
   }
 }
 

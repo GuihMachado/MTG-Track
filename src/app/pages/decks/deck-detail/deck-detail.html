@@ -1,0 +1,142 @@
+<div class="page">
+  @if (deck(); as deck) {
+    <!-- Herói: a arte do commander no topo, com véu para o título se ler. -->
+    @if (deck.commanderArtUrl; as art) {
+      <img class="hero" [src]="art" alt="" />
+    }
+    <div class="hero-veil" aria-hidden="true"></div>
+
+    <div class="container-page relative pb-32 pt-3">
+      <header class="flex items-center gap-3">
+        <button type="button" class="glass-btn" (click)="back()" aria-label="Voltar">
+          <ng-icon hlm name="lucideChevronLeft" class="!size-[18px]" />
+        </button>
+
+        <span class="flex-1"></span>
+
+        <button type="button" class="glass-btn" (click)="removeDeck()" aria-label="Apagar deck">
+          <ng-icon hlm name="lucideTrash2" class="!size-[17px]" />
+        </button>
+        <button type="button" class="glass-btn" (click)="rename()" aria-label="Renomear deck">
+          <ng-icon hlm name="lucidePencil" class="!size-[17px]" />
+        </button>
+      </header>
+
+      <div class="mt-[110px] flex items-start gap-3">
+        <h1 class="min-w-0 flex-1 text-[25px] font-bold leading-[1.15] tracking-[-0.02em]"
+            style="text-wrap: pretty">
+          {{ deck.name }}
+        </h1>
+        @if (symbols()) {
+          <span class="mt-1 flex flex-none gap-1.5 text-[17px]"
+                [innerHTML]="symbols() | manaSymbol"></span>
+        }
+      </div>
+
+      <!-- Painel de progresso: a borda toma a cor do estado. -->
+      @if (progress(); as bar) {
+        <section class="plate progress mt-4" [style.border-color]="bar.color + '4d'">
+          <div class="flex items-baseline justify-between">
+            <span class="label-caps">Na sua coleção</span>
+            <span class="leading-none">
+              <span class="owned" [style.color]="bar.color">{{ deck.ownedCards }}</span>
+              <span class="font-data text-[13px] text-foreground-subtle">/{{ deck.totalCards }}</span>
+            </span>
+          </div>
+
+          <div class="track mt-2.5" role="progressbar" [attr.aria-valuenow]="deck.ownedCards"
+               aria-valuemin="0" [attr.aria-valuemax]="deck.totalCards"
+               [attr.aria-label]="deck.ownedCards + ' de ' + deck.totalCards + ' cartas na sua coleção'">
+            <span class="fill" [class.glow]="bar.glow" [style.width.%]="bar.percent"
+                  [style.background]="bar.color"></span>
+          </div>
+
+          <p class="mt-2.5 font-data text-[11px] text-foreground-muted">{{ progressLine() }}</p>
+        </section>
+      }
+
+      <!-- Falta comprar primeiro: é a informação que leva a uma ação. -->
+      @if (missing().length > 0) {
+        <h2 class="section-head mt-5 text-danger">
+          <ng-icon hlm name="lucideCircleDashed" class="!size-[15px]" />
+          Falta comprar · {{ missing().length }}
+        </h2>
+
+        <ul class="mt-2.5 flex flex-col gap-2">
+          @for (card of visibleMissing(); track card.id) {
+            <li class="missing-row rise-stagger">
+              <span class="w-[14px] flex-none font-data text-[11px] text-faint">
+                {{ card.quantity - card.ownedQuantity }}×
+              </span>
+              <span class="min-w-0 flex-1 truncate text-[14px]">{{ card.name }}</span>
+              <span class="flex-none font-data text-[11.5px] text-foreground-muted">
+                {{ priceOf(card) }}
+              </span>
+              <!-- Atalho para proxiar só esta carta. -->
+              <button type="button" class="print-one" (click)="proxyOne(card)"
+                      [attr.aria-label]="'Proxiar ' + card.name">
+                <ng-icon hlm name="lucidePrinter" class="!size-4" />
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (hiddenMissing() > 0) {
+          <button type="button" class="more" (click)="allMissing.set(true)">
+            + {{ hiddenMissing() }} carta{{ hiddenMissing() > 1 ? 's' : '' }} · toque para ver todas
+          </button>
+        }
+      }
+
+      <!-- Você já tem: recolhido por padrão. -->
+      @if (owned().length > 0) {
+        <button type="button" class="section-head mt-5 w-full text-success"
+                (click)="ownedOpen.set(!ownedOpen())" [attr.aria-expanded]="ownedOpen()">
+          <ng-icon hlm name="lucideCircleCheck" class="!size-[15px]" />
+          <span class="flex-1 text-left">Você já tem · {{ owned().length }}</span>
+          <ng-icon hlm name="lucideChevronDown" class="chevron !size-4"
+                   [class.open]="ownedOpen()" />
+        </button>
+
+        @if (ownedOpen()) {
+          <ul class="mt-2.5 flex flex-col gap-1.5">
+            @for (card of owned(); track card.id) {
+              <li class="owned-row">
+                <span class="w-[22px] flex-none font-data text-[11px] text-faint">
+                  {{ card.quantity }}×
+                </span>
+                <span class="min-w-0 flex-1 truncate text-[13.5px]">{{ card.name }}</span>
+                <span class="flex-none font-data text-[10.5px] text-foreground-subtle">
+                  {{ priceOf(card) }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+
+      @if (deck.cards && deck.cards.length === 0) {
+        <p class="mt-6 text-center text-[13.5px] text-foreground-muted">
+          Esse deck está sem cartas. Importe a lista dele para ver o que falta.
+        </p>
+      }
+    </div>
+
+    @if (missing().length > 0) {
+      <button type="button" class="cta-pill" (click)="proxyAllMissing()">
+        <ng-icon hlm name="lucidePrinter" class="!size-[18px] text-accent" />
+        Proxiar {{ missing().length === 1 ? 'a que falta' : 'as ' + missing().length + ' que faltam' }}
+      </button>
+    }
+  } @else if (loading()) {
+    <div class="container-page pt-3">
+      <div class="skeleton hero-skeleton"></div>
+      <div class="skeleton mt-4 h-[92px] rounded-[18px]"></div>
+      <div class="mt-4 flex flex-col gap-2">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton h-[46px] rounded-[14px]"></div>
+        }
+      </div>
+    </div>
+  }
+</div>

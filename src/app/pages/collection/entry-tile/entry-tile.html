@@ -1,0 +1,23 @@
+<button type="button" class="tile" [class.plenty]="plenty()" (click)="edit.emit(entry())"
+        [attr.aria-label]="entry().name + ', ' + copies()">
+  @if (entry().artCropUrl; as art) {
+    <img class="art" [src]="art" alt="" loading="lazy" decoding="async" />
+  } @else {
+    <span class="art art-empty" aria-hidden="true"></span>
+  }
+
+  <span class="veil" aria-hidden="true"></span>
+
+  <span class="qty-badge tile-qty" [class.plenty]="plenty()"
+        [attr.aria-label]="copies()">
+    ×{{ entry().quantity }}
+  </span>
+
+  @if (entry().foil) {
+    <span class="foil-square tile-foil" aria-label="foil">
+      <ng-icon hlm name="lucideSparkles" class="!size-[11px]" />
+    </span>
+  }
+
+  <span class="name">{{ entry().name }}</span>
+</button>

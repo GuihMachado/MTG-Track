@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { markSessionExpired } from '../shared/http/session-expired';
 import { NotificationService } from '../shared/notification/notification.service';
+import { SessionService } from '../shared/session/session.service';
 import { environment } from '../../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -15,6 +16,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const router = inject(Router);
   const notify = inject(NotificationService);
+  const session = inject(SessionService);
   const token = localStorage.getItem('auth-token');
 
   const request = token
@@ -25,11 +27,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: unknown) => {
       // 401 mesmo tendo mandado token = token expirado ou inválido: derruba a sessão.
       if (token && error instanceof HttpErrorResponse && error.status === 401) {
-        localStorage.removeItem('auth-token');
-        localStorage.removeItem('user-name');
-        localStorage.removeItem('user-id');
-        localStorage.removeItem('user-avatar');
-        localStorage.removeItem('matchId');
+        // Mesma limpeza do logout: a lista de chaves vive no SessionService.
+        session.clear();
 
         markSessionExpired(error);
 

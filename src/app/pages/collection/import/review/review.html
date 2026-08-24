@@ -1,0 +1,168 @@
+<div class="page">
+  <div class="container-page relative pb-32 pt-3">
+    <header class="flex items-center gap-3">
+      <button type="button" class="plate-btn" (click)="back.emit()" aria-label="Voltar para a lista">
+        <ng-icon hlm name="lucideChevronLeft" class="!size-[18px]" />
+      </button>
+      <h1 class="flex-1 text-[22px] font-semibold tracking-[-0.01em]">Revisar</h1>
+      <span class="font-data text-[11px] text-foreground-muted">
+        {{ totalLines() }} linha{{ totalLines() > 1 ? 's' : '' }}
+      </span>
+    </header>
+
+    <!-- Painel de resultado -->
+    <section class="plate mt-4 rounded-[18px] p-[14px]">
+      <div class="flex items-baseline justify-between">
+        <span class="label-caps">Reconhecidas</span>
+        <span class="leading-none">
+          <span class="recognized">{{ recognized() }}</span>
+          <span class="font-data text-[13px] text-foreground-subtle">/{{ totalLines() }}</span>
+        </span>
+      </div>
+
+      <div class="bar mt-2.5" role="progressbar" [attr.aria-valuenow]="recognized()"
+           aria-valuemin="0" [attr.aria-valuemax]="totalLines()"
+           [attr.aria-label]="recognized() + ' de ' + totalLines() + ' linhas reconhecidas'">
+        <span class="seg ok" [style.flex]="recognized()"></span>
+        @if (pendingCount() > 0) {
+          <span class="seg warn" [style.flex]="pendingCount()"></span>
+        }
+      </div>
+
+      <p class="mt-2.5 font-data text-[11px] text-foreground-muted">
+        {{ pendingCount() }} pendente{{ pendingCount() === 1 ? '' : 's' }} ·
+        {{ alreadyOwned() }} já na sua coleção
+      </p>
+    </section>
+
+    <!-- Pendências primeiro: uma decisão cada. -->
+    @if (pending().length > 0) {
+      <h2 class="section-head mt-5 text-warning">
+        <ng-icon hlm name="lucideTriangleAlert" class="!size-[15px]" />
+        Precisam de você · {{ pendingCount() }}
+      </h2>
+
+      <div class="mt-2.5 flex flex-col gap-2.5">
+        @for (item of pending(); track item.line) {
+          <article class="pendency rise-stagger"
+                   [class.missing]="item.status === 'notfound'"
+                   [attr.aria-describedby]="'reason-' + item.line">
+            <!-- A linha crua e o número dela: é o que permite conferir sem
+                 voltar à fonte. -->
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="raw min-w-0 flex-1 truncate font-data text-[12.5px]"
+                    [class.missing]="item.status === 'notfound'">
+                {{ item.raw }}
+              </span>
+              <span class="flex-none font-data text-[10px] text-faint">linha {{ item.line }}</span>
+            </div>
+
+            <div class="mt-2.5 flex items-center gap-2.5">
+              @if (matchOf(item); as guess) {
+                @if (guess.artCropUrl) {
+                  <img class="guess-art" [src]="guess.artCropUrl" alt="" loading="lazy" />
+                } @else {
+                  <span class="guess-art guess-art-empty" aria-hidden="true"></span>
+                }
+
+                <span class="min-w-0 flex-1">
+                  <!-- O palpite se identifica pelo nome em inglês: com nome em
+                       português, o impresso repetiria a linha crua ao lado. -->
+                  <span class="block truncate text-sm font-semibold">{{ guess.nameEn }}</span>
+                  <span [id]="'reason-' + item.line"
+                        class="block font-data text-[10.5px] text-foreground-subtle">
+                    {{ item.reason }}
+                    @if (alternativesOf(item).length > 0) {
+                      · {{ alternativesOf(item).length }} outra{{ alternativesOf(item).length > 1 ? 's' : '' }} opção
+                    }
+                  </span>
+                </span>
+              } @else {
+                <span class="guess-art guess-art-dashed" aria-hidden="true"></span>
+
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-semibold text-danger">Não encontrada</span>
+                  <span [id]="'reason-' + item.line"
+                        class="block font-data text-[10.5px] text-foreground-subtle">
+                    {{ item.reason }}
+                  </span>
+                </span>
+              }
+
+              <button type="button" class="decide" (click)="discard(item)"
+                      [attr.aria-label]="'Descartar linha ' + item.line">
+                <ng-icon hlm name="lucideX" class="!size-4" />
+              </button>
+
+              @if (matchOf(item)) {
+                <button type="button" class="decide accept" (click)="accept(item)"
+                        [attr.aria-label]="'Confirmar ' + matchOf(item)!.name">
+                  <ng-icon hlm name="lucideCheck" class="!size-4" />
+                </button>
+              } @else {
+                <!-- Sem palpite, o segundo botão vira busca manual: a carta
+                     entra pela folha de adicionar, depois. -->
+                <button type="button" class="decide" (click)="discard(item)"
+                        aria-label="Resolver depois, na busca">
+                  <ng-icon hlm name="lucideSearch" class="!size-4" />
+                </button>
+              }
+            </div>
+
+            @if (alternativesOf(item).length > 0) {
+              <div class="mt-2.5 flex flex-wrap gap-1.5">
+                @for (option of alternativesOf(item); track option.scryfallId) {
+                  <button type="button" class="chip-small" (click)="chooseAlternative(item, option)">
+                    {{ option.name }}
+                  </button>
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+
+    <!-- Prontas: fechado por padrão, porque 96 linhas resolvidas não merecem
+         scroll. -->
+    <button type="button" class="section-head mt-5 w-full text-success"
+            (click)="readyOpen.set(!readyOpen())" [attr.aria-expanded]="readyOpen()">
+      <ng-icon hlm name="lucideCircleCheck" class="!size-[15px]" />
+      <span class="flex-1 text-left">Prontas · {{ recognized() }}</span>
+      <ng-icon hlm name="lucideChevronDown" class="chevron !size-4"
+               [class.open]="readyOpen()" />
+    </button>
+
+    @if (readyOpen()) {
+      <ul class="mt-2.5 flex flex-col gap-1.5">
+        @for (item of included(); track item.line) {
+          <li class="ready-row">
+            <span class="w-[22px] flex-none font-data text-[11px] text-faint">
+              {{ item.quantity }}×
+            </span>
+            <span class="min-w-0 flex-1 truncate text-[13.5px]">{{ matchOf(item)?.name }}</span>
+            <span class="flex-none font-data text-[10px] text-faint">
+              {{ matchOf(item)?.setCode }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- O rótulo conta o número real que vai ser gravado, e nunca bloqueia por
+       pendência: deixar quatro linhas de fora é melhor que travar tudo. -->
+  <button type="button" class="cta-pill" (click)="save()"
+          [disabled]="cardCount() === 0 || saving()" [attr.aria-busy]="saving()">
+    <ng-icon hlm [name]="destination() === 'deck' ? 'lucideLayers' : 'lucideLibraryBig'"
+             class="!size-[17px]" />
+    {{ saving() ? 'Gravando…' : actionLabel() }}
+  </button>
+
+  @if (pendingCount() > 0) {
+    <p class="legend font-data">
+      {{ pendingCount() }} pendente{{ pendingCount() === 1 ? '' : 's' }} fica{{ pendingCount() === 1 ? '' : 'm' }}
+      de fora — pode resolver depois
+    </p>
+  }
+</div>

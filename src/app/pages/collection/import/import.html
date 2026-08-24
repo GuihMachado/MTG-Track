@@ -1,0 +1,115 @@
+@if (resolutions(); as resolved) {
+  <app-import-review [resolutions]="resolved" [destination]="destination()"
+                     [deckName]="deckName()" (back)="backToList()" (imported)="onImported()" />
+} @else {
+  <div class="page">
+    <div class="halo" aria-hidden="true"></div>
+
+    <div class="container-page relative pb-32 pt-3">
+      <header class="flex items-center gap-3">
+        <app-back-button fallbackRoute="/colecao" />
+        <h1 class="flex-1 text-[22px] font-semibold tracking-[-0.01em]">Importar</h1>
+      </header>
+
+      <!-- Destino: a primeira escolha, e a que evita a pior falha da feature. -->
+      <section class="mt-4">
+        <span class="label-caps">Para onde vai</span>
+
+        <div class="segmented mt-2">
+          <button type="button" class="segmented-tab" [class.on]="destination() === 'deck'"
+                  (click)="setDestination('deck')">
+            <ng-icon hlm name="lucideLayers" class="!size-4" />
+            Novo deck
+          </button>
+          <button type="button" class="segmented-tab" [class.on]="destination() === 'collection'"
+                  (click)="setDestination('collection')">
+            <ng-icon hlm name="lucideLibraryBig" class="!size-4" />
+            Somar à coleção
+          </button>
+        </div>
+
+        <p class="mt-2 text-[12px] text-faint">{{ destinationHint() }}</p>
+      </section>
+
+      <!-- Link -->
+      <section class="mt-4">
+        <span class="label-caps">Link do deck</span>
+
+        <label class="well mt-2 !h-[46px] !rounded-[14px]">
+          <ng-icon hlm name="lucideLink" class="field-icon !size-4" />
+          <input class="well-input" type="url" inputmode="url" autocomplete="off"
+                 placeholder="archidekt.com/decks/123456" [value]="url()"
+                 (input)="url.set($any($event.target).value)"
+                 (keydown.enter)="fetchFromUrl()" aria-label="Link do deck" />
+          @if (fetching()) {
+            <ng-icon hlm name="lucideLoader" class="field-icon animate-spin !size-4" />
+          } @else if (source() && source() !== 'moxfield') {
+            <ng-icon hlm name="lucideCircleCheck" class="!size-[14px] text-success" />
+          }
+        </label>
+
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          @for (option of sources; track option.id) {
+            <span class="source-chip" [class.on]="source() === option.id">{{ option.label }}</span>
+          }
+        </div>
+
+        @if (urlWarning(); as warning) {
+          <p class="mt-2 text-[12px] text-warning">{{ warning }}</p>
+        } @else if (source() && source() !== 'moxfield') {
+          <button type="button" class="fetch-btn mt-2.5" (click)="fetchFromUrl()"
+                  [disabled]="fetching()">
+            {{ fetching() ? 'Buscando…' : 'Buscar a lista desse link' }}
+          </button>
+        }
+      </section>
+
+      <!-- Divisor -->
+      <div class="divider mt-5">
+        <span class="line" aria-hidden="true"></span>
+        <span class="font-data text-[10px] uppercase tracking-[0.16em] text-faint">
+          ou cole a lista
+        </span>
+        <span class="line" aria-hidden="true"></span>
+      </div>
+
+      <!-- Área de colar: mono porque é dado, não prosa — e o alinhamento das
+           quantidades ajuda a conferir. -->
+      <textarea class="paste mt-3.5" spellcheck="false" [value]="text()"
+                (input)="text.set($any($event.target).value)"
+                [attr.placeholder]="placeholder" aria-label="Cole a lista de cartas"></textarea>
+
+      <div class="mt-2.5 flex gap-2.5">
+        <button type="button" class="soft-btn" (click)="paste()">
+          <ng-icon hlm name="lucideClipboardPaste" class="!size-4" />
+          Colar
+        </button>
+
+        <label class="soft-btn">
+          <ng-icon hlm name="lucideDownload" class="!size-4" />
+          Abrir .txt
+          <input type="file" accept=".txt,.csv,.dec" class="sr-only"
+                 (change)="openFile($event)" />
+        </label>
+      </div>
+
+      <p class="mt-2.5 font-data text-[10.5px] text-faint">
+        Aceita qualquer formato com quantidade + nome. Edição entre parênteses é opcional.
+      </p>
+
+      @if (lineCount() > 0) {
+        <p class="mt-3 font-data text-[11px] text-foreground-muted">
+          {{ lineCount() }} linha{{ lineCount() > 1 ? 's' : '' }} ·
+          {{ cardCount() }} carta{{ cardCount() > 1 ? 's' : '' }}
+        </p>
+      }
+    </div>
+
+    <button type="button" class="cta-pill" (click)="read()" [disabled]="!canRead()">
+      {{ reading() ? 'Lendo…' : 'Ler a lista' }}
+      @if (!reading()) {
+        <ng-icon hlm name="lucideArrowRight" class="!size-[18px]" />
+      }
+    </button>
+  </div>
+}

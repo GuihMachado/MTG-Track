@@ -1,36 +1,107 @@
-<div class="flex justify-center items-center h-screen px-4">
-	<section class="w-full max-w-sm" hlmCard>
-		<div hlmCardHeader>
-			<h3 hlmCardTitle class="title-section text-center">Login</h3>
-			<p hlmCardDescription>Digite seu email abaixo para fazer login na sua conta</p>
-		</div>
+<div class="entry">
+  <div class="brand-halo animate-halo-slow" aria-hidden="true"></div>
+  <div class="footer-echo" aria-hidden="true"></div>
 
-		<div hlmCardContent>
-			<form [formGroup]="mainForm">
-				<div class="flex flex-col gap-6">
-					<div class="grid gap-2">
-						<label hlmLabel for="email">Email</label>
-						<input type="email" id="email" formControlName="email" placeholder="m@exemplo.com" required hlmInput />
-					</div>
+  <!-- ── Marca: o ícone do app é a manchete ─────────────────────── -->
+  <header class="relative flex flex-col items-center px-7 pt-[72px]">
+    <img
+      class="brand-icon animate-floaty size-24 rounded-[24px] object-cover"
+      src="icons/icon-192x192.png"
+      alt="" />
+    <h1 class="mt-[22px] text-[30px] leading-[1.1] font-bold tracking-[-0.02em]">MTG Track</h1>
+    <p class="mt-2 text-center text-[14.5px] leading-[1.55] text-pretty text-foreground-muted">
+      A mesa de Commander do seu grupo — vidas, partidas e ranking num lugar só.
+    </p>
+  </header>
 
-					<div class="grid gap-2">
-						<div class="flex items-center">
-							<label hlmLabel for="password">Senha</label>
-							<a href="#" class="ml-auto inline-block text-sm text-primary-text underline-offset-4 hover:underline">
-								Esqueceu sua senha?
-							</a>
-						</div>
-						<input type="password" id="password" formControlName="password" hlmInput />
-					</div>
-				</div>
-			</form>
-		</div>
+  <!-- ── Campos: o poço afunda, o botão levita ──────────────────── -->
+  <!-- <label> sem hlmLabel de propósito: a diretiva traz text-sm, que empata
+       com o label-caps na camada de utilitários e vence por ordem de emissão. -->
+  <form
+    class="relative flex flex-col gap-3.5 px-6 pt-[34px]"
+    [formGroup]="mainForm"
+    (ngSubmit)="login()">
+    <div>
+      <label class="label-caps mb-[7px] block" for="email">E-mail</label>
+      <div class="field-well" [class.invalid]="!!emailError()">
+        <ng-icon hlm size="17px" class="field-icon" name="lucideMail" aria-hidden="true" />
+        <input
+          class="field-input"
+          id="email"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          placeholder="voce@exemplo.com"
+          formControlName="email"
+          [attr.aria-invalid]="!!emailError()"
+          [attr.aria-describedby]="emailError() ? 'email-error' : null" />
+      </div>
+      @if (emailError(); as message) {
+        <p id="email-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+          {{ message }}
+        </p>
+      }
+    </div>
 
-		<div hlmCardFooter class="flex-col gap-2">
-			<button hlmBtn type="button" class="w-full" [disabled]="loading()" (click)="login()">
-				{{ loading() ? 'Entrando...' : 'Login' }}
-			</button>
-			<button [routerLink]="['','register']" hlmBtn variant="secondary" class="w-full">Cadastre-se</button>
-		</div>
-	</section>
+    <div>
+      <label class="label-caps mb-[7px] block" for="password">Senha</label>
+      <div class="field-well" [class.invalid]="!!passwordError()">
+        <ng-icon hlm size="17px" class="field-icon" name="lucideLock" aria-hidden="true" />
+        <input
+          class="field-input"
+          id="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          autocomplete="current-password"
+          formControlName="password"
+          [attr.aria-invalid]="!!passwordError()"
+          [attr.aria-describedby]="passwordError() ? 'password-error' : null" />
+        <button
+          class="field-eye"
+          type="button"
+          [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+          [attr.aria-pressed]="showPassword()"
+          (click)="togglePassword()">
+          <ng-icon
+            hlm
+            size="18px"
+            [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'"
+            aria-hidden="true" />
+        </button>
+      </div>
+      @if (passwordError(); as message) {
+        <p id="password-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+          {{ message }}
+        </p>
+      }
+    </div>
+
+    <button
+      class="btn-primary mt-2 flex h-[54px] items-center justify-center gap-2.5 rounded-full text-base font-semibold"
+      type="submit"
+      [disabled]="loading()">
+      @if (loading()) {
+        <!-- Sob prefers-reduced-motion o giro para: o texto sozinho basta. -->
+        <hlm-spinner class="text-[18px] motion-reduce:hidden" aria-label="Entrando" />
+        Entrando…
+      } @else {
+        Entrar
+        <ng-icon hlm size="18px" name="lucideArrowRight" aria-hidden="true" />
+      }
+    </button>
+  </form>
+
+  <!-- ── Rodapé: uma tela, um botão — o resto é link ─────────────── -->
+  <footer class="relative mt-auto flex flex-col items-center gap-[18px] px-6 pt-10 pb-[26px]">
+    <div class="flex w-full items-center gap-3">
+      <span class="h-px flex-1 bg-hairline"></span>
+      <span class="label-caps divider-label">Primeira vez?</span>
+      <span class="h-px flex-1 bg-hairline"></span>
+    </div>
+    <a
+      class="px-1 py-2 text-[15.5px] font-semibold text-primary-text"
+      [routerLink]="['', 'register']">
+      Criar conta
+    </a>
+    <span class="signature font-data text-[10px]">uso pessoal · sem anúncios</span>
+  </footer>
 </div>

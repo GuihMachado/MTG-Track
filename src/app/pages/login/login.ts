@@ -1,31 +1,26 @@
 import { Component, inject, signal } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronDown } from '@ng-icons/lucide';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideArrowRight,
+  lucideEye,
+  lucideEyeOff,
+  lucideLock,
+  lucideMail,
+} from '@ng-icons/lucide';
 import { AuthService } from '../../services/auth-service';
 import { Subject, takeUntil } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HlmCardImports } from '@spartan-ng/helm/card';
-import { HlmLabelImports } from '@spartan-ng/helm/label';
-import { HlmInputImports } from '@spartan-ng/helm/input';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmIcon } from '@spartan-ng/helm/icon';
+import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 import { NotificationService } from '../../shared/notification/notification.service';
-import { ProfileService } from '../../shared/profile/profile.service';
-
-/** Id fixo: um novo aviso de validação substitui o anterior em vez de empilhar. */
-const FORM_WARNING = 'form-validation';
+import { SessionService } from '../../shared/session/session.service';
+import { FieldName, fieldMessage } from '../../shared/forms/validation-messages';
 
 @Component({
   selector: 'app-login',
-  imports: [ 
-    HlmCardImports, 
-    HlmLabelImports, 
-    HlmInputImports, 
-    HlmButtonImports, 
-    RouterLink,
-    ReactiveFormsModule
-  ],
-  providers: [provideIcons({ lucideCheck, lucideChevronDown })],
+  imports: [NgIcon, HlmIcon, HlmSpinnerImports, RouterLink, ReactiveFormsModule],
+  providers: [provideIcons({ lucideMail, lucideLock, lucideEye, lucideEyeOff, lucideArrowRight })],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -33,12 +28,14 @@ export class Login {
   protected mainForm: FormGroup;
   // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
   protected loading = signal(false);
+  /** Olho de mostrar/ocultar senha. */
+  protected showPassword = signal(false);
 
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
   private router = inject(Router);
-  // Busca o perfil (inclui o ícone) assim que a sessão existe.
-  private profileService = inject(ProfileService);
+  // Dono das chaves da sessão: grava o token e busca o perfil (inclui o ícone).
+  private session = inject(SessionService);
   private readonly destroy = new Subject<void>();
 
   constructor() {
@@ -52,10 +49,23 @@ export class Login {
     this.destroy.complete();
   }
 
+  protected togglePassword() {
+    this.showPassword.update((shown) => !shown);
+  }
+
+  protected emailError(): string | null {
+    return this.errorOf('email');
+  }
+
+  protected passwordError(): string | null {
+    return this.errorOf('password');
+  }
+
   protected login() {
     if (this.mainForm.invalid) {
+      // Sem toast: o erro de validação é resolvido no campo, e as duas camadas
+      // de erro não competem. O toast fica para a resposta da API.
       this.mainForm.markAllAsTouched();
-      this.notify.warning('Informe um e-mail válido e a sua senha para entrar.', { id: FORM_WARNING });
       return;
     }
 
@@ -66,11 +76,7 @@ export class Login {
       .subscribe({
       next: (data) => {
         this.loading.set(false);
-
-        localStorage.setItem('auth-token', data.token);
-        localStorage.setItem('user-name', data.user.name);
-        localStorage.setItem('user-id', String(data.user.id));
-        this.profileService.load();
+        this.session.signIn(data);
 
         this.notify.success(`Bem-vindo, ${data.user.name}!`, { description: 'Login efetuado com sucesso.' });
         this.router.navigate(['/dashboard']);
@@ -79,6 +85,7 @@ export class Login {
         this.loading.set(false);
         this.notify.apiError(error, {
           fallback: 'Não foi possível entrar agora.',
+          description: 'Confira os dados e tente de novo.',
           byStatus: {
             400: 'E-mail ou senha inválidos.',
             401: 'E-mail ou senha inválidos.',
@@ -87,6 +94,20 @@ export class Login {
         });
       }
     });
+  }
+
+  /**
+   * Mensagem só depois que o usuário passou pelo campo (ou tentou enviar): erro
+   * em campo que ninguém tocou ainda é acusação, não ajuda.
+   */
+  private errorOf(field: FieldName): string | null {
+    const control = this.mainForm.get(field);
+
+    if (!control || !control.touched) {
+      return null;
+    }
+
+    return fieldMessage(field, control.errors, 'login');
   }
 
   private bodybuilder() {
