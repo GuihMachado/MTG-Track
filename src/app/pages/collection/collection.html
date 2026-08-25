@@ -38,9 +38,18 @@
             <span class="font-data text-[13px] text-[#9A8C6A]">US$</span>
             <span class="value-number">{{ totalValue() }}</span>
           </span>
-          <span class="relative mt-1.5 block truncate font-data text-[11px] text-foreground-subtle">
-            {{ mostValuable() }}
-          </span>
+          @if (mostValuable(); as top) {
+            <span class="relative mt-1.5 block truncate font-data text-[11px] text-foreground-subtle">
+              {{ top.name }}
+            </span>
+            <span class="relative mt-[2px] block font-data text-[11px] text-foreground-subtle">
+              {{ top.price }}
+            </span>
+          } @else {
+            <span class="relative mt-1.5 block font-data text-[11px] text-foreground-subtle">
+              sem preço ainda
+            </span>
+          }
         </div>
       </div>
 
@@ -81,7 +90,9 @@
       <!-- Busca local: casa nome impresso e nome em inglês, sem acento nem
            caixa, e sem ida à rede. -->
       <div class="mt-3 flex flex-none items-center gap-2">
-        <label class="well flex-1">
+        <!-- min-w-0: sem ele o poço não encolhe abaixo do tamanho natural do
+             input e empurra o botão de grade para fora da tela. -->
+        <label class="well min-w-0 flex-1">
           <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
           <input class="well-input" type="search" autocomplete="off"
                  placeholder="Buscar na coleção" [value]="query()"

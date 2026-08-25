@@ -8,7 +8,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  /* A tela agora vive sob o header do app: 3.5rem do header + 1.25rem do
+     respiro que o <main> ganha em tela com header. Sem o desconto, a rolagem
+     interna perderia 76px por baixo da borda. */
+  height: calc(100dvh - 4.75rem);
   overflow: hidden;
   background: var(--background);
 }
@@ -90,6 +93,10 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Nunca de lado: com overflow-y ativo, o eixo x "visible" computa para auto
+     (e o CDK ainda põe overflow:auto no viewport da lista) — qualquer pixel a
+     mais viraria arrasto horizontal no toque. */
+  overflow-x: hidden;
   /* Respiro para a pílula fixa não cobrir a última linha. */
   padding-bottom: 92px;
 }

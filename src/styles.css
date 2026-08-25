@@ -530,6 +530,16 @@ body {
   line-height: 1;
 }
 
+/* O wrapper do virtual scroll é absoluto e encolhe-para-caber, então uma linha
+   cujo min-content passa da tela (nome longo em nowrap dentro de um truncate)
+   alarga o wrapper inteiro — e o overflow:auto que o CDK põe no viewport vira
+   rolagem horizontal. O teto devolve a largura da tela e deixa o truncate
+   fazer o trabalho dele. Global porque o elemento é do CDK, fora do escopo das
+   folhas de componente. */
+.cdk-virtual-scroll-orientation-vertical .cdk-virtual-scroll-content-wrapper {
+  max-width: 100%;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
