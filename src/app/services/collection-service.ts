@@ -29,6 +29,7 @@ export class CollectionService {
   private _sets = signal<CollectionSetDto[]>([]);
   private _loadingSets = signal(false);
   private _setsLoaded = signal(false);
+  private _setsFailed = signal(false);
   private _summary = signal(EMPTY_SUMMARY);
   private _loading = signal(false);
   private _loaded = signal(false);
@@ -37,6 +38,12 @@ export class CollectionService {
   /** As coleções da estante — famílias de edição, com quanto falta de cada uma. */
   readonly sets = this._sets.asReadonly();
   readonly loadingSets = this._loadingSets.asReadonly();
+  /**
+   * A busca das coleções falhou. Existe porque a aba não tem como distinguir
+   * "você não tem coleção nenhuma" de "a lista não chegou" olhando só a lista
+   * vazia — e chamar de estante vazia quem tem quatro cartas é mentira.
+   */
+  readonly setsFailed = this._setsFailed.asReadonly();
   readonly summary = this._summary.asReadonly();
   readonly loading = this._loading.asReadonly();
   readonly loaded = this._loaded.asReadonly();
@@ -74,6 +81,7 @@ export class CollectionService {
    */
   loadSets(): Observable<CollectionSetDto[]> {
     this._loadingSets.set(true);
+    this._setsFailed.set(false);
 
     return this.http.get<CollectionSetDto[]>(`${this.API_URL}/sets`).pipe(
       tap({
@@ -82,7 +90,10 @@ export class CollectionService {
           this._loadingSets.set(false);
           this._setsLoaded.set(true);
         },
-        error: () => this._loadingSets.set(false),
+        error: () => {
+          this._loadingSets.set(false);
+          this._setsFailed.set(true);
+        },
       }),
     );
   }
@@ -90,6 +101,13 @@ export class CollectionService {
   /** Carrega uma vez; mexer na coleção invalida e a próxima visita recarrega. */
   ensureSets(): void {
     if (this._setsLoaded() || this._loadingSets()) return;
+    this.loadSets().subscribe({ error: () => undefined });
+  }
+
+  /** Depois de uma falha: a aba oferece o botão, e ele chama isto. */
+  retrySets(): void {
+    if (this._loadingSets()) return;
+    this._setsLoaded.set(false);
     this.loadSets().subscribe({ error: () => undefined });
   }
 

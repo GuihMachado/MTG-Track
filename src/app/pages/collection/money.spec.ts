@@ -41,9 +41,20 @@ describe('usd', () => {
 });
 
 describe('formatTotal', () => {
-  it('total é sempre inteiro: centavos num numeral de 30px são ruído', () => {
+  it('inteiro a partir de cem: acima disso, centavos são ruído', () => {
     expect(formatTotal(8740.37)).toBe('8.740');
+    expect(formatTotal(110.25)).toBe('110');
+  });
+
+  it('centavos abaixo de cem: arredondar 0,50 para 1 dobra a coleção', () => {
+    expect(formatTotal(0.5)).toBe('0,50');
+    expect(formatTotal(1.82)).toBe('1,82');
+    expect(formatTotal(38.89)).toBe('38,89');
+  });
+
+  it('sem valor nenhum é zero seco, não zero com centavos', () => {
     expect(formatTotal(0)).toBe('0');
     expect(formatTotal(null)).toBe('0');
+    expect(formatTotal(undefined)).toBe('0');
   });
 });

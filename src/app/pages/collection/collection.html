@@ -230,6 +230,20 @@
             <div class="skeleton-deck"></div>
           }
         </div>
+      } @else if (setsFailed()) {
+        <!-- Lista vazia por falha não é estante vazia: dizer "nenhuma coleção"
+             a quem tem cartas manda a pessoa procurar erro onde não tem. -->
+        <div class="empty plate mt-4">
+          <ng-icon hlm name="lucideCloudOff" class="!size-7 text-faint" />
+          <p class="mt-3 text-base font-semibold">Não deu para carregar as coleções</p>
+          <p class="mt-1 text-[13.5px] text-foreground-muted">
+            O total de cada coleção vem da Scryfall, e a consulta não voltou.
+            Suas cartas estão salvas.
+          </p>
+          <button type="button" class="btn-primary pill mt-4" (click)="retrySets()">
+            Tentar de novo
+          </button>
+        </div>
       } @else if (collectionSets().length === 0) {
         <div class="empty plate mt-4">
           <ng-icon hlm name="lucideLibraryBig" class="!size-7 text-faint" />

@@ -29,6 +29,21 @@
   ],
   "dataGroups": [
     {
+      "name": "api-collection",
+      "urls": [
+        "http://localhost:3000/collection",
+        "http://localhost:3000/collection/**",
+        "https://mtg-0r86.onrender.com/collection",
+        "https://mtg-0r86.onrender.com/collection/**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 100,
+        "maxAge": "1d",
+        "timeout": "60s"
+      }
+    },
+    {
       "name": "api",
       "urls": ["http://localhost:3000/**", "https://mtg-0r86.onrender.com/**"],
       "cacheConfig": {

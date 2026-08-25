@@ -41,10 +41,18 @@ export function usd(value: number | null | undefined): string {
 }
 
 /**
- * Total da coleção: sempre inteiro. Centavos num numeral de 30px são ruído, e
- * um total que oscila na casa dos centavos entre duas aberturas de tela parece
- * erro — o valor é uma ordem de grandeza, não um extrato.
+ * Total da coleção. Segue a mesma régua do preço de uma carta — centavos abaixo
+ * de US$ 100, inteiro acima — e não o inteiro puro de antes: numa estante de
+ * US$ 8.740 os centavos são ruído, mas numa de US$ 0,50 arredondar imprimia
+ * `US$ 1`, que é o dobro do que a pessoa tem. O total é ordem de grandeza
+ * quando há grandeza; abaixo de cem dólares ele ainda é o extrato.
+ *
+ * Zero é `0` e não `0,00`: coleção sem preço nenhum não tem centavo para
+ * mostrar.
  */
 export function formatTotal(value: number | null | undefined): string {
-  return formatCount(Math.round(Number(value) || 0));
+  const number = Number(value) || 0;
+  if (number === 0) return '0';
+
+  return Math.abs(number) >= 100 ? formatCount(Math.round(number)) : formatUsd(number);
 }

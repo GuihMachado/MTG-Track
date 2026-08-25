@@ -16,6 +16,7 @@ import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import {
   lucideArrowUpDown,
   lucideCirclePlus,
+  lucideCloudOff,
   lucideDownload,
   lucideLayoutGrid,
   lucideLibraryBig,
@@ -97,6 +98,7 @@ interface FilterChip {
       lucidePlus,
       lucideX,
       lucideCirclePlus,
+      lucideCloudOff,
       lucideLibraryBig,
       lucideDownload,
     }),
@@ -134,6 +136,7 @@ export class Collection implements OnInit {
   protected loadingDecks = this.decksService.loading;
   protected collectionSets = this.collection.sets;
   protected loadingSets = this.collection.loadingSets;
+  protected setsFailed = this.collection.setsFailed;
 
   /** As coleções da estante, agrupadas por família — local, sem ida à rede. */
   protected setGroups = computed(() => groupSets(this.entries()));
@@ -249,6 +252,10 @@ export class Collection implements OnInit {
     // O denominador de cada coleção é uma busca na Scryfall: só vale pagá-la
     // quando o usuário pede para ver a aba.
     if (tab === 'sets') this.collection.ensureSets();
+  }
+
+  protected retrySets(): void {
+    this.collection.retrySets();
   }
 
   protected toggleView(): void {
