@@ -30,7 +30,18 @@ export class App {
   
   // Telas que desenham o próprio cabeçalho: login, cadastro, mesa e nova
   // partida (botão voltar, título e contador de lugares na própria tela).
-  private hiddenRoutes = ['/', '/register', '/match', '/play', '/colecao', '/decks'];
+  // A coleção fica de fora de propósito: ela tem voltar e título próprios,
+  // mas o menu e o avatar do header valem lá também. Os filhos dela
+  // (importar, fichário) continuam em tela cheia.
+  private hiddenRoutes = [
+    '/',
+    '/register',
+    '/match',
+    '/play',
+    '/colecao/importar',
+    '/colecao/edicao',
+    '/decks',
+  ];
 
   showHeader = signal(true);
   /** Só na home o header fica sobre a arte do commander, sem barra. */

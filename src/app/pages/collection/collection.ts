@@ -202,9 +202,10 @@ export class Collection implements OnInit {
   protected uniqueCards = computed(() => formatCount(this.summary().uniqueCards));
   protected totalValue = computed(() => formatTotal(this.summary().totalValueUsd));
 
+  /** Nome numa linha, valor na de baixo: o separador " · " espremia os dois. */
   protected mostValuable = computed(() => {
     const top = this.summary().mostValuable;
-    return top ? `${top.name} · US$ ${formatUsd(top.priceUsd)}` : 'sem preço ainda';
+    return top ? { name: top.name, price: `US$ ${formatUsd(top.priceUsd)}` } : null;
   });
 
   /** Por que a lista está vazia muda o que a tela oferece como saída. */
