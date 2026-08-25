@@ -61,6 +61,13 @@
           <span class="font-data text-[11px] text-faint">{{ summary().uniqueCards }}</span>
         }
       </button>
+      <button type="button" class="segmented-tab" [class.on]="tab() === 'sets'"
+              (click)="setTab('sets')">
+        Coleções
+        @if (setGroups().length > 0) {
+          <span class="font-data text-[11px] text-faint">{{ setGroups().length }}</span>
+        }
+      </button>
       <button type="button" class="segmented-tab" [class.on]="tab() === 'decks'"
               (click)="setTab('decks')">
         Decks
@@ -101,6 +108,25 @@
 
       @if (filtersOpen() || activeFilters() > 0) {
         <div class="mt-2.5 flex flex-none flex-wrap gap-1.5">
+          <!-- Edição não vira pílula fixa: são dezenas, e a lista cresce a cada
+               importação. A entrada abre a folha; o que já foi marcado fica
+               aqui, com nome e não com sigla. -->
+          @for (chip of setChips(); track chip.code) {
+            <button type="button" class="chip-small on" aria-pressed="true"
+                    (click)="toggleSet(chip.code)">
+              {{ chip.label }}
+              <ng-icon hlm name="lucideX" class="!size-[11px]" />
+            </button>
+          }
+
+          @if (filtersOpen()) {
+            <button type="button" class="chip-small" (click)="setsSheetOpen.set(true)"
+                    [disabled]="setGroups().length === 0">
+              <ng-icon hlm name="lucideLibraryBig" class="!size-[11px]" />
+              Coleção
+            </button>
+          }
+
           @for (chip of chips; track chip.axis + chip.value) {
             @if (filtersOpen() || isChipOn(chip)) {
               <button type="button" class="chip-small" [class.on]="isChipOn(chip)"
@@ -172,7 +198,7 @@
           }
         </div>
       }
-    } @else {
+    } @else if (tab() === 'decks') {
       @if (loadingDecks() && decks().length === 0) {
         <div class="mt-3 flex flex-col gap-2.5">
           @for (i of [1, 2, 3]; track i) {
@@ -195,6 +221,35 @@
               ou importe do Archidekt, Deckstats ou TappedOut
             </p>
           }
+        </div>
+      }
+    } @else {
+      @if (loadingSets() && collectionSets().length === 0) {
+        <div class="mt-3 flex flex-col gap-2.5">
+          @for (i of [1, 2, 3]; track i) {
+            <div class="skeleton-deck"></div>
+          }
+        </div>
+      } @else if (collectionSets().length === 0) {
+        <div class="empty plate mt-4">
+          <ng-icon hlm name="lucideLibraryBig" class="!size-7 text-faint" />
+          <p class="mt-3 text-base font-semibold">Nenhuma coleção ainda</p>
+          <p class="mt-1 text-[13.5px] text-foreground-muted">
+            Toda carta que você adiciona entra na coleção da edição dela.
+          </p>
+          <button type="button" class="btn-primary pill mt-4" (click)="openAdd()">
+            Adicionar carta
+          </button>
+        </div>
+      } @else {
+        <div class="viewport decks mt-3">
+          @for (set of collectionSets(); track set.code) {
+            <app-set-row class="rise-stagger" [set]="set" (open)="openSet($event)" />
+          }
+
+          <p class="mt-1 text-center font-data text-[10.5px] text-faint">
+            o total de cada coleção vem da Scryfall · toque para abrir o fichário
+          </p>
         </div>
       }
     }
@@ -220,6 +275,12 @@
     }
   </div>
 </ng-template>
+
+@if (setsSheetOpen()) {
+  <app-set-filter [groups]="setGroups()" [selected]="filters().sets"
+                  (toggled)="toggleSet($event)" (cleared)="clearSets()"
+                  (closed)="setsSheetOpen.set(false)" />
+}
 
 @if (sheet()) {
   <app-add-card [editing]="editingEntry()" (closed)="closeSheet()"

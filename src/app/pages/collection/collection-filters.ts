@@ -31,7 +31,11 @@ export function matchesQuery(entry: CollectionEntryDto, query: string): boolean 
   return (
     fold(entry.name).includes(needle) ||
     fold(entry.nameEn).includes(needle) ||
-    fold(entry.setCode).includes(needle)
+    fold(entry.setCode).includes(needle) ||
+    // O nome da edição também casa: quem digita "hobbit" está procurando a
+    // coleção, não uma carta chamada Hobbit.
+    fold(entry.setName).includes(needle) ||
+    fold(entry.setFamilyName ?? '').includes(needle)
   );
 }
 
@@ -52,6 +56,17 @@ export function matchesFilters(entry: CollectionEntryDto, filters: CollectionFil
   if (filters.types.length > 0) {
     const type = fold(entry.typeLine);
     if (!filters.types.some(candidate => type.includes(fold(candidate)))) return false;
+  }
+
+  if (filters.sets.length > 0) {
+    // A marca pode ser a família ("hob") ou uma edição solta dela ("hoc"):
+    // marcar The Hobbit traz o Eternal junto, marcar só o Eternal não traz o
+    // resto da família.
+    const family = fold(entry.setFamilyCode ?? entry.setCode);
+    const code = fold(entry.setCode);
+    if (!filters.sets.some(chosen => fold(chosen) === family || fold(chosen) === code)) {
+      return false;
+    }
   }
 
   if (filters.foil !== null && entry.foil !== filters.foil) return false;
@@ -101,6 +116,7 @@ export function activeFilterCount(filters: CollectionFilters): number {
   return (
     filters.colors.length +
     filters.types.length +
+    filters.sets.length +
     (filters.foil === null ? 0 : 1) +
     (filters.language === null ? 0 : 1)
   );

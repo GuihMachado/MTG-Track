@@ -24,6 +24,9 @@ function entry(overrides: Partial<CollectionEntryDto> = {}): CollectionEntryDto 
     artCropUrl: null,
     setCode: 'C21',
     setName: 'Commander 2021',
+    setFamilyCode: 'c21',
+    setFamilyName: 'Commander 2021',
+    setIconUrl: null,
     collectorNumber: '263',
     language: 'pt',
     foil: false,
@@ -162,7 +165,15 @@ describe('applyCollectionView', () => {
 describe('activeFilterCount', () => {
   it('conta cada eixo ligado, para o botão de filtro acender', () => {
     expect(activeFilterCount(NO_FILTERS)).toBe(0);
-    expect(activeFilterCount({ colors: ['U', 'W'], types: ['artefato'], foil: true, language: 'pt' })).toBe(5);
+    expect(
+      activeFilterCount({
+        colors: ['U', 'W'],
+        types: ['artefato'],
+        foil: true,
+        language: 'pt',
+        sets: ['hob'],
+      }),
+    ).toBe(6);
   });
 });
 
@@ -208,5 +219,61 @@ describe('deckProgress', () => {
 
   it('deck fechado diz "completo", não "faltam 0"', () => {
     expect(deckProgress(deck({ ownedCards: 100, missingCards: 0 })).context).toBe('completo');
+  });
+});
+
+describe('matchesFilters · eixo de coleção', () => {
+  const eternal = entry({
+    setCode: 'HOC',
+    setName: 'The Hobbit Eternal',
+    setFamilyCode: 'hob',
+    setFamilyName: 'The Hobbit',
+  });
+
+  const base = entry({
+    setCode: 'HOB',
+    setName: 'The Hobbit',
+    setFamilyCode: 'hob',
+    setFamilyName: 'The Hobbit',
+  });
+
+  it('marcar a família traz os filhos junto', () => {
+    // "The Hobbit" na boca do usuário é hob + hoc — é a decisão §5.1.
+    const filters = { ...NO_FILTERS, sets: ['hob'] };
+    expect(matchesFilters(base, filters)).toBe(true);
+    expect(matchesFilters(eternal, filters)).toBe(true);
+    expect(matchesFilters(entry(), filters)).toBe(false);
+  });
+
+  it('marcar só o filho não traz o resto da família', () => {
+    const filters = { ...NO_FILTERS, sets: ['hoc'] };
+    expect(matchesFilters(eternal, filters)).toBe(true);
+    expect(matchesFilters(base, filters)).toBe(false);
+  });
+
+  it('soma com os outros eixos, e não substitui', () => {
+    // E entre eixos: coleção + cor mostra o verde daquela coleção.
+    const filters = { ...NO_FILTERS, sets: ['hob'], colors: ['G'] };
+    expect(matchesFilters({ ...base, colors: ['G'] }, filters)).toBe(true);
+    expect(matchesFilters({ ...base, colors: ['U'] }, filters)).toBe(false);
+  });
+
+  it('conta como filtro ativo, um por coleção marcada', () => {
+    expect(activeFilterCount({ ...NO_FILTERS, sets: ['hob', 'spm'] })).toBe(2);
+  });
+});
+
+describe('matchesQuery · nome da edição', () => {
+  it('digitar o nome da coleção acha as cartas dela', () => {
+    const card = entry({
+      name: 'Bilbo',
+      nameEn: 'Bilbo',
+      setCode: 'HOB',
+      setName: 'The Hobbit',
+      setFamilyName: 'The Hobbit',
+    });
+
+    expect(matchesQuery(card, 'hobbit')).toBe(true);
+    expect(matchesQuery(card, 'HOB')).toBe(true);
   });
 });

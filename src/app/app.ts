@@ -45,7 +45,9 @@ export class App {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      const currentUrl = event.urlAfterRedirects;
+      // Sem a query e sem o fragmento: /colecao?edicao=hob é a mesma tela que
+      // /colecao, e ela desenha o próprio cabeçalho.
+      const currentUrl = String(event.urlAfterRedirects).split(/[?#]/)[0];
 
       const shouldHide = this.hiddenRoutes.some(route => {
         if (route === '/') {

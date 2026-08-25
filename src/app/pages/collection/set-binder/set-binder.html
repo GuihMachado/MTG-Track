@@ -1,0 +1,136 @@
+<div class="page">
+  <div class="halo" aria-hidden="true"></div>
+
+  <div class="container-page relative flex min-h-0 flex-1 flex-col pt-3">
+    <header class="flex flex-none items-center gap-3">
+      <button type="button" class="plate-btn" (click)="back()" aria-label="Voltar">
+        <ng-icon hlm name="lucideChevronLeft" class="!size-[18px]" />
+      </button>
+
+      <h1 class="min-w-0 flex-1 truncate text-[20px] font-semibold tracking-[-0.01em]">
+        @if (binder(); as set) {
+          {{ set.name }}
+        } @else {
+          Coleção
+        }
+      </h1>
+
+      @if (year()) {
+        <span class="label-caps flex-none">{{ year() }}</span>
+      }
+    </header>
+
+    @if (binder(); as set) {
+      <!-- Painel de progresso: a borda toma a cor do estado, como no deck. -->
+      <section class="plate progress mt-3.5 flex-none"
+               [style.border-color]="progress().color + '4d'">
+        <div class="flex items-baseline justify-between">
+          <span class="label-caps">Na sua coleção</span>
+          <span class="leading-none">
+            <span class="owned" [style.color]="progress().color">{{ set.ownedUnique }}</span>
+            <span class="font-data text-[13px] text-foreground-subtle">
+              /{{ set.totalUnique ?? '—' }}
+            </span>
+          </span>
+        </div>
+
+        <div class="track mt-2.5" role="progressbar" [attr.aria-valuenow]="set.ownedUnique"
+             aria-valuemin="0" [attr.aria-valuemax]="set.totalUnique ?? set.ownedUnique"
+             [attr.aria-label]="set.ownedUnique + ' de ' + (set.totalUnique ?? '?') + ' cartas da coleção'">
+          <span class="fill" [class.glow]="progress().glow" [style.width.%]="progress().percent"
+                [style.background]="progress().color"></span>
+        </div>
+
+        <div class="mt-2.5 flex items-baseline justify-between gap-3">
+          <p class="font-data text-[11px] text-foreground-muted">{{ context() }}</p>
+          <button type="button" class="link-mine" (click)="seeMine()">ver as minhas</button>
+        </div>
+
+        <!-- A conta não é arbitrária: a família está escrita. -->
+        @if (set.members.length > 1) {
+          <p class="mt-1.5 font-data text-[10px] text-faint">
+            @for (member of set.members; track member.code) {
+              {{ member.code.toUpperCase() }}@if (!$last) { · }
+            }
+          </p>
+        }
+      </section>
+
+      <div class="mt-3 flex flex-none flex-wrap gap-1.5">
+        @for (option of filters; track option.key) {
+          <button type="button" class="chip-small" [class.on]="filter() === option.key"
+                  [attr.aria-pressed]="filter() === option.key" (click)="setFilter(option.key)">
+            {{ option.label }}
+          </button>
+        }
+      </div>
+
+      @if (matching().length === 0) {
+        <p class="mt-8 text-center text-[13.5px] text-foreground-muted">
+          @switch (filter()) {
+            @case ('owned') { Você ainda não tem nenhuma carta desta coleção. }
+            @case ('missing') { Você tem todas. A coleção está fechada. }
+            @default { Não achei as cartas desta coleção na Scryfall. }
+          }
+        </p>
+      } @else {
+        <div class="binder mt-3">
+          @for (card of visible(); track trackByCard($index, card)) {
+            <button type="button" class="slot" [class.miss]="card.ownedQuantity === 0"
+                    (click)="open(card)"
+                    [attr.aria-label]="card.name + (card.ownedQuantity > 0
+                      ? ', ' + card.ownedQuantity + ' na coleção'
+                      : ', não está na sua coleção')">
+              @if (card.imageUrl; as image) {
+                <img class="art" [src]="image" alt="" loading="lazy" decoding="async" />
+              } @else {
+                <span class="art art-empty" aria-hidden="true"></span>
+              }
+
+              @if (card.ownedQuantity > 1) {
+                <span class="qty" aria-hidden="true">{{ card.ownedQuantity }}×</span>
+              }
+
+              @if (card.ownedQuantity === 0) {
+                <span class="plus" aria-hidden="true">
+                  <ng-icon hlm name="lucidePlus" class="!size-[13px]" />
+                </span>
+              }
+            </button>
+          }
+        </div>
+
+        @if (hidden() > 0) {
+          <button type="button" class="more" (click)="showMore()">
+            + {{ hidden() }} carta{{ hidden() > 1 ? 's' : '' }} · toque para ver mais
+          </button>
+        }
+
+        <p class="mt-3 pb-6 text-center font-data text-[10px] text-faint">
+          {{ visible().length }} de {{ matching().length }} · toque num vazio para adicionar
+        </p>
+      }
+    } @else if (loading()) {
+      <div class="mt-3.5 flex flex-col gap-3">
+        <div class="skeleton h-[104px] rounded-[18px]"></div>
+        <div class="binder">
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <div class="skeleton slot-skeleton"></div>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="empty plate mt-6">
+        <ng-icon hlm name="lucideLibraryBig" class="!size-7 text-faint" />
+        <p class="mt-3 text-base font-semibold">Coleção não encontrada</p>
+        <button type="button" class="btn-primary pill mt-4" (click)="back()">
+          Voltar para a coleção
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+@if (picked(); as name) {
+  <app-add-card [presetName]="name" (closed)="closeSheet()" (changed)="onChanged()" />
+}

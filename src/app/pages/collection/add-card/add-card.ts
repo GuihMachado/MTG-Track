@@ -79,6 +79,13 @@ export class AddCard {
   /** Entrada em edição; null abre a folha no modo de busca. */
   editing = input<CollectionEntryDto | null>(null);
 
+  /**
+   * Nome da carta já escolhida — é assim que o fichário abre a folha: o slot
+   * vazio sabe qual carta falta, e digitar o nome de novo seria pedir ao
+   * usuário um trabalho que a tela já fez.
+   */
+  presetName = input<string | null>(null);
+
   closed = output<void>();
   /** Gravou algo — a tela de coleção usa para reavaliar os decks. */
   changed = output<void>();
@@ -117,6 +124,16 @@ export class AddCard {
       this.quantity.set(entry.quantity);
       this.foil.set(entry.foil);
       this.print.set(this.printFromEntry(entry));
+    });
+
+    // Aberta a partir de um slot do fichário: a busca já sai resolvida, e o
+    // que resta ao usuário é a impressão, o idioma e a quantidade.
+    effect(() => {
+      const name = this.presetName();
+      if (!name || this.editing()) return;
+
+      this.query.set(name);
+      this.loadPrints(name);
     });
   }
 

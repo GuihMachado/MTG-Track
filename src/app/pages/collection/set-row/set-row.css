@@ -1,0 +1,89 @@
+/* Cartão de coleção. Placa neutra de propósito: a família de edições não tem
+   cor de mana, e tingir por "cor mais comum" seria inventar um dado. */
+:host {
+  display: block;
+}
+
+.set {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px;
+  border-radius: 18px;
+  background-color: var(--surface-plate-bottom);
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--surface-plate-bottom));
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-2);
+  cursor: pointer;
+  transition: scale 120ms ease-out;
+}
+
+.set:active {
+  scale: 0.99;
+}
+
+.set:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.sigil {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: var(--foreground-muted);
+  background-image: linear-gradient(180deg, var(--surface-plate-alt-top), var(--surface-plate-alt-bottom));
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-1);
+}
+
+/* O símbolo da Scryfall é um SVG preto sem `fill` declarado: no escuro ele
+   sumiria na placa, então inverte. No claro fica como veio. */
+.icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: invert(1);
+  opacity: 0.82;
+}
+
+:host-context(.light) .icon {
+  filter: none;
+  opacity: 0.72;
+}
+
+.track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 300ms ease-out;
+}
+
+/* Verde e âmbar brilham; vermelho não — não se celebra o que está longe. */
+.fill.glow {
+  box-shadow: 0 0 12px currentColor;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.15));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .set,
+  .fill {
+    transition: none;
+  }
+
+  .set:active {
+    scale: 1;
+  }
+}

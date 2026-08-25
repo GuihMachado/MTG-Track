@@ -25,8 +25,13 @@ const COLORS: Record<DeckProgressLevel, string> = {
   far: 'var(--danger)',
 };
 
-export function deckProgress(deck: DeckDto): DeckProgress {
-  const percent = deck.totalCards > 0 ? Math.round((deck.ownedCards / deck.totalCards) * 100) : 0;
+/**
+ * A barra sozinha, sem a linha de contexto. Deck e coleção usam a mesma
+ * gramática de cor de propósito: as duas respondem "o quanto disso eu tenho",
+ * e inventar uma segunda escala faria o usuário aprender duas.
+ */
+export function progressBar(owned: number, total: number | null): Omit<DeckProgress, 'context'> {
+  const percent = total && total > 0 ? Math.round((owned / total) * 100) : 0;
   const level: DeckProgressLevel = percent >= 90 ? 'complete' : percent >= 60 ? 'close' : 'far';
 
   return {
@@ -36,8 +41,11 @@ export function deckProgress(deck: DeckDto): DeckProgress {
     // O vermelho é o único sem brilho: acender o que está longe seria elogiar
     // o problema.
     glow: level !== 'far',
-    context: contextLine(deck),
   };
+}
+
+export function deckProgress(deck: DeckDto): DeckProgress {
+  return { ...progressBar(deck.ownedCards, deck.totalCards), context: contextLine(deck) };
 }
 
 /** "completo · US$ 1.420" ou "faltam 13 · US$ 186 para fechar". */

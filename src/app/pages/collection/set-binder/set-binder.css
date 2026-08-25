@@ -1,0 +1,231 @@
+/* Fichário da coleção: a grade de cartas é a tela. O que falta não é uma
+   linha de lista — é o vidro apagado no lugar da carta. */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: var(--background);
+}
+
+/* Halo dourado do topo, como na aba de cartas: o assunto aqui é a estante. */
+.halo {
+  position: absolute;
+  top: -180px;
+  left: 50%;
+  width: 420px;
+  height: 320px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--accent-rgb) / 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Progresso ─────────────────────────────────────────────── */
+.progress {
+  padding: 14px;
+  border-radius: 18px;
+}
+
+/* Gótico no numeral do que se tem: é o troféu da tela, como no deck. */
+.owned {
+  font-family: var(--font-numeral);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 300ms ease-out;
+}
+
+.fill.glow {
+  box-shadow: 0 0 12px currentColor;
+}
+
+.link-mine {
+  flex: none;
+  background: none;
+  border: 0;
+  padding: 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--primary-text);
+  cursor: pointer;
+}
+
+.link-mine:focus-visible,
+.more:focus-visible,
+.slot:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Fichário ──────────────────────────────────────────────── */
+.binder {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+@media (min-width: 520px) {
+  .binder {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 860px) {
+  .binder {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+.slot {
+  position: relative;
+  aspect-ratio: 63 / 88;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background-image: linear-gradient(180deg, var(--surface-plate-alt-top), var(--surface-plate-alt-bottom));
+  box-shadow: var(--elev-1);
+  padding: 0;
+  cursor: pointer;
+  transition: scale 120ms ease-out;
+}
+
+.slot:active {
+  scale: 0.97;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.art-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* A que falta continua legível — apagada, sem cor e atrás de borda tracejada.
+   Slot em branco diria "falta alguma coisa"; assim ele diz qual. */
+.slot.miss {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--foreground) 12%, transparent);
+  box-shadow: none;
+}
+
+.slot.miss .art {
+  filter: grayscale(1) brightness(0.75);
+  opacity: 0.3;
+}
+
+:host-context(.light) .slot.miss .art {
+  filter: grayscale(1);
+  opacity: 0.22;
+}
+
+.qty {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  padding: 1px 4px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* O mais no vazio é o convite: um toque e a folha abre com a carta preenchida. */
+.plus {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: color-mix(in oklab, var(--foreground) 45%, transparent);
+}
+
+.more {
+  margin-top: 12px;
+  background: none;
+  border: 0;
+  padding: 6px 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+/* ─── Vazio e carregando ────────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding-inline: 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  animation: halo 1.6s ease-in-out infinite;
+}
+
+.slot-skeleton {
+  aspect-ratio: 63 / 88;
+  border-radius: 7px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .slot {
+    transition: none;
+  }
+
+  .slot:active {
+    scale: 1;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+}

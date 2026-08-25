@@ -19,6 +19,11 @@ export interface CollectionEntryDto {
   artCropUrl: string | null;
   setCode: string;
   setName: string;
+  /** Raiz da família de edições: hoc (The Hobbit Eternal) devolve hob. */
+  setFamilyCode: string;
+  /** Nome da família — é o que o usuário chama de coleção. */
+  setFamilyName: string;
+  setIconUrl: string | null;
   collectorNumber: string;
   language: string;
   foil: boolean;
@@ -148,6 +153,12 @@ export interface CollectionFilters {
   types: string[];
   foil: boolean | null;
   language: string | null;
+  /**
+   * Coleções marcadas. Guarda o código da família ("hob") ou o de uma edição
+   * solta ("hoc") — marcar a família traz os filhos junto, que é como o
+   * usuário fala de The Hobbit.
+   */
+  sets: string[];
 }
 
 export const NO_FILTERS: CollectionFilters = {
@@ -155,7 +166,45 @@ export const NO_FILTERS: CollectionFilters = {
   types: [],
   foil: null,
   language: null,
+  sets: [],
 };
+
+/**
+ * Uma coleção como o usuário a enxerga: a família inteira de edições. O que
+ * você tem é contado em cartas distintas **dessa família** — ter Anel Solar de
+ * Commander 2021 não aproxima ninguém de fechar The Hobbit.
+ */
+export interface CollectionSetDto {
+  code: string;
+  name: string;
+  iconUrl: string | null;
+  releasedAt: string | null;
+  members: { code: string; name: string; setType: string }[];
+  ownedUnique: number;
+  ownedCards: number;
+  ownedEntries: number;
+  /** Cartas distintas da família; null quando a Scryfall não respondeu. */
+  totalUnique: number | null;
+  valueUsd: number;
+}
+
+/** Uma carta da edição no fichário — tendo você ou não. */
+export interface SetBinderCardDto {
+  scryfallId: string;
+  oracleId: string;
+  name: string;
+  setCode: string;
+  collectorNumber: string;
+  rarity: string;
+  colors: string[];
+  priceUsd: number | null;
+  imageUrl: string | null;
+  ownedQuantity: number;
+}
+
+export interface SetBinderDto extends CollectionSetDto {
+  cards: SetBinderCardDto[];
+}
 
 export type CollectionSort = 'name' | 'price' | 'quantity' | 'recent';
 export type CollectionView = 'list' | 'grid';

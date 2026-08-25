@@ -5,9 +5,11 @@ import { environment } from '../../environments/environment';
 import {
   CollectionEntryDto,
   CollectionResponse,
+  CollectionSetDto,
   EMPTY_SUMMARY,
   ImportItem,
   ImportResult,
+  SetBinderDto,
 } from '../models/collection.models';
 
 /**
@@ -24,11 +26,17 @@ export class CollectionService {
   private API_URL = `${environment.apiUrl}/collection`;
 
   private _entries = signal<CollectionEntryDto[]>([]);
+  private _sets = signal<CollectionSetDto[]>([]);
+  private _loadingSets = signal(false);
+  private _setsLoaded = signal(false);
   private _summary = signal(EMPTY_SUMMARY);
   private _loading = signal(false);
   private _loaded = signal(false);
 
   readonly entries = this._entries.asReadonly();
+  /** As coleções da estante — famílias de edição, com quanto falta de cada uma. */
+  readonly sets = this._sets.asReadonly();
+  readonly loadingSets = this._loadingSets.asReadonly();
   readonly summary = this._summary.asReadonly();
   readonly loading = this._loading.asReadonly();
   readonly loaded = this._loaded.asReadonly();
@@ -57,6 +65,37 @@ export class CollectionService {
   ensureLoaded(): void {
     if (this._loaded() || this._loading()) return;
     this.load().subscribe({ error: () => undefined });
+  }
+
+  /**
+   * As coleções vêm do servidor, e não do agrupamento local, porque o
+   * denominador ("de 310") é uma busca na Scryfall — o navegador não tem como
+   * saber quantas cartas The Hobbit tem.
+   */
+  loadSets(): Observable<CollectionSetDto[]> {
+    this._loadingSets.set(true);
+
+    return this.http.get<CollectionSetDto[]>(`${this.API_URL}/sets`).pipe(
+      tap({
+        next: sets => {
+          this._sets.set(sets);
+          this._loadingSets.set(false);
+          this._setsLoaded.set(true);
+        },
+        error: () => this._loadingSets.set(false),
+      }),
+    );
+  }
+
+  /** Carrega uma vez; mexer na coleção invalida e a próxima visita recarrega. */
+  ensureSets(): void {
+    if (this._setsLoaded() || this._loadingSets()) return;
+    this.loadSets().subscribe({ error: () => undefined });
+  }
+
+  /** Uma coleção aberta como fichário: todas as cartas dela, tendo você ou não. */
+  binder(code: string): Observable<SetBinderDto> {
+    return this.http.get<SetBinderDto>(`${this.API_URL}/sets/${encodeURIComponent(code)}`);
   }
 
   add(scryfallId: string, quantity: number, foil: boolean): Observable<CollectionEntryDto> {
@@ -104,6 +143,7 @@ export class CollectionService {
   }
 
   private apply(response: CollectionResponse): void {
+    this.invalidateSets();
     this._entries.set(response.entries);
     this._summary.set(response.summary);
     this._loading.set(false);
@@ -114,7 +154,13 @@ export class CollectionService {
    * Recalcula o resumo localmente depois de mexer numa entrada. É a mesma conta
    * do servidor, e evita uma volta de rede só para atualizar dois números.
    */
+  private invalidateSets(): void {
+    this._setsLoaded.set(false);
+  }
+
   private upsertLocal(entry: CollectionEntryDto): void {
+    this.invalidateSets();
+
     this._entries.update(entries => {
       const index = entries.findIndex(item => item.id === entry.id);
       if (index === -1) return [...entries, entry];
@@ -128,6 +174,7 @@ export class CollectionService {
   }
 
   private removeLocal(id: string): void {
+    this.invalidateSets();
     this._entries.update(entries => entries.filter(entry => entry.id !== id));
     this.resummarize();
   }

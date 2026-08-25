@@ -1,0 +1,38 @@
+<button type="button" class="set" (click)="open.emit(set().code)"
+        [attr.aria-label]="'Abrir ' + set().name">
+  <span class="sigil" aria-hidden="true">
+    @if (set().iconUrl; as icon) {
+      <img class="icon" [src]="icon" alt="" loading="lazy" decoding="async" />
+    } @else {
+      <span class="font-data text-[9.5px] font-bold">{{ sigil() }}</span>
+    }
+  </span>
+
+  <span class="min-w-0 flex-1">
+    <span class="flex items-start gap-2">
+      <span class="min-w-0 flex-1 truncate text-left text-[15px] font-semibold">
+        {{ set().name }}
+      </span>
+
+      <!-- O número vive ao lado da barra: cor não é a única portadora do estado. -->
+      <span class="flex-none font-data text-[13px] font-bold" [style.color]="progress().color">
+        {{ set().ownedUnique }}<span class="text-faint text-[11px]">/{{ set().totalUnique ?? '—' }}</span>
+      </span>
+    </span>
+
+    <span class="mt-[3px] block text-left font-data text-[10px] text-faint">
+      {{ memberLine() }}@if (year()) { · {{ year() }} }
+    </span>
+
+    <span class="mt-2 block track" role="progressbar" [attr.aria-valuenow]="set().ownedUnique"
+          aria-valuemin="0" [attr.aria-valuemax]="set().totalUnique ?? set().ownedUnique"
+          [attr.aria-label]="set().ownedUnique + ' de ' + (set().totalUnique ?? '?') + ' cartas da coleção'">
+      <span class="fill" [class.glow]="progress().glow" [style.width.%]="progress().percent"
+            [style.background]="progress().color"></span>
+    </span>
+
+    <span class="mt-2 block text-left font-data text-[10.5px] text-foreground-subtle">
+      {{ context() }}
+    </span>
+  </span>
+</button>

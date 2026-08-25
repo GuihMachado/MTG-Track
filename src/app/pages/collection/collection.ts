@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
@@ -37,11 +37,16 @@ import {
   NO_FILTERS,
 } from '../../models/collection.models';
 import { activeFilterCount, applyCollectionView } from './collection-filters';
+import { groupSets } from './collection-sets';
 import { formatCount, formatTotal, formatUsd } from './money';
 import { EntryRow } from './entry-row/entry-row';
 import { EntryTile } from './entry-tile/entry-tile';
 import { AddCard } from './add-card/add-card';
 import { DeckRow } from './deck-row/deck-row';
+import { SetRow } from './set-row/set-row';
+import { SetFilter } from './set-filter/set-filter';
+
+type CollectionTab = 'cards' | 'sets' | 'decks';
 
 const VIEW_KEY = 'collection-view';
 const SORT_KEY = 'collection-sort';
@@ -78,6 +83,8 @@ interface FilterChip {
     EntryRow,
     EntryTile,
     DeckRow,
+    SetRow,
+    SetFilter,
     AddCard,
   ],
   providers: [
@@ -103,16 +110,19 @@ export class Collection implements OnInit {
   private decksService = inject(DeckService);
   private notify = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly rowSize = ROW_SIZE;
 
-  protected tab = signal<'cards' | 'decks'>('cards');
+  protected tab = signal<CollectionTab>('cards');
   protected view = signal<CollectionView>('list');
   protected sort = signal<CollectionSort>('name');
   protected query = signal('');
   protected filters = signal<CollectionFilters>(NO_FILTERS);
   protected filtersOpen = signal(false);
+  /** Folha de coleções: o eixo de edição não cabe em pílula (são dezenas). */
+  protected setsSheetOpen = signal(false);
 
   /** Folha de adicionar/editar: null fechada, 'new' ou a entrada em edição. */
   protected sheet = signal<'new' | CollectionEntryDto | null>(null);
@@ -122,6 +132,11 @@ export class Collection implements OnInit {
   protected loading = this.collection.loading;
   protected decks = this.decksService.decks;
   protected loadingDecks = this.decksService.loading;
+  protected collectionSets = this.collection.sets;
+  protected loadingSets = this.collection.loadingSets;
+
+  /** As coleções da estante, agrupadas por família — local, sem ida à rede. */
+  protected setGroups = computed(() => groupSets(this.entries()));
 
   protected readonly sortLabels: Record<CollectionSort, string> = {
     name: 'Nome',
@@ -160,6 +175,26 @@ export class Collection implements OnInit {
 
   protected activeFilters = computed(() => activeFilterCount(this.filters()));
 
+  /**
+   * As coleções marcadas viram pílula na faixa de filtros ativos, como cor e
+   * tipo — mas com nome, e não com sigla: "The Hobbit" é o que o usuário
+   * marcou, "HOB" é o que o banco guarda.
+   */
+  protected setChips = computed(() => {
+    const groups = this.setGroups();
+
+    return this.filters().sets.map(code => {
+      const family = groups.find(group => group.code === code);
+      if (family) return { code, label: family.name };
+
+      const child = groups
+        .flatMap(group => group.members)
+        .find(member => member.code === code);
+
+      return { code, label: child?.name ?? code.toUpperCase() };
+    });
+  });
+
   protected totalCards = computed(() => formatCount(this.summary().totalCards));
   protected uniqueCards = computed(() => formatCount(this.summary().uniqueCards));
   protected totalValue = computed(() => formatTotal(this.summary().totalValueUsd));
@@ -186,6 +221,13 @@ export class Collection implements OnInit {
       this.stored(SORT_KEY, ['name', 'price', 'quantity', 'recent'], 'name') as CollectionSort,
     );
 
+    // Voltar do fichário com "ver as minhas" já entra filtrado pela coleção.
+    const fromBinder = this.route.snapshot.queryParamMap.get('edicao');
+    if (fromBinder) {
+      this.filters.set({ ...NO_FILTERS, sets: [fromBinder.toLowerCase()] });
+      this.tab.set('cards');
+    }
+
     this.collection.load().subscribe({
       next: () => {
         // Os preços são do dia da consulta. Revalidar em segundo plano é o que
@@ -202,8 +244,11 @@ export class Collection implements OnInit {
   /** `cdkVirtualFor` recicla os nós: sem chave estável a linha troca de carta. */
   protected readonly trackById = (_: number, entry: CollectionEntryDto) => entry.id;
 
-  protected setTab(tab: 'cards' | 'decks'): void {
+  protected setTab(tab: CollectionTab): void {
     this.tab.set(tab);
+    // O denominador de cada coleção é uma busca na Scryfall: só vale pagá-la
+    // quando o usuário pede para ver a aba.
+    if (tab === 'sets') this.collection.ensureSets();
   }
 
   protected toggleView(): void {
@@ -250,6 +295,18 @@ export class Collection implements OnInit {
     this.filters.set(NO_FILTERS);
   }
 
+  protected toggleSet(code: string): void {
+    this.filters.update(filters => ({ ...filters, sets: toggle(filters.sets, code) }));
+  }
+
+  protected clearSets(): void {
+    this.filters.update(filters => ({ ...filters, sets: [] }));
+  }
+
+  protected openSet(code: string): void {
+    this.router.navigate(['/colecao/edicao', code]);
+  }
+
   protected clearQuery(): void {
     this.query.set('');
   }
@@ -269,6 +326,8 @@ export class Collection implements OnInit {
   /** A coleção mudou, então o "quanto falta" de cada deck mudou junto. */
   protected onCollectionChanged(): void {
     this.decksService.load().subscribe({ error: () => undefined });
+    // O "quanto falta" de cada coleção mudou junto com o dos decks.
+    if (this.tab() === 'sets') this.collection.loadSets().subscribe({ error: () => undefined });
   }
 
   protected editingEntry(): CollectionEntryDto | null {

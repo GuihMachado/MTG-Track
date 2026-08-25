@@ -1,0 +1,106 @@
+<div class="veil" (click)="close()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-label="Filtrar por coleção">
+  <span class="handle" aria-hidden="true"></span>
+
+  <header class="flex items-baseline justify-between px-1">
+    <h2 class="label-caps">Filtrar por coleção</h2>
+    @if (selected().length > 0) {
+      <button type="button" class="link text-[12px]" (click)="cleared.emit()">
+        limpar {{ selected().length }}
+      </button>
+    }
+  </header>
+
+  <label class="well mt-3">
+    <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
+    <input class="well-input" type="search" autocomplete="off" placeholder="Buscar coleção"
+           [value]="query()" (input)="query.set($any($event.target).value)"
+           aria-label="Buscar coleção" />
+    @if (query()) {
+      <button type="button" class="clear" (click)="query.set('')" aria-label="Limpar busca">
+        <ng-icon hlm name="lucideX" class="!size-[14px]" />
+      </button>
+    }
+  </label>
+
+  @if (visible().length === 0) {
+    <p class="mt-6 text-center text-[13px] text-foreground-muted">
+      Nenhuma coleção com esse nome na sua estante.
+    </p>
+  } @else {
+    <ul class="mt-3 flex flex-col gap-1">
+      @for (group of visible(); track group.code) {
+        <li>
+          <div class="set-line" [class.on]="isTouched(group)">
+            <button type="button" class="pick" [attr.aria-pressed]="isOn(group.code)"
+                    [attr.aria-label]="group.name" (click)="toggle(group.code)">
+              <span class="sigil" aria-hidden="true">
+                @if (group.iconUrl; as icon) {
+                  <img class="icon" [src]="icon" alt="" loading="lazy" decoding="async" />
+                } @else {
+                  <span class="font-data text-[9px] font-bold">
+                    {{ group.code.toUpperCase().slice(0, 4) }}
+                  </span>
+                }
+              </span>
+
+              <span class="min-w-0 flex-1 text-left">
+                <span class="block truncate text-[13.5px] font-medium">{{ group.name }}</span>
+                <span class="mt-[2px] block font-data text-[10px] text-faint">
+                  {{ group.unique }} carta{{ group.unique === 1 ? '' : 's' }} ·
+                  {{ group.cards }} cópia{{ group.cards === 1 ? '' : 's' }}
+                </span>
+              </span>
+
+              <span class="check" [class.checked]="isOn(group.code)" aria-hidden="true">
+                @if (isOn(group.code)) {
+                  <ng-icon hlm name="lucideCheck" class="!size-[12px]" />
+                }
+              </span>
+            </button>
+
+            <!-- Só abre quando há o que separar: uma família de uma edição só
+                 não tem filho para escolher. -->
+            @if (splittable(group)) {
+              <button type="button" class="expand" (click)="expand(group.code)"
+                      [attr.aria-expanded]="isExpanded(group.code)"
+                      [attr.aria-label]="'Ver as edições de ' + group.name">
+                <ng-icon hlm name="lucideChevronDown" class="chevron !size-4"
+                         [class.open]="isExpanded(group.code)" />
+              </button>
+            }
+          </div>
+
+          @if (splittable(group) && isExpanded(group.code)) {
+            <ul class="mt-1 flex flex-col gap-1 pl-6">
+              @for (member of group.members; track member.code) {
+                <li>
+                  <button type="button" class="pick child rise-stagger"
+                          [class.on]="isOn(member.code)" [attr.aria-pressed]="isOn(member.code)"
+                          [attr.aria-label]="member.name" (click)="toggle(member.code)">
+                    <span class="min-w-0 flex-1 text-left">
+                      <span class="block truncate text-[12.5px]">{{ member.name }}</span>
+                      <span class="mt-[1px] block font-data text-[9.5px] text-faint">
+                        {{ member.code.toUpperCase() }} ·
+                        {{ member.cards }} cópia{{ member.cards === 1 ? '' : 's' }}
+                      </span>
+                    </span>
+
+                    <span class="check" [class.checked]="isOn(member.code)" aria-hidden="true">
+                      @if (isOn(member.code)) {
+                        <ng-icon hlm name="lucideCheck" class="!size-[12px]" />
+                      }
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <button type="button" class="btn-primary pill mt-4 w-full" (click)="close()">Pronto</button>
+</section>
