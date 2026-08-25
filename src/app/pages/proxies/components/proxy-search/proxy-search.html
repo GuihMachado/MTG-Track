@@ -16,19 +16,29 @@
       }
     </div>
 
-    <select hlmInput class="w-full sm:w-44" aria-label="Filtrar por cor"
-            [value]="color()" (change)="setColor($any($event.target).value)">
-      @for (option of colorFilters; track option.value) {
-        <option [value]="option.value">{{ option.label }}</option>
-      }
-    </select>
+    <brn-select class="block w-full min-w-0 sm:w-44" placeholder="Filtrar por cor"
+                [value]="color()" (valueChange)="setColor($any($event))">
+      <hlm-select-trigger class="w-full">
+        <hlm-select-value />
+      </hlm-select-trigger>
+      <hlm-select-content>
+        @for (option of colorFilters; track option.value) {
+          <hlm-option [value]="option.value">{{ option.label }}</hlm-option>
+        }
+      </hlm-select-content>
+    </brn-select>
 
-    <select hlmInput class="w-full sm:w-52" aria-label="Filtrar por tipo"
-            [value]="type()" (change)="setType($any($event.target).value)">
-      @for (option of typeFilters; track option.value) {
-        <option [value]="option.value">{{ option.label }}</option>
-      }
-    </select>
+    <brn-select class="block w-full min-w-0 sm:w-52" placeholder="Filtrar por tipo"
+                [value]="type()" (valueChange)="setType($any($event))">
+      <hlm-select-trigger class="w-full">
+        <hlm-select-value />
+      </hlm-select-trigger>
+      <hlm-select-content>
+        @for (option of typeFilters; track option.value) {
+          <hlm-option [value]="option.value">{{ option.label }}</hlm-option>
+        }
+      </hlm-select-content>
+    </brn-select>
   </div>
 
   <!-- Estados -->

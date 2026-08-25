@@ -34,7 +34,7 @@ export class HlmMenubarTrigger {
 	public readonly userClass = input<ClassValue>('', { alias: 'class' });
 	protected readonly _computedClass = computed(() =>
 		hlm(
-			'focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground flex items-center rounded-sm px-2 py-1 text-sm font-medium outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+			'focus:bg-hairline-strong focus:text-foreground data-[state=open]:bg-hairline-strong data-[state=open]:text-foreground flex items-center rounded-sm px-2 py-1 text-sm font-medium outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
 			this.userClass(),
 		),
 	);

@@ -14,7 +14,7 @@ export class HlmNavigationMenuLink {
 	public readonly userClass = input<ClassValue>('', { alias: 'class' });
 	protected readonly _computedClass = computed(() =>
 		hlm(
-			'data-[active=true]:focus:bg-accent data-[active=true]:hover:bg-accent data-[active=true]:bg-accent/50 data-[active=true]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus-visible:ring-ring/50 [&_ng-icon:not([class*="text-"])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_ng-icon:not([class*="text-"])]:text-base',
+			'data-[active=true]:focus:bg-hairline-strong data-[active=true]:hover:bg-hairline-strong data-[active=true]:bg-hairline data-[active=true]:text-foreground hover:bg-hairline-strong hover:text-foreground focus:bg-hairline-strong focus:text-foreground focus-visible:ring-ring/50 [&_ng-icon:not([class*="text-"])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_ng-icon:not([class*="text-"])]:text-base',
 			'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
 			this.userClass(),
 		),

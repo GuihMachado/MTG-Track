@@ -23,6 +23,6 @@ export class HlmCommand {
 
 	/** The styles to apply  */
 	protected readonly _computedClass = computed(() =>
-		hlm('bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md', this.userClass()),
+		hlm('glass-panel text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md', this.userClass()),
 	);
 }

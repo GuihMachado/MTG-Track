@@ -8,6 +8,8 @@ import { lucideChevronDown, lucidePlus, lucideSearch, lucideX } from '@ng-icons/
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmInputImports } from '@spartan-ng/helm/input';
+import { BrnSelectImports } from '@spartan-ng/brain/select';
+import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { HlmLabelImports } from '@spartan-ng/helm/label';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { HlmDialogService } from '@spartan-ng/helm/dialog';
@@ -16,8 +18,13 @@ import { ScryfallService } from '../../../../services/scryfall-service';
 import { extractImageUris, ScryfallCard } from '../../../../models/proxy.models';
 import { CardPreviewDialog } from '../../../../shared/card-preview-dialog/card-preview-dialog';
 
+/* O item "todas/todos" precisa de um valor real: o hlm-select só mostra o
+   rótulo do que está selecionado, e string vazia ele lê como nada escolhido
+   (cairia no placeholder). A busca traduz ALL de volta para "sem filtro". */
+const ALL = 'all';
+
 const COLOR_FILTERS = [
-  { value: '', label: 'Todas as cores' },
+  { value: ALL, label: 'Todas as cores' },
   { value: 'w', label: 'Branco' },
   { value: 'u', label: 'Azul' },
   { value: 'b', label: 'Preto' },
@@ -27,7 +34,7 @@ const COLOR_FILTERS = [
 ] as const;
 
 const TYPE_FILTERS = [
-  { value: '', label: 'Todos os tipos' },
+  { value: ALL, label: 'Todos os tipos' },
   { value: 'creature', label: 'Criatura' },
   { value: 'instant', label: 'Mágica instantânea' },
   { value: 'sorcery', label: 'Feitiço' },
@@ -36,6 +43,9 @@ const TYPE_FILTERS = [
   { value: 'planeswalker', label: 'Planeswalker' },
   { value: 'land', label: 'Terreno' },
 ] as const;
+
+/** ALL não é filtro: vira ausência de parâmetro na consulta da Scryfall. */
+const unset = (value: string): string | undefined => (value === ALL ? undefined : value);
 
 /** Busca na Scryfall + formulário de proxy manual. */
 @Component({
@@ -48,6 +58,8 @@ const TYPE_FILTERS = [
     HlmButtonImports,
     HlmInputImports,
     HlmLabelImports,
+    BrnSelectImports,
+    HlmSelectImports,
     HlmSkeletonImports,
   ],
   providers: [provideIcons({ lucideSearch, lucidePlus, lucideX, lucideChevronDown })],
@@ -67,8 +79,8 @@ export class ProxySearch {
   protected readonly extractImages = extractImageUris;
 
   protected queryControl = new FormControl('', { nonNullable: true });
-  protected color = signal('');
-  protected type = signal('');
+  protected color = signal<string>(ALL);
+  protected type = signal<string>(ALL);
 
   protected results = signal<ScryfallCard[]>([]);
   protected totalCards = signal(0);
@@ -125,7 +137,7 @@ export class ProxySearch {
 
     this.loading.set(true);
     this.scryfall
-      .search(query, { color: this.color() || undefined, type: this.type() || undefined })
+      .search(query, { color: unset(this.color()), type: unset(this.type()) })
       .subscribe({
         next: page => {
           if (seq !== this.searchSeq) return;

@@ -146,6 +146,8 @@
   --color-hairline: var(--hairline);
   --color-hairline-strong: var(--hairline-strong);
   --color-glass: var(--glass);
+  --color-glass-panel: var(--glass-panel);
+  --color-glass-field: var(--glass-field);
   --color-faint: var(--text-faint);
   --shadow-elev-1: var(--elev-1);
   --shadow-elev-2: var(--elev-2);
@@ -226,6 +228,15 @@
   --hairline: rgba(255, 255, 255, 0.07);
   --hairline-strong: rgba(255, 255, 255, 0.16);
   --glass: rgba(255, 255, 255, 0.045);
+  /* Vidro em dois pesos. O painel flutuante (select, menu, popover) é tinta
+     de placa translúcida, não branco: 4,5% de branco não separa o texto do
+     painel do que passa atrás. `-opaque` é o fallback de quem não tem
+     backdrop-filter. O campo é o vidro leve, que só precisa dizer "aqui se
+     digita" sobre a placa que o contém. */
+  --glass-panel: rgba(21, 18, 34, 0.78);
+  --glass-panel-opaque: #191527;
+  --glass-field: rgba(255, 255, 255, 0.055);
+  --glass-field-hover: rgba(255, 255, 255, 0.085);
 
   /* O roxo arcano deixa de ser a cor de ação: a identidade da home é
      preto-e-branco com vidro, e o único acento é o ouro. Os tokens seguem
@@ -350,6 +361,10 @@
   --hairline: rgba(23, 19, 31, 0.1);
   --hairline-strong: rgba(23, 19, 31, 0.18);
   --glass: rgba(255, 255, 255, 0.62);
+  --glass-panel: rgba(255, 255, 255, 0.82);
+  --glass-panel-opaque: #FFFFFF;
+  --glass-field: rgba(255, 255, 255, 0.55);
+  --glass-field-hover: rgba(255, 255, 255, 0.78);
 
   --surface: #FFFFFF;
   --surface-2: var(--color-ink-50);
@@ -657,6 +672,38 @@ body [data-sonner-toaster][data-theme='dark'] [data-sonner-toast] [data-close-bu
   background-color: var(--glass);
   border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
   backdrop-filter: blur(12px);
+}
+
+/* Vidro de painel: toda superfície flutuante pequena (conteúdo de select,
+   menu suspenso, popover, autocomplete). Substitui `bg-popover`/`plate-high`
+   nesses painéis — o painel deixa ver a placa de baixo em vez de tapá-la.
+   Não usa --glass: 4,5% de branco sobre o app deixaria o texto do painel
+   disputando com o que está atrás. É tinta de placa a 78% + desfoque. */
+@utility glass-panel {
+  background-color: var(--glass-panel);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--hairline-strong);
+  box-shadow: var(--elev-3);
+
+  /* Sem desfoque o vidro não se lê: volta a ser placa chapada. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background-color: var(--glass-panel-opaque);
+  }
+}
+
+/* Vidro de campo: fundo de input, textarea e gatilho de select. Sem
+   box-shadow de propósito — o anel de foco do Tailwind (`ring-[3px]`) é
+   box-shadow, e uma sombra própria aqui atropelaria a composição dele.
+   Quem desenha a borda continua sendo `border-input`. */
+@utility glass-field {
+  background-color: var(--glass-field);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+
+  &:hover:not(:disabled, [disabled], [aria-disabled='true']) {
+    background-color: var(--glass-field-hover);
+  }
 }
 
 /* Rótulo em caixa alta com tracking (lei 3): JetBrains Mono, nunca Inter. */
