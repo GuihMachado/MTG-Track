@@ -99,6 +99,26 @@ describe('matchesFilters', () => {
     expect(matchesFilters(entry(), { ...NO_FILTERS, types: ['criatura'] })).toBe(false);
   });
 
+  it('tipo é bilíngue: o chip casa a linha de tipo nos dois idiomas', () => {
+    // A linha gravada segue o idioma da impressão — a mesma coleção mistura os dois.
+    const creatureEn = entry({ typeLine: 'Creature — Human Soldier' });
+    const creaturePt = entry({ typeLine: 'Criatura — Humano Soldado' });
+    const sorceryPt = entry({ typeLine: 'Feitiço' });
+    const instantPt = entry({ typeLine: 'Mágica Instantânea' });
+    const enchantEn = entry({ typeLine: 'Enchantment — Aura' });
+    const landEn = entry({ typeLine: 'Basic Land — Island' });
+
+    expect(matchesFilters(creatureEn, { ...NO_FILTERS, types: ['criatura'] })).toBe(true);
+    expect(matchesFilters(creaturePt, { ...NO_FILTERS, types: ['criatura'] })).toBe(true);
+    expect(matchesFilters(sorceryPt, { ...NO_FILTERS, types: ['sorcery'] })).toBe(true);
+    expect(matchesFilters(instantPt, { ...NO_FILTERS, types: ['instant'] })).toBe(true);
+    expect(matchesFilters(enchantEn, { ...NO_FILTERS, types: ['encantamento'] })).toBe(true);
+    expect(matchesFilters(landEn, { ...NO_FILTERS, types: ['terreno'] })).toBe(true);
+    // E não vira passe-livre: tipo errado continua fora nos dois idiomas.
+    expect(matchesFilters(creatureEn, { ...NO_FILTERS, types: ['sorcery'] })).toBe(false);
+    expect(matchesFilters(sorceryPt, { ...NO_FILTERS, types: ['criatura'] })).toBe(false);
+  });
+
   it('eixos diferentes se somam com E', () => {
     const blueArtifact = entry({ colors: ['U'], typeLine: 'Artefato' });
     expect(

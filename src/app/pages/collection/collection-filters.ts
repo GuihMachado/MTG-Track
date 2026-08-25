@@ -40,6 +40,22 @@ export function matchesQuery(entry: CollectionEntryDto, query: string): boolean 
 }
 
 /**
+ * O tipo é bilíngue como o nome: a linha de tipo gravada vem do idioma da
+ * impressão (o backend prefere `printed_type_line`), então a mesma coleção tem
+ * "Criatura — Humano" e "Creature — Human" convivendo. O filtro casa com os
+ * dois, senão marcar "Criatura" esconde toda criatura em inglês — e vice-versa.
+ * As chaves são os `value` dos chips; os termos já saem passados por `fold`.
+ */
+const TYPE_TERMS: Record<string, string[]> = {
+  criatura: ['criatura', 'creature'],
+  artefato: ['artefato', 'artifact'],
+  instant: ['instant', 'instantanea'],
+  sorcery: ['sorcery', 'feitico'],
+  encantamento: ['encantamento', 'enchantment'],
+  terreno: ['terreno', 'land'],
+};
+
+/**
  * Os eixos de filtro são independentes e se somam (E entre eixos, OU dentro do
  * eixo): cor azul + tipo artefato mostra artefato azul, e duas cores marcadas
  * mostram qualquer uma das duas.
@@ -55,7 +71,10 @@ export function matchesFilters(entry: CollectionEntryDto, filters: CollectionFil
 
   if (filters.types.length > 0) {
     const type = fold(entry.typeLine);
-    if (!filters.types.some(candidate => type.includes(fold(candidate)))) return false;
+    const hit = filters.types.some(candidate =>
+      (TYPE_TERMS[candidate] ?? [fold(candidate)]).some(term => type.includes(term)),
+    );
+    if (!hit) return false;
   }
 
   if (filters.sets.length > 0) {
