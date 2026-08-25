@@ -466,6 +466,39 @@
 
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SEM ZOOM — o app instalado se comporta como app
+   São três zooms diferentes e cada um tem a sua trava:
+   1. pinça e duplo toque → meta viewport em index.html + `touch-action`;
+   2. foco em campo de texto → o iOS aproxima a tela sempre que a fonte do
+      campo é menor que 16px, e ignora `user-scalable=no` para isso; a única
+      cura é o campo nascer com 16px no toque;
+   3. inflação de fonte do Android ao girar → `text-size-adjust`.
+   Fica fora de @layer e com !important porque os campos são pintados por
+   folhas de componente (.field-input, .well-input, .paste), que ganhariam
+   desta regra tanto na camada quanto na especificidade.
+   ═══════════════════════════════════════════════════════════════ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html,
+body {
+  /* Mata o zoom de duplo toque sem tirar o rolar da página. */
+  touch-action: manipulation;
+  /* Sem puxar-para-recarregar nem elástico de borda: o app não é uma página. */
+  overscroll-behavior: none;
+}
+
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='password']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Gutter único do app (substitui w-[90%]/w-[95%]/w-[85%]):
    16px até 767px, 24px até 1023px, 32px acima; conteúdo em 1120px. */
 @utility container-page {

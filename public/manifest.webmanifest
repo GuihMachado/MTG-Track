@@ -1,7 +1,8 @@
 {
   "name": "MTG Track",
   "short_name": "MTG Track",
-  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "display": "fullscreen",
   "scope": "./",
   "start_url": "./",
   "icons": [

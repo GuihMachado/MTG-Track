@@ -4,8 +4,24 @@
   <meta charset="utf-8">
   <title>MTG Track</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- `maximum-scale=1` + `user-scalable=no` matam o zoom por pinça e por duplo
+       toque; `viewport-fit=cover` deixa o app pintar por baixo do entalhe e da
+       barra de gestos quando o Android abre em fullscreen. O zoom ao focar um
+       input NÃO se resolve aqui (o iOS ignora estes dois no Safari): quem
+       resolve é a regra de 16px em styles.css. -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#06050B">
+
+  <!-- App instalado: sem barra de endereço no Android (o `display: fullscreen`
+       do manifesto também esconde a barra de status) e sem chrome do Safari no
+       iOS. `black` mantém a barra de status opaca, então nada do app corre por
+       baixo dela — não há vão de área segura para compensar. -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="MTG Track">
+
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
@@ -13,5 +29,14 @@
 <body>
   <app-root></app-root>
   <noscript>Please enable JavaScript to continue using this application.</noscript>
+
+  <!-- O iOS ignora `user-scalable=no`, mas ainda dispara os eventos de gesto do
+       WebKit: barrá-los é o que sobra para travar a pinça lá. Fica no index e
+       não no Angular para valer desde o primeiro quadro. -->
+  <script>
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (evt) {
+      document.addEventListener(evt, function (e) { e.preventDefault(); }, { passive: false });
+    });
+  </script>
 </body>
 </html>
