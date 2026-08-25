@@ -43,6 +43,12 @@ export class App {
     '/decks',
   ];
 
+  // Estatísticas: a lista convive com o header (menu e avatar valem lá);
+  // só os detalhes (deck e confrontos) desenham o próprio cabeçalho com
+  // voltar. Lista separada porque aqui o pai mostra e SÓ os filhos escondem —
+  // em hiddenRoutes o pai esconderia junto.
+  private hiddenChildRoutes = ['/estatisticas'];
+
   showHeader = signal(true);
   /** Só na home o header fica sobre a arte do commander, sem barra. */
   overArt = signal(false);
@@ -65,7 +71,7 @@ export class App {
           return currentUrl === '/';
         }
         return currentUrl === route || currentUrl.startsWith(route + '/');
-      });
+      }) || this.hiddenChildRoutes.some(route => currentUrl.startsWith(route + '/'));
 
       this.showHeader.set(!shouldHide);
       this.overArt.set(currentUrl.startsWith('/dashboard'));

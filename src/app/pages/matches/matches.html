@@ -20,8 +20,19 @@
     </div>
   </div>
 
+  <!-- Recorte por deck, vindo de Estatísticas: um toque no ✕ volta ao todo. -->
+  @if (commanderLabel(); as commander) {
+    <button type="button" class="deck-cut mt-4" (click)="clearCommander()"
+            [attr.aria-label]="'Remover o filtro do deck ' + commander">
+      <span class="label-caps !text-inherit">Deck</span>
+      <span class="min-w-0 truncate text-[13px] font-semibold">{{ commander }}</span>
+      <ng-icon hlm name="lucideX" class="!size-[14px] flex-none" />
+    </button>
+  }
+
   <!-- Faixa de filtros: a pílula ativa vira vidro branco. -->
-  <div class="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
+  <div class="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+       [class.mt-4]="!commanderLabel()" [class.mt-2.5]="commanderLabel()">
     @for (option of filters; track option.id) {
       <button type="button" class="chip-filter" [class.on]="filter() === option.id"
               [attr.aria-pressed]="filter() === option.id"

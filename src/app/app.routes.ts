@@ -16,6 +16,9 @@ import { Collection } from './pages/collection/collection';
 import { CollectionImport } from './pages/collection/import/import';
 import { DeckDetail } from './pages/decks/deck-detail/deck-detail';
 import { SetBinder } from './pages/collection/set-binder/set-binder';
+import { Stats } from './pages/stats/stats';
+import { DeckStatsPage } from './pages/stats/deck-stats/deck-stats';
+import { Matchups } from './pages/stats/matchups/matchups';
 
 const authGuard: CanActivateFn = () => {
     const router = inject(Router);
@@ -119,6 +122,23 @@ export const routes: Routes = [
     {
         path: 'decks/:id',
         component: DeckDetail,
+        canActivate: [authGuard]
+    },
+    // Estatísticas por deck: o :commander é o deckKey normalizado, para o
+    // link ser compartilhável e o voltar do navegador funcionar.
+    {
+        path: 'estatisticas',
+        component: Stats,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'estatisticas/:commander',
+        component: DeckStatsPage,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'estatisticas/:commander/confrontos',
+        component: Matchups,
         canActivate: [authGuard]
     }
 ];

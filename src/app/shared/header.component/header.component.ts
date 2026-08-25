@@ -8,6 +8,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import {
+  lucideChartColumn,
   lucideCrown,
   lucideLibraryBig,
   lucideHouse,
@@ -46,6 +47,7 @@ interface NavItem {
   ],
   providers: [
     provideIcons({
+      lucideChartColumn,
       lucideCrown,
       lucideLibraryBig,
       lucideSwords,
@@ -84,6 +86,7 @@ export class HeaderComponent {
     { route: '/dashboard', icon: 'lucideHouse', label: 'Home' },
     { route: '/matchs', icon: 'lucideSwords', label: 'Partidas' },
     { route: '/ranking', icon: 'lucideCrown', label: 'Ranking' },
+    { route: '/estatisticas', icon: 'lucideChartColumn', label: 'Estatísticas' },
     { route: '/colecao', icon: 'lucideLibraryBig', label: 'Coleção' },
     { route: '/proxies', icon: 'lucidePrinter', label: 'Proxies' },
     { route: '/rules', icon: 'lucideScrollText', label: 'Regras da Casa' },

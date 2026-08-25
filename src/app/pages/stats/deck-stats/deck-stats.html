@@ -1,0 +1,148 @@
+<div class="page">
+  @if (deck(); as deck) {
+    <!-- Herói: arte do commander com véu; a cor do deck entra como brilho. -->
+    @if (artUrl() && !artFailed()) {
+      <img class="hero" [src]="artUrl()" alt="" (error)="artFailed.set(true)" />
+    }
+    <div class="hero-veil" aria-hidden="true"></div>
+    <div class="mana-glow" [style.--deck-rgb]="rgb()" aria-hidden="true"></div>
+
+    <div class="container-page relative flex flex-col pb-10">
+      <header class="flex h-[58px] items-center justify-between">
+        <button type="button" class="glass-btn" (click)="back()" aria-label="Voltar">
+          <ng-icon hlm name="lucideChevronLeft" class="!size-[18px]" />
+        </button>
+        <button type="button" class="glass-btn" (click)="toMatchups()"
+                aria-label="Ver confrontos deste deck">
+          <ng-icon hlm name="lucideSwords" class="!size-[17px]" />
+        </button>
+      </header>
+
+      <div class="mt-[92px] flex items-start gap-3">
+        <h1 class="min-w-0 flex-1 text-[25px] font-bold leading-[1.15] tracking-[-0.02em]"
+            style="text-wrap: pretty">
+          {{ deck.commander }}
+        </h1>
+        @if (symbols()) {
+          <span class="mt-1 flex flex-none gap-1.5 text-[17px]"
+                [innerHTML]="symbols() | manaSymbol"></span>
+        }
+      </div>
+
+      <!-- Painel de winrate: o gótico de 46px é a resposta da tela. -->
+      <section class="plate panel mt-4 rise-in"
+               [style.border-color]="'color-mix(in oklab, var(--' + band().color + ') 28%, transparent)'">
+        <div class="flex items-end justify-between gap-3">
+          <div class="flex flex-col gap-1">
+            <span class="label-caps">Winrate</span>
+            <span class="rate-value" [style.color]="'var(--' + band().color + ')'">
+              {{ deck.winRate }}<span class="rate-unit">%</span>
+            </span>
+          </div>
+          <div class="flex flex-col items-end gap-1 pb-1">
+            <span class="score">
+              <b class="text-success">{{ deck.wins }}</b>V ·
+              <b class="text-danger">{{ deck.losses }}</b>D
+            </span>
+            <span class="score-sub">{{ deck.total }} partida{{ deck.total > 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+
+        <div class="track mt-3" role="progressbar" [attr.aria-valuenow]="deck.winRate"
+             aria-valuemin="0" aria-valuemax="100"
+             [attr.aria-label]="deck.commander + ': ' + deck.winRate + ' por cento, ' + deck.wins + ' vitórias em ' + deck.total + ' partidas'">
+          <span class="fill" [class.glow]="band().glow"
+                [style.width.%]="deck.winRate"
+                [style.background]="'var(--' + band().color + ')'"></span>
+        </div>
+
+        @if (deck.total >= 2) {
+          <p class="streak mt-3" [class.loss]="deck.currentStreak.type === 'loss'">
+            <ng-icon hlm class="!size-[14px]"
+                     [name]="deck.currentStreak.type === 'win' ? 'lucideFlame' : 'lucideTrendingDown'" />
+            @if (deck.currentStreak.type === 'win') {
+              {{ deck.currentStreak.count }}
+              vitória{{ deck.currentStreak.count > 1 ? 's' : '' }} seguida{{ deck.currentStreak.count > 1 ? 's' : '' }}
+              · melhor sequência: {{ deck.bestWinStreak }}
+            } @else {
+              {{ deck.currentStreak.count }}
+              derrota{{ deck.currentStreak.count > 1 ? 's' : '' }} seguida{{ deck.currentStreak.count > 1 ? 's' : '' }}
+              · melhor sequência: {{ deck.bestWinStreak }}
+            }
+          </p>
+        }
+      </section>
+
+      @if (deck.total >= 2) {
+        <!-- Fita das últimas 12: as da sequência atual ficam acesas. -->
+        <section class="mt-5 rise-in">
+          <h2 class="section-label">Últimas {{ deck.recentResults.length }} partidas</h2>
+          <div class="mt-2 flex gap-[5px]" [attr.aria-label]="ribbonLabel()">
+            @for (square of ribbon(); track $index) {
+              <span class="square" aria-hidden="true"
+                    [class.win]="square.won" [class.loss]="!square.won"
+                    [class.lit]="square.inStreak">
+                {{ square.won ? 'V' : 'D' }}
+              </span>
+            }
+          </div>
+          <p class="ribbon-legend mt-1.5">mais antiga → mais recente</p>
+        </section>
+
+        <!-- A seção mais útil: onde se descobre que um deck ganha em duelo e
+             afoga em mesa de 6. O "· N" é obrigatório — 100% em 1 jogo e 100%
+             em 8 não podem parecer iguais. -->
+        <section class="mt-5 rise-in">
+          <h2 class="section-label">Por tamanho de mesa</h2>
+          <div class="mt-2.5 flex flex-col gap-2">
+            @for (bucket of deck.byTableSize; track bucket.label) {
+              <div class="flex items-center gap-2">
+                <span class="size-label">{{ bucket.label === '2' ? '2 jog.' : bucket.label + ' jog.' }}</span>
+                <span class="size-track flex-1" role="progressbar"
+                      [attr.aria-valuenow]="bucket.winRate" aria-valuemin="0" aria-valuemax="100"
+                      [attr.aria-label]="'Mesa de ' + bucket.label + ': ' + bucket.winRate + ' por cento em ' + bucket.total + ' partidas'">
+                  <span class="size-fill" [style.width.%]="bucket.winRate"
+                        [style.background]="'var(--' + bandOf(bucket.winRate).color + ')'"></span>
+                </span>
+                <span class="size-value">{{ bucket.winRate }}% · {{ bucket.total }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Duração: média sem as mesas que ninguém encerrou. -->
+      <section class="mt-5 flex gap-2.5 rise-in">
+        <div class="mini">
+          <span class="mini-label">Duração média</span>
+          <span class="mini-value">
+            {{ deck.avgDurationMin > 0 ? deck.avgDurationMin : '—' }}<span class="mini-unit">min</span>
+          </span>
+          @if (deck.durationIgnored > 0) {
+            <span class="mini-note">
+              {{ deck.durationIgnored }} partida{{ deck.durationIgnored > 1 ? 's' : '' }} ignorada{{ deck.durationIgnored > 1 ? 's' : '' }}
+            </span>
+          }
+        </div>
+        @if (deck.total >= 2) {
+          <div class="mini">
+            <span class="mini-label">Vitória mais rápida</span>
+            <span class="mini-value text-success">
+              @if (deck.fastestWinMin !== null) {
+                {{ deck.fastestWinMin }}<span class="mini-unit">min</span>
+              } @else {
+                —
+              }
+            </span>
+          </div>
+        }
+      </section>
+    </div>
+  } @else if (loading()) {
+    <div class="container-page pt-3">
+      <div class="skeleton h-[150px] rounded-[18px]"></div>
+      <div class="skeleton mt-4 h-[150px] rounded-[20px]"></div>
+      <div class="skeleton mt-4 h-[110px] rounded-[18px]"></div>
+    </div>
+  }
+</div>

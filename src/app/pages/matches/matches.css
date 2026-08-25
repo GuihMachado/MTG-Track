@@ -24,3 +24,31 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
+
+/* Recorte por deck (vindo de "Ver as N partidas" nas Estatísticas): chip
+   arcano, como todo filtro ativo — e o roxo só volta em estado, nunca em ação. */
+.deck-cut {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  align-self: flex-start;
+  height: 32px;
+  padding-inline: 12px 9px;
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.16);
+  border: 1px solid rgba(124, 92, 255, 0.45);
+  color: var(--color-arcane-200);
+  cursor: pointer;
+}
+
+.deck-cut:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+:root.light .deck-cut {
+  background: rgba(91, 58, 209, 0.12);
+  border-color: rgba(91, 58, 209, 0.4);
+  color: var(--color-arcane-800);
+}

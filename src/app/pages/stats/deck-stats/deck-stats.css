@@ -1,0 +1,310 @@
+/* Estatísticas · tela 2 — um deck em detalhe. */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: var(--background);
+}
+
+/* ─── Herói ─────────────────────────────────────────────────── */
+.hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 212px;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.hero-veil {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 264px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 5, 11, 0.68) 0%,
+    rgba(6, 5, 11, 0.2) 32%,
+    rgba(6, 5, 11, 0.95) 86%,
+    var(--background) 100%
+  );
+}
+
+:root.light .hero-veil {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.25) 32%,
+    rgba(250, 248, 255, 0.95) 86%,
+    var(--background) 100%
+  );
+}
+
+/* Brilho ambiente na cor do deck, ancorado à esquerda do título. */
+.mana-glow {
+  position: absolute;
+  left: -70px;
+  top: 110px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--deck-rgb) / 0.22), transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* Sobre a arte, o botão é de vidro: placa sólida apagaria a imagem. */
+.glass-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--foreground);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+:root.light .glass-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(23, 19, 31, 0.14);
+}
+
+.glass-btn:active {
+  filter: brightness(1.2);
+}
+
+.glass-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ─── Painel de winrate ─────────────────────────────────────── */
+.panel {
+  padding: 16px;
+  border-radius: 20px;
+}
+
+/* O segundo maior número do app depois da vida na mesa: é a resposta. */
+.rate-value {
+  font-family: var(--font-numeral);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-unit {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--foreground-subtle);
+  margin-left: 2px;
+}
+
+.score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--foreground-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--foreground-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  display: block;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.fill.glow {
+  box-shadow: 0 0 12px currentColor;
+}
+
+.streak {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.streak.loss {
+  color: var(--danger);
+}
+
+/* ─── Fita das últimas 12 ───────────────────────────────────── */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--foreground-subtle);
+}
+
+.square {
+  flex: 1;
+  max-width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.square.win {
+  background: rgb(var(--success-rgb) / 0.14);
+  border-color: rgb(var(--success-rgb) / 0.32);
+  color: var(--success);
+}
+
+.square.loss {
+  background: rgb(var(--danger-rgb) / 0.14);
+  border-color: rgb(var(--danger-rgb) / 0.3);
+  color: var(--danger);
+}
+
+/* As partidas da sequência atual acendem. */
+.square.win.lit {
+  background: rgb(var(--success-rgb) / 0.2);
+  border-color: rgb(var(--success-rgb) / 0.5);
+  box-shadow: 0 0 12px -3px rgb(var(--success-rgb) / 0.6);
+}
+
+.square.loss.lit {
+  background: rgb(var(--danger-rgb) / 0.2);
+  border-color: rgb(var(--danger-rgb) / 0.5);
+  box-shadow: 0 0 12px -3px rgb(var(--danger-rgb) / 0.6);
+}
+
+/* Sem esta legenda, metade das pessoas lê a fita ao contrário. */
+.ribbon-legend {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+/* ─── Por tamanho de mesa ───────────────────────────────────── */
+.size-label {
+  flex: none;
+  width: 52px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--foreground-muted);
+}
+
+.size-track {
+  display: block;
+  height: 22px;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+  overflow: hidden;
+}
+
+.size-fill {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+}
+
+.size-value {
+  flex: none;
+  width: 60px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--foreground-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Duração ───────────────────────────────────────────────── */
+.mini {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--foreground) 3%, transparent);
+  border: 1px solid var(--hairline);
+}
+
+.mini-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mini-value {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--foreground-subtle);
+  margin-left: 2px;
+}
+
+.mini-note {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-faint);
+}
+
+/* ─── Carregando ────────────────────────────────────────────── */
+.skeleton {
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-plate-alt-top),
+    var(--surface-plate-alt-bottom)
+  );
+  border: 1px solid var(--hairline);
+  animation: halo 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

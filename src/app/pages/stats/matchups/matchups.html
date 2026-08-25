@@ -1,0 +1,123 @@
+<div class="page">
+  <div class="top-halo" aria-hidden="true"></div>
+
+  <div class="container-page relative flex flex-col pb-28 pt-3">
+    <header class="flex h-[58px] items-center gap-3">
+      <app-back-button fallbackRoute="/estatisticas" />
+      <h1 class="flex-1 text-[22px] font-semibold tracking-[-0.01em]">Confrontos</h1>
+    </header>
+
+    @if (deck(); as deck) {
+      <!-- Seletor de deck: troca sem voltar. -->
+      <button type="button" class="selector rise-in" (click)="switching.set(!switching())"
+              [attr.aria-expanded]="switching()" aria-label="Trocar de deck">
+        @if (artUrl() && !artFailed()) {
+          <img class="selector-art" [src]="artUrl()" alt="" (error)="artFailed.set(true)" />
+        } @else {
+          <span class="selector-art art-fallback" aria-hidden="true"></span>
+        }
+        <span class="min-w-0 flex-1 flex flex-col gap-0.5 text-left">
+          <span class="truncate text-[14.5px] font-semibold">{{ deck.commander }}</span>
+          <span class="selector-sub">
+            {{ deck.total }} partida{{ deck.total > 1 ? 's' : '' }} · {{ deck.winRate }}% geral
+          </span>
+        </span>
+        <ng-icon hlm name="lucideChevronDown" class="chevron !size-4 text-foreground-muted"
+                 [class.open]="switching()" />
+      </button>
+
+      @if (switching()) {
+        <div class="mt-2.5 flex flex-col gap-2.5">
+          @for (other of otherDecks(); track other.key) {
+            <app-deck-row [deck]="other" (open)="switchTo(other.key)" />
+          } @empty {
+            <p class="px-1 py-2 text-[13px] text-foreground-muted">
+              Nenhum outro deck neste período.
+            </p>
+          }
+        </div>
+      }
+
+      <!-- Com quem na mesa: presença, não duelo. -->
+      @if (deck.byPlayer.length > 0) {
+        <h2 class="section-head mt-6">
+          <ng-icon hlm name="lucideUser" class="!size-[15px]" />
+          Com quem na mesa
+        </h2>
+
+        <ul class="mt-2.5 flex flex-col gap-2">
+          @for (player of deck.byPlayer; track player.userId) {
+            <li class="player-row plate-alt rise-stagger" [class.short]="player.smallSample"
+                [style.--seat-rgb]="rgbOf(player.colors)">
+              <span class="avatar" aria-hidden="true">{{ initialOf(player.name) }}</span>
+
+              <span class="min-w-0 flex-1 flex flex-col gap-1.5">
+                <span class="truncate text-[14px] font-semibold">{{ player.name }}</span>
+                @if (!player.smallSample) {
+                  <span class="meter" role="progressbar" [attr.aria-valuenow]="player.winRate"
+                        aria-valuemin="0" aria-valuemax="100"
+                        [attr.aria-label]="player.name + ': ' + player.winRate + ' por cento com ele na mesa, ' + player.wins + ' vitórias em ' + player.total + ' partidas'">
+                    <span class="meter-fill" [class.glow]="bandOf(player.winRate).glow"
+                          [style.width.%]="player.winRate"
+                          [style.background]="'var(--' + bandOf(player.winRate).color + ')'"></span>
+                  </span>
+                } @else {
+                  <span class="short-note">
+                    {{ player.total }} partida{{ player.total > 1 ? 's' : '' }} · amostra curta
+                  </span>
+                }
+              </span>
+
+              <span class="flex flex-none flex-col items-end gap-1">
+                <span class="player-rate"
+                      [style.color]="player.smallSample ? 'var(--foreground-muted)' : 'var(--' + bandOf(player.winRate).color + ')'">
+                  {{ player.winRate }}%
+                </span>
+                <span class="player-score">{{ player.wins }}V · {{ player.total - player.wins }}D</span>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- Só comandantes com 3+ encontros e winrate abaixo de 50. Se não houver
+           nenhum, a seção some — "nenhum comandante te derrota" soa a piada. -->
+      @if (deck.byOpponentCommander.length > 0) {
+        <h2 class="section-head danger mt-6">
+          <ng-icon hlm name="lucideSkull" class="!size-[15px]" />
+          Comandantes que te derrotam
+        </h2>
+
+        <ul class="mt-2.5 flex flex-col gap-2">
+          @for (opponent of deck.byOpponentCommander; track opponent.commander) {
+            <li class="threat-row rise-stagger">
+              <img class="threat-art" [src]="artOf(opponent.commander)" alt=""
+                   loading="lazy" (error)="$any($event.target).style.visibility = 'hidden'" />
+              <span class="min-w-0 flex-1 flex flex-col gap-0.5">
+                <span class="truncate text-[13.5px] font-medium">{{ opponent.commander }}</span>
+                <span class="threat-sub">
+                  {{ opponent.ownerName }} · {{ opponent.total }} encontro{{ opponent.total > 1 ? 's' : '' }}
+                </span>
+              </span>
+              <span class="threat-score">{{ opponent.wins }}V · {{ opponent.losses }}D</span>
+            </li>
+          }
+        </ul>
+      }
+    } @else if (loading()) {
+      <div class="skeleton mt-2 h-[64px] rounded-[14px]"></div>
+      <div class="mt-6 flex flex-col gap-2">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton h-[58px] rounded-[14px]"></div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (deck(); as deck) {
+    <button type="button" class="cta-pill" (click)="seeMatches()">
+      <ng-icon hlm name="lucideSwords" class="!size-[17px]" />
+      Ver a{{ deck.total > 1 ? 's ' + deck.total + ' partidas' : ' partida' }}
+    </button>
+  }
+</div>
