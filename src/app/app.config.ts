@@ -8,6 +8,7 @@ import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { provideServiceWorker } from '@angular/service-worker';
 import { NavigationHistoryService } from './shared/navigation/navigation-history.service';
 import { ThemeService } from './shared/theme/theme.service';
+import { UpdateService } from './shared/update/update.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,6 +24,9 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(NavigationHistoryService);
     }),
+    // Sem isto, o worker baixa a versão nova e nunca a usa: um PWA instalado
+    // quase não tem "lançamento limpo", que é quando o Angular trocaria.
+    provideAppInitializer(() => inject(UpdateService).init()),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'
