@@ -331,12 +331,19 @@
   --chart-tooltip-fg: #EDEAF5;
   --chart-tooltip-border: #3A3350;
 
-  /* Escada de z */
+  /* Escada de z. A pílula fixa é mobília de página, não camada: ela precisa
+     ficar ABAIXO de véu, folha e modal, senão uma folha inferior abre com o
+     botão flutuando por cima do próprio campo dela (era o caso de /colecao,
+     onde a pílula tapava a busca da folha de adicionar carta, e de /cartas,
+     onde ela ficava sobre a carta em tela cheia).
+     O header tem token próprio porque ele fica no topo e por cima de tudo de
+     propósito — antes ele reusava --z-fab e ia junto quando este descia. */
   --z-raised: 10;
+  --z-fab: 15;
   --z-overlay: 20;
   --z-modal: 30;
   --z-toast: 40;
-  --z-fab: 50;
+  --z-header: 50;
 }
 
 /* ═══════════════ TEMA LIGHT (override explícito) ═══════════════ */

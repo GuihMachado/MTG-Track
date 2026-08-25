@@ -1,10 +1,12 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   ElementRef,
   effect,
   inject,
+  Injector,
   input,
   output,
   signal,
@@ -94,6 +96,7 @@ export class AddCard {
   private importService = inject(ImportService);
   private collection = inject(CollectionService);
   private notify = inject(NotificationService);
+  private injector = inject(Injector);
 
   private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchField');
 
@@ -352,7 +355,13 @@ export class AddCard {
       this.print.set(null);
       this.quantity.set(1);
       this.foil.set(false);
-      this.searchInput()?.nativeElement.focus();
+
+      // O campo de busca não existe ainda: a folha só troca do passo 2 para o
+      // passo 1 quando o Angular renderizar o `print()` zerado acima, e até lá
+      // o viewChild é undefined — focar aqui seria um no-op silencioso.
+      afterNextRender(() => this.searchInput()?.nativeElement.focus(), {
+        injector: this.injector,
+      });
     });
   }
 
