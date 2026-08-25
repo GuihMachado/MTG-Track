@@ -48,11 +48,19 @@
   } @else if (print(); as chosen) {
     <!-- Passo 2: a carta está escolhida; o que falta é como ela entra. -->
     <div class="flex gap-3.5">
-      @if (chosen.artCropUrl; as art) {
-        <img class="identity-art" [src]="art" alt="" />
-      } @else {
-        <span class="identity-art identity-art-empty" aria-hidden="true"></span>
-      }
+      <!-- A arte é a porta para a carta inteira: abre a tela de tradução com o
+           texto completo — a lupa no canto é o convite. -->
+      <button type="button" class="identity-art-btn" (click)="viewCard()"
+              aria-label="Ver a carta inteira">
+        @if (chosen.artCropUrl; as art) {
+          <img class="identity-art" [src]="art" alt="" />
+        } @else {
+          <span class="identity-art identity-art-empty" aria-hidden="true"></span>
+        }
+        <span class="identity-art-hint" aria-hidden="true">
+          <ng-icon hlm name="lucideExpand" class="!size-[11px]" />
+        </span>
+      </button>
 
       <div class="min-w-0 flex-1">
         <h2 class="text-[19px] font-bold leading-tight">{{ chosen.name }}</h2>

@@ -1,4 +1,5 @@
 import { Component, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -64,6 +65,7 @@ type CardLanguage = 'pt' | 'en';
 })
 export class Cards {
   private platformId = inject(PLATFORM_ID);
+  private route = inject(ActivatedRoute);
   private cardService = inject(CardService);
   private scryfall = inject(ScryfallService);
   private proxyList = inject(ProxyListService);
@@ -82,6 +84,8 @@ export class Cards {
   protected activeFaceIndex = signal(0);
   protected language = signal<CardLanguage>(this.storedLanguage());
   protected fullscreen = signal(false);
+  /** Tradução sob demanda em voo — a aba PT espera sem apagar a carta. */
+  protected translating = signal(false);
 
   /** Descarta resposta de busca já superada por uma digitação mais nova. */
   private searchSeq = 0;
@@ -122,6 +126,7 @@ export class Cards {
   /** Brilho ambiente na identidade de cor da face (só no verso, como no design). */
   protected faceRgb = computed(() => manaRgbVar(this.face()?.colors?.join('/')));
 
+  /** O payload atual tem texto em português (impressão PT ou já traduzido). */
   protected hasPortuguese = computed(() => this.card()?.language === 'pt');
 
   protected inProxyList = computed(() => {
@@ -130,18 +135,40 @@ export class Cards {
     return this.proxyList.list().some(item => item.name.trim().toLowerCase() === name);
   });
 
-  protected ptLabel = computed(() => (this.card()?.translated ? 'Português (auto)' : 'Português'));
+  /**
+   * O rótulo já avisa o que a aba vai fazer: carta sem impressão PT ganha
+   * "(auto)" antes mesmo de traduzir, porque tocá-la dispara o DeepL.
+   */
+  protected ptLabel = computed(() => {
+    if (this.translating()) return 'traduzindo…';
+    const card = this.card();
+    return card && (card.translated || card.language === 'en') ? 'Português (auto)' : 'Português';
+  });
 
   constructor() {
     this.query.valueChanges
       .pipe(debounceTime(500), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(term => this.runSearch(term));
 
-    // Carta nova sempre começa pela face frontal.
+    // Carta nova sempre começa pela face frontal — e a aba acompanha o que o
+    // payload tem: carta que chegou em inglês (sem impressão PT, ainda não
+    // traduzida) abre na aba English, senão a aba PT mostraria texto inglês.
     effect(() => {
-      this.card();
+      const card = this.card();
       this.activeFaceIndex.set(0);
+      if (card && card.language === 'en' && !card.translated) this.language.set('en');
     });
+
+    // Aberta por link (a coleção manda para cá): ?carta=Sol+Ring cai direto no
+    // detalhe, sem obrigar a digitar de novo um nome que a outra tela já sabia.
+    const preset = this.route.snapshot.queryParamMap.get('carta');
+    if (preset && isPlatformBrowser(this.platformId)) {
+      // Sem emitir: o valueChanges dispararia a busca e a lista de resultados
+      // ficaria carregando atrás do detalhe, à toa.
+      this.query.setValue(preset, { emitEvent: false });
+      this.loadByName(preset);
+      this.fetchChosen(preset);
+    }
   }
 
   protected costLabel(cost: string | null): string {
@@ -159,11 +186,15 @@ export class Cards {
   /** Abre o detalhe: a tradução só roda para a carta escolhida. */
   protected open(card: ScryfallCard): void {
     this.chosen.set(card);
+    this.loadByName(card.name);
+  }
+
+  private loadByName(name: string): void {
     this.loadingCard.set(true);
     this.card.set(null);
     this.fullscreen.set(false);
 
-    this.cardService.getCard(card.name).subscribe({
+    this.cardService.getCard(name).subscribe({
       next: found => {
         this.card.set(found);
         this.loadingCard.set(false);
@@ -173,11 +204,25 @@ export class Cards {
         this.chosen.set(null);
 
         if (error instanceof HttpErrorResponse && error.status === 404) {
-          this.notify.warning(`Nenhum texto encontrado para "${card.name}".`);
+          this.notify.warning(`Nenhum texto encontrado para "${name}".`);
           return;
         }
         this.notify.apiError(error, { fallback: 'Não foi possível abrir essa carta agora.' });
       },
+    });
+  }
+
+  /**
+   * A carta crua da Scryfall, que o botão de proxies exige — quem entra pela
+   * busca já a tem, quem entra por link não. Melhor esforço: sem ela o detalhe
+   * funciona igual, só o salvar-como-proxy fica mudo.
+   */
+  private fetchChosen(name: string): void {
+    this.scryfall.search(`!"${name}"`).subscribe({
+      next: page => {
+        if (!this.chosen()) this.chosen.set(page.data[0] ?? null);
+      },
+      error: () => undefined,
     });
   }
 
@@ -189,9 +234,46 @@ export class Cards {
   }
 
   protected setLanguage(language: CardLanguage): void {
-    if (language === 'pt' && !this.hasPortuguese()) return;
-    this.language.set(language);
+    // Pedir português para uma carta que veio em inglês é o gatilho do DeepL:
+    // a tradução só acontece aqui, no toque — nunca na abertura da carta.
+    if (language === 'pt' && !this.hasPortuguese()) {
+      this.translatePt();
+      return;
+    }
 
+    this.language.set(language);
+    this.remember(language);
+  }
+
+  /** Busca a mesma carta com a tradução ligada, sem apagar a que está na tela. */
+  private translatePt(): void {
+    const card = this.card();
+    if (!card || this.translating()) return;
+
+    this.translating.set(true);
+    this.cardService.getCard(card.englishName, true).subscribe({
+      next: found => {
+        this.translating.set(false);
+
+        // O backend cai para inglês quando o DeepL está fora: avisa em vez de
+        // fingir que a aba PT mostrou português.
+        if (found.language !== 'pt') {
+          this.notify.warning('A tradução automática está indisponível agora.');
+          return;
+        }
+
+        this.card.set(found);
+        this.language.set('pt');
+        this.remember('pt');
+      },
+      error: (error: unknown) => {
+        this.translating.set(false);
+        this.notify.apiError(error, { fallback: 'Não foi possível traduzir agora.' });
+      },
+    });
+  }
+
+  private remember(language: CardLanguage): void {
     if (isPlatformBrowser(this.platformId)) {
       sessionStorage.setItem(LANGUAGE_KEY, language);
     }
@@ -263,7 +345,8 @@ export class Cards {
   }
 
   private storedLanguage(): CardLanguage {
-    if (!isPlatformBrowser(this.platformId)) return 'pt';
-    return sessionStorage.getItem(LANGUAGE_KEY) === 'en' ? 'en' : 'pt';
+    // Inglês é o padrão: é o texto que sempre existe e não custa tradução.
+    if (!isPlatformBrowser(this.platformId)) return 'en';
+    return sessionStorage.getItem(LANGUAGE_KEY) === 'pt' ? 'pt' : 'en';
   }
 }

@@ -9,9 +9,14 @@ export class CardService {
   private http = inject(HttpClient);
   private API_URL = `${environment.apiUrl}/mtg`;
 
-  /** Carta estruturada: faces separadas e texto de oráculo já em linhas. */
-  getCard(name: string): Observable<CardDto> {
-    const params = new HttpParams().set('name', name);
+  /**
+   * Carta estruturada: faces separadas e texto de oráculo já em linhas.
+   * `translate` liga o DeepL para carta sem impressão PT — ele cobra por
+   * caractere, então só a aba Português pede a tradução.
+   */
+  getCard(name: string, translate = false): Observable<CardDto> {
+    let params = new HttpParams().set('name', name);
+    if (translate) params = params.set('translate', '1');
     return this.http.get<CardDto>(`${this.API_URL}/search`, { params });
   }
 }

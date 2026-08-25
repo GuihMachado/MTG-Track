@@ -69,15 +69,18 @@
     <!-- Idioma: alterna só o conteúdo do oráculo, sem recarregar a carta -->
     <div class="relative flex gap-2 px-4 pt-[18px]">
       <div class="lang-track" role="tablist" aria-label="Idioma do texto">
-        <button type="button" class="lang-tab" role="tab"
-                [class.on]="language() === 'pt'"
-                [attr.aria-selected]="language() === 'pt'"
-                [disabled]="!hasPortuguese()"
-                (click)="setLanguage('pt')">{{ ptLabel() }}</button>
+        <!-- English primeiro: é o texto que sempre existe e não custa nada.
+             A aba PT não desabilita mais quando falta impressão — é ela que
+             dispara a tradução sob demanda (por isso o rótulo "(auto)"). -->
         <button type="button" class="lang-tab" role="tab"
                 [class.on]="language() === 'en'"
                 [attr.aria-selected]="language() === 'en'"
                 (click)="setLanguage('en')">English</button>
+        <button type="button" class="lang-tab" role="tab"
+                [class.on]="language() === 'pt'"
+                [attr.aria-selected]="language() === 'pt'"
+                [disabled]="translating()"
+                (click)="setLanguage('pt')">{{ ptLabel() }}</button>
       </div>
     </div>
 

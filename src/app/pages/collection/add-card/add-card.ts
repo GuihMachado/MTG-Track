@@ -13,12 +13,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import {
   lucideCheck,
   lucideChevronDown,
   lucideCirclePlus,
+  lucideExpand,
   lucideLoader,
   lucideMinus,
   lucidePlus,
@@ -65,6 +67,7 @@ const MAX_SUGGESTIONS = 12;
       lucideChevronDown,
       lucideCheck,
       lucideCirclePlus,
+      lucideExpand,
       lucideMinus,
       lucidePlus,
       lucideTrash2,
@@ -97,6 +100,7 @@ export class AddCard {
   private collection = inject(CollectionService);
   private notify = inject(NotificationService);
   private injector = inject(Injector);
+  private router = inject(Router);
 
   private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchField');
 
@@ -432,6 +436,17 @@ export class AddCard {
 
   protected close(): void {
     this.closed.emit();
+  }
+
+  /**
+   * A carta inteira, com o texto para ler: a tela de tradução já faz isso —
+   * navegar para lá com o nome é reusar o modelo em vez de duplicá-lo. O nome
+   * vai em inglês porque é a chave que a busca de texto daquela tela usa.
+   */
+  protected viewCard(): void {
+    const print = this.print();
+    if (!print) return;
+    this.router.navigate(['/cards'], { queryParams: { carta: print.nameEn } });
   }
 
   /** Entrada já gravada vira uma "impressão" para o cabeçalho da folha. */

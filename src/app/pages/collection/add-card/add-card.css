@@ -103,7 +103,43 @@
 }
 
 /* ─── Identificação ─────────────────────────────────────────── */
+/* A arte é um botão: abre a carta inteira na tela de tradução. O botão não
+   pinta nada — quem desenha continua sendo a .identity-art de dentro. */
+.identity-art-btn {
+  position: relative;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.identity-art-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* O convite: lupa pequena no canto da arte, em vidro, para o toque não ser
+   um segredo. */
+.identity-art-hint {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  background: rgba(6, 5, 11, 0.62);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.88);
+  pointer-events: none;
+}
+
 .identity-art {
+  display: block;
   flex: none;
   width: 78px;
   height: 98px;
