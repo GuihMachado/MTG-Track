@@ -17,7 +17,7 @@ export interface CollectionEntryDto {
   /** Sempre em inglês — a busca casa contra os dois ao mesmo tempo. */
   nameEn: string;
   artCropUrl: string | null;
-  /** Carta inteira (imagem `small`); null em linha antiga até o refresh de preços. */
+  /** Carta inteira (imagem `normal`); null em linha antiga até o refresh de preços. */
   imageUrl: string | null;
   setCode: string;
   setName: string;
@@ -72,7 +72,7 @@ export interface CardPrint {
   priceUsd: number | null;
   priceUsdFoil: number | null;
   artCropUrl: string | null;
-  /** Carta inteira (imagem `small`) — a folha de adicionar mostra a carta. */
+  /** Carta inteira (imagem `normal`) — a folha de adicionar mostra a carta. */
   imageUrl: string | null;
   /** Símbolo da edição; vem preenchido só do seletor de impressões. */
   setIconUrl: string | null;

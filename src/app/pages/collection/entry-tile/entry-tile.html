@@ -1,28 +1,27 @@
-<button type="button" class="tile" [class.plenty]="plenty()" (click)="edit.emit(entry())"
+<button type="button" class="tile" (click)="edit.emit(entry())"
         [attr.aria-label]="entry().name + ', ' + copies()">
-  @if (entry().imageUrl; as image) {
-    <!-- A carta inteira: nome, moldura e arte já vêm na imagem — véu e rótulo
-         em cima dela só cobririam o que a carta mesma escreve. -->
-    <img class="card" [src]="image" alt="" loading="lazy" decoding="async" />
-  } @else {
-    @if (entry().artCropUrl; as art) {
-      <img class="art" [src]="art" alt="" loading="lazy" decoding="async" />
+  <span class="frame" [class.plenty]="plenty()">
+    @if (entry().imageUrl ?? entry().artCropUrl; as image) {
+      <!-- A carta inteira quando o dado existe; linha antiga cai na arte (na
+           mesma caixa de carta) até o refresh de preços preencher a imagem. -->
+      <img class="face" [src]="image" alt="" loading="lazy" decoding="async" />
     } @else {
-      <span class="art art-empty" aria-hidden="true"></span>
+      <span class="face face-empty" aria-hidden="true"></span>
     }
 
-    <span class="veil" aria-hidden="true"></span>
-    <span class="name">{{ entry().name }}</span>
-  }
+    <span class="qty-badge tile-qty" [class.plenty]="plenty()"
+          [attr.aria-label]="copies()">
+      ×{{ entry().quantity }}
+    </span>
 
-  <span class="qty-badge tile-qty" [class.plenty]="plenty()"
-        [attr.aria-label]="copies()">
-    ×{{ entry().quantity }}
+    @if (entry().foil) {
+      <span class="foil-square tile-foil" aria-label="foil">
+        <ng-icon hlm name="lucideSparkles" class="!size-[11px]" />
+      </span>
+    }
   </span>
 
-  @if (entry().foil) {
-    <span class="foil-square tile-foil" aria-label="foil">
-      <ng-icon hlm name="lucideSparkles" class="!size-[11px]" />
-    </span>
-  }
+  <!-- O nome mora embaixo, como nos proxies: sobre a carta ele cobriria o que
+       a carta mesma escreve, e a 110px o nome impresso não se lê. -->
+  <span class="name">{{ entry().name }}</span>
 </button>
