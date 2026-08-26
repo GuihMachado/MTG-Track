@@ -45,17 +45,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* O halo nasce no topo da célula, não do conteúdo girado: a luz vem da mesma
-     direção para todos os assentos, o que os lê como objeto físico. */
   background-color: var(--seat-plate-bottom);
-  background-image: radial-gradient(
-      130% 80% at 50% 0%,
-      rgb(var(--mana-rgb) / var(--halo-a)),
-      rgb(var(--mana-rgb) / 0.05) 60%,
-      transparent
-    ),
-    linear-gradient(180deg, var(--seat-top), var(--seat-plate-bottom));
+  background-image: linear-gradient(180deg, var(--seat-top), var(--seat-plate-bottom));
   border: 1px solid rgb(var(--mana-rgb) / var(--border-a));
+  /* A placa é o container de medida da arte: girada ±90°, ela precisa das
+     dimensões trocadas (cqh × cqw) para continuar cobrindo o assento. */
+  container-type: size;
   box-shadow: 0 18px 34px -18px rgb(var(--mana-rgb) / var(--shadow-a)),
     0 12px 28px -14px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.09);
   /* none (não manipulation): o deslize que troca o contador precisa chegar
@@ -74,6 +69,68 @@
 
 .seat.wide {
   grid-column: span 2;
+}
+
+/*
+ * Arte do comandante (art_crop da Scryfall) atrás do numeral.
+ *
+ * Três decisões, na ordem em que importam:
+ *   - a máscara radial apaga o centro (transparente até 22%, meia força em 52%,
+ *     cheia em 92%): protege a área do número e nada além dela;
+ *   - opacidade 0.5 e saturação 0.9 sob o halo de mana — dá para reconhecer a
+ *     carta de relance, e a cor continua mandando na leitura;
+ *   - a rotação acompanha o assento, então a ilustração fica em pé para quem
+ *     está sentado ali, não deitada.
+ */
+.art {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Fallback primeiro: sem unidades de container, a arte ainda cobre os
+     assentos de 0°/180° e sobra canto nos girados. */
+  width: 100%;
+  height: 100%;
+  width: 100cqw;
+  height: 100cqh;
+  object-fit: cover;
+  opacity: 0.5;
+  filter: saturate(0.9);
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(
+    118% 88% at 50% 50%,
+    transparent 0 22%,
+    rgba(0, 0, 0, 0.5) 52%,
+    #000 92%
+  );
+  mask-image: radial-gradient(
+    118% 88% at 50% 50%,
+    transparent 0 22%,
+    rgba(0, 0, 0, 0.5) 52%,
+    #000 92%
+  );
+  transition: opacity 240ms ease-out, filter 240ms ease-out;
+}
+
+/* Assento girado ±90°: a arte é deitada em relação à placa, então as medidas
+   trocam de eixo para cobrir sem faixa vazia. */
+.art.quarter {
+  width: 100cqh;
+  height: 100cqw;
+}
+
+/* Halo de mana: mesma luz de antes, agora como camada acima da arte. Nasce no
+   topo da célula, não do conteúdo girado — a luz vem da mesma direção para
+   todos os assentos, o que os lê como objeto físico. */
+.halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    130% 80% at 50% 0%,
+    rgb(var(--mana-rgb) / var(--halo-a)),
+    rgb(var(--mana-rgb) / 0.05) 60%,
+    transparent
+  );
 }
 
 /* O conteúdo gira junto: o jogador lê o próprio número na horizontal. */
@@ -354,11 +411,20 @@
 /* Vida baixa: a cor do assento sai de cena e entra o âmbar de alerta — mesma
    receita de placa, outra luz. */
 .seat.low {
-  background-image: radial-gradient(130% 80% at 50% 0%, rgba(245, 180, 84, 0.2), transparent 60%),
-    linear-gradient(180deg, #171320, var(--seat-plate-bottom));
+  background-image: linear-gradient(180deg, #171320, var(--seat-plate-bottom));
   border-color: rgba(245, 180, 84, 0.55);
   box-shadow: 0 18px 34px -18px rgba(245, 180, 84, 0.55),
     0 12px 28px -14px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(245, 180, 84, 0.18);
+}
+
+.seat.low .halo {
+  background: radial-gradient(130% 80% at 50% 0%, rgba(245, 180, 84, 0.2), transparent 60%);
+}
+
+/* A arte recua um passo sob o âmbar: o alerta tem que ganhar da ilustração. */
+.seat.low .art {
+  opacity: 0.4;
+  filter: saturate(0.75);
 }
 
 .seat.low .life {
@@ -375,6 +441,16 @@
   border-color: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   animation: seat-out 520ms ease-out;
+}
+
+.seat.out .halo {
+  background: none;
+}
+
+/* Eliminado: a arte perde a cor junto com a placa e fica quase só sombra. */
+.seat.out .art {
+  opacity: 0.16;
+  filter: saturate(0);
 }
 
 @keyframes seat-out {
@@ -423,7 +499,19 @@
 }
 
 .seat.picked {
-  box-shadow: inset 0 0 0 3px var(--accent), 0 0 30px -6px rgba(230, 199, 127, 0.7);
+  box-shadow: 0 0 30px -6px rgba(230, 199, 127, 0.7);
+}
+
+/* O anel de seleção saiu do box-shadow inset para um pseudo acima da arte:
+   sombra interna pinta sob os filhos do assento, e a arte comia o dourado. */
+.seat.picked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 3px var(--accent);
+  pointer-events: none;
 }
 
 /* Hub central: o único elemento da mesa que levita de verdade. */

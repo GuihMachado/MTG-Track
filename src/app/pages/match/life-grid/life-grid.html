@@ -23,6 +23,22 @@
          (pointerup)="onPointerUp($event, seat)"
          (pointercancel)="onPointerCancel()">
 
+      <!-- Arte do comandante forrando a placa. Gira junto com o assento, então
+           quem senta ali vê a ilustração em pé; a máscara radial apaga o centro,
+           exatamente onde o numeral vive. -->
+      @if (seat.artUrl) {
+        <img class="art"
+             [class.quarter]="seat.quarterTurn"
+             [src]="seat.artUrl"
+             [style.transform]="seat.artTransform"
+             (error)="onArtError(seat.player.id)"
+             alt="" decoding="async" fetchpriority="low" />
+      }
+
+      <!-- O halo de mana é irmão da arte, não fundo da placa: precisa pintar
+           por cima dela para a cor continuar mandando na leitura do assento. -->
+      <span class="halo" aria-hidden="true"></span>
+
       @if (arranging()) {
         <button type="button" class="tap zone-full"
                 [attr.aria-label]="'Trocar o assento de ' + seat.player.name"

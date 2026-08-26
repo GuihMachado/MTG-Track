@@ -4,6 +4,7 @@ import { SeatColorCode, SeatPaint, paintSeats, seatPaint } from '../seat-colors'
 import { SeatSlot, TapZone, gridRows, lifeFontSize, seatSlots } from './grid-layout';
 import { CounterMap, CounterType } from '../counters';
 import { MTG_ICON_PATHS, MTG_ICON_VIEWBOX } from '../../../shared/icons/mtg-icons';
+import { commanderArtUrl } from '../../../shared/match-utils';
 import { FLOAT_WINDOW_MS, LifeFloat, markLeaving, removeFloat, upsertFloat } from './float-deltas';
 import {
   cycleCounter,
@@ -23,6 +24,8 @@ export interface SeatPlayer {
   poison?: number;
   /** Contadores extras (energia, experiência, tesouro, radiação). */
   counters?: CounterMap;
+  /** Comandante da partida — a arte dele forra o assento. Ausente = placa lisa. */
+  commander?: string | null;
 }
 
 export const POISON_LETHAL = 10;
@@ -58,6 +61,12 @@ interface SeatVM {
   lethal: boolean;
   low: boolean;
   out: boolean;
+  /** art_crop do comandante; null quando não há comandante ou a arte falhou. */
+  artUrl: string | null;
+  /** Gira a arte junto com o assento, a partir do centro da placa. */
+  artTransform: string;
+  /** Assento girado ±90°: a arte precisa das medidas trocadas para cobrir. */
+  quarterTurn: boolean;
 }
 
 interface SwipeStart {
@@ -99,6 +108,12 @@ export class LifeGrid implements OnDestroy {
   private floatSeq = 0;
   private floatTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
+  /**
+   * Assentos cuja art_crop não carregou — nome que a Scryfall não achou pelo
+   * fuzzy devolve 404. O assento volta a ser placa lisa, sem imagem quebrada.
+   */
+  private artFailed = signal<ReadonlySet<number>>(new Set());
+
   private swipeStart: SwipeStart | null = null;
   /** Um deslize consome o clique que o navegador dispara logo depois. */
   private swallowTapSeatId: number | null = null;
@@ -124,6 +139,7 @@ export class LifeGrid implements OnDestroy {
     const slots = seatSlots(players.length);
     const paints = paintSeats(players.map(p => p.seatColor));
     const modes = this.modes();
+    const artFailed = this.artFailed();
 
     return players.map((player, i) => {
       const slot = slots[i]!;
@@ -148,6 +164,9 @@ export class LifeGrid implements OnDestroy {
         lethal: kind === 'poison' && poison >= POISON_LETHAL,
         low: player.life > 0 && player.life <= LIFE_ALERT,
         out: player.life <= 0 || poison >= POISON_LETHAL,
+        artUrl: artFailed.has(player.id) ? null : commanderArtUrl(player.commander),
+        artTransform: `translate(-50%, -50%) rotate(${slot.rotation}deg)`,
+        quarterTurn: Math.abs(slot.rotation) === 90,
       };
     });
   });
@@ -209,6 +228,10 @@ export class LifeGrid implements OnDestroy {
     setTimeout(() => {
       if (this.swallowTapSeatId === seat.player.id) this.swallowTapSeatId = null;
     }, 300);
+  }
+
+  protected onArtError(id: number): void {
+    this.artFailed.update(set => new Set(set).add(id));
   }
 
   protected onPointerCancel(): void {

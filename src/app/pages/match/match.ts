@@ -190,6 +190,9 @@ export class Match implements OnInit {
         poison: saved?.poison ?? 0,
         counters: normalizeCounters(saved?.counters),
         seatColor: saved?.seatColor ?? SEAT_COLOR_ORDER[i % SEAT_COLOR_ORDER.length]!,
+        // Vem sempre da API, nunca do localStorage: o comandante é da partida,
+        // não do estado da mesa, e não muda no meio do jogo.
+        commander: mp.commander,
       };
     });
   }
