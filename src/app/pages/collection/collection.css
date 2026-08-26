@@ -267,9 +267,117 @@
   border-radius: 18px;
 }
 
+/* ─── Busca por efeito ──────────────────────────────────────────
+   A linha sob o campo de busca, nos dois estados. Arcano, e não ouro: no
+   sistema desta tela cor de ação é ouro e cor de *estado de filtro* é o
+   arcano — é a mesma tinta do `.well-btn.on` e do `.chip-small.on`. */
+.text-hint {
+  width: 100%;
+  padding: 8px 11px;
+  border-radius: 11px;
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  background: rgba(124, 92, 255, 0.08);
+  color: var(--foreground-muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+  cursor: pointer;
+  text-align: left;
+  animation: hint-in 180ms ease-out;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.text-hint b {
+  font-weight: 600;
+  color: var(--color-arcane-200);
+}
+
+/* Ligado: a mesma linha, agora afirmando em vez de oferecendo. */
+.text-hint.on {
+  cursor: default;
+  border-color: rgba(124, 92, 255, 0.55);
+  background: rgba(124, 92, 255, 0.16);
+  color: var(--color-arcane-200);
+}
+
+.text-hint .hint-go {
+  flex: none;
+  color: var(--color-arcane-200);
+}
+
+.hint-action {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 2px;
+  color: var(--color-arcane-200);
+  font-family: var(--font-data);
+  font-size: 11px;
+  border-bottom: 1px solid rgba(124, 92, 255, 0.5);
+  cursor: pointer;
+}
+
+.text-hint:focus-visible,
+.hint-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+:host-context(.light) .text-hint {
+  border-color: rgba(91, 58, 209, 0.32);
+  background: rgba(91, 58, 209, 0.07);
+}
+
+:host-context(.light) .text-hint b,
+:host-context(.light) .text-hint.on,
+:host-context(.light) .text-hint .hint-go,
+:host-context(.light) .hint-action {
+  color: var(--color-arcane-800);
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+/* ─── Aviso de filtro ativo ─────────────────────────────────────
+   Os chips saíram da tela, então o botão carrega o recado sozinho: um anel em
+   volta dele diz que existe filtro, e o número diz quantos. */
+.well-btn.ringed {
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22);
+}
+
+:host-context(.light) .well-btn.ringed {
+  box-shadow: 0 0 0 3px rgba(91, 58, 209, 0.18);
+}
+
+.filter-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding-inline: 4px;
+  border-radius: 999px;
+  background: var(--color-arcane-500);
+  color: #fff;
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  /* O anel na cor do fundo recorta o contador do botão sem borda sólida. */
+  box-shadow: 0 0 0 2px var(--background);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-row,
   .skeleton-deck {
+    animation: none;
+  }
+
+  .text-hint {
     animation: none;
   }
 }

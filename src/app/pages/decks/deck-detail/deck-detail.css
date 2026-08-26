@@ -218,3 +218,22 @@
     animation: none;
   }
 }
+
+/* Botão de limpar do campo de busca — mesma peça das folhas da coleção. */
+.clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  color: var(--foreground-muted);
+  cursor: pointer;
+}
+
+.clear:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

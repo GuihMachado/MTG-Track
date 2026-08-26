@@ -37,6 +37,14 @@ export interface CollectionEntryDto {
   manaCost: string | null;
   /** common | uncommon | rare | mythic; "" em linha antiga até o refresh. */
   rarity: string;
+  /**
+   * Texto de regras em inglês, faces juntas — o que a busca por efeito varre.
+   * Vazio na carta sem regras (urso 2/2, terreno básico) e null enquanto a
+   * linha ainda não foi preenchida pelo refresh de preços.
+   */
+  oracleText: string | null;
+  /** Palavras-chave em inglês ("Connive", "Deathtouch") — os chips de habilidade. */
+  keywords: string[];
   addedAt: string;
   pricedAt: string | null;
 }
@@ -98,6 +106,9 @@ export interface DeckCardDto {
   priceUsd: number | null;
   artCropUrl: string | null;
   section: string;
+  /** Texto de regras em inglês; a busca por efeito também vale no detalhe do deck. */
+  oracleText: string | null;
+  keywords: string[];
 }
 
 export interface DeckDto {
@@ -169,6 +180,12 @@ export interface CollectionFilters {
    * usuário fala de The Hobbit.
    */
   sets: string[];
+  /**
+   * Palavras-chave marcadas, em inglês, como a Scryfall as publica ("Connive").
+   * Eixo separado do texto livre de propósito: keyword é lista fechada e vira
+   * chip; "ganha vida" não é keyword e só o texto acha.
+   */
+  keywords: string[];
 }
 
 export const NO_FILTERS: CollectionFilters = {
@@ -177,7 +194,16 @@ export const NO_FILTERS: CollectionFilters = {
   foil: null,
   language: null,
   sets: [],
+  keywords: [],
 };
+
+/**
+ * Como o termo da busca é aplicado. O campo é um só: `name` casa nome impresso
+ * e nome em inglês, `text` casa o texto de regras. A troca acontece pela linha
+ * de sugestão que aparece sob o campo — não existe modo escondido, porque a
+ * linha fica visível dizendo qual dos dois está valendo.
+ */
+export type SearchMode = 'name' | 'text';
 
 /**
  * Uma coleção como o usuário a enxerga: a família inteira de edições. O que

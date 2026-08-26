@@ -16,7 +16,9 @@ import {
   lucideCircleDashed,
   lucidePencil,
   lucidePrinter,
+  lucideSearch,
   lucideTrash2,
+  lucideX,
 } from '@ng-icons/lucide';
 import { ManaSymbolPipe } from '../../../shared/pipes/mana-symbol-pipe';
 import { NotificationService } from '../../../shared/notification/notification.service';
@@ -24,6 +26,7 @@ import { DeckService } from '../../../services/deck-service';
 import { ProxyListService } from '../../../services/proxy-list-service';
 import { DeckCardDto, DeckDto } from '../../../models/collection.models';
 import { deckProgress } from '../../collection/deck-progress';
+import { matchesDeckCardQuery } from '../../collection/collection-filters';
 import { usd } from '../../collection/money';
 
 /** Quantas faltantes aparecem antes do "+ N cartas · toque para ver todas". */
@@ -50,6 +53,8 @@ const PREVIEW_MISSING = 4;
       lucideCircleDashed,
       lucideCircleCheck,
       lucideTrash2,
+      lucideSearch,
+      lucideX,
     }),
   ],
   templateUrl: './deck-detail.html',
@@ -67,6 +72,8 @@ export class DeckDetail implements OnInit {
   protected loading = signal(true);
   protected ownedOpen = signal(false);
   protected allMissing = signal(false);
+  /** Busca local no deck: casa nome e texto de regras no mesmo campo. */
+  protected query = signal('');
 
   protected progress = computed(() => {
     const deck = this.deck();
@@ -78,18 +85,46 @@ export class DeckDetail implements OnInit {
   );
 
   /** Sideboard fica fora: o deck é o que vai à mesa. */
-  private counted = computed(() =>
+  protected counted = computed(() =>
     (this.deck()?.cards ?? []).filter(card => card.section === 'main' || card.section === 'commander'),
   );
 
   protected missing = computed(() => this.counted().filter(card => !card.owned));
   protected owned = computed(() => this.counted().filter(card => card.owned));
 
-  protected visibleMissing = computed(() =>
-    this.allMissing() ? this.missing() : this.missing().slice(0, PREVIEW_MISSING),
+  /**
+   * Busca dentro do deck, por nome ou por efeito. Não mexe em `missing()`: o
+   * progresso e o botão de proxiar continuam falando do deck inteiro, senão
+   * digitar no campo mudaria silenciosamente o que o botão imprime.
+   */
+  protected searching = computed(() => this.query().trim().length > 0);
+
+  private matches = (cards: DeckCardDto[]) =>
+    cards.filter(card => matchesDeckCardQuery(card, this.query()));
+
+  protected matchedMissing = computed(() => this.matches(this.missing()));
+  protected matchedOwned = computed(() => this.matches(this.owned()));
+
+  /** Buscando, mostra tudo o que casou: esconder resultado atrás de "ver mais"
+   *  é esconder justamente o que a pessoa pediu. */
+  protected visibleMissing = computed(() => {
+    if (this.searching()) return this.matchedMissing();
+    return this.allMissing() ? this.missing() : this.missing().slice(0, PREVIEW_MISSING);
+  });
+
+  protected visibleOwned = computed(() =>
+    this.searching() ? this.matchedOwned() : this.owned(),
   );
 
-  protected hiddenMissing = computed(() => Math.max(0, this.missing().length - PREVIEW_MISSING));
+  protected hiddenMissing = computed(() => {
+    if (this.searching()) return 0;
+    return Math.max(0, this.missing().length - PREVIEW_MISSING);
+  });
+
+  /** Nada casou em nenhuma das duas seções. */
+  protected noMatches = computed(
+    () => this.searching() && this.matchedMissing().length === 0 && this.matchedOwned().length === 0,
+  );
 
   protected missingValue = computed(() => usd(this.deck()?.missingValueUsd ?? 0));
 

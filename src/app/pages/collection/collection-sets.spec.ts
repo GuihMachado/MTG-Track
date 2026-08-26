@@ -25,6 +25,8 @@ function entry(overrides: Partial<CollectionEntryDto> = {}): CollectionEntryDto 
     priceUsd: 1,
     colors: [],
     typeLine: 'Criatura',
+    oracleText: null,
+    keywords: [],
     addedAt: '2026-08-01T00:00:00.000Z',
     pricedAt: null,
     ...overrides,

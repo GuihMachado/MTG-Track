@@ -1,0 +1,160 @@
+<div class="veil" (click)="close()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-label="Filtros da coleção">
+  <span class="handle" aria-hidden="true"></span>
+
+  <header class="flex items-baseline justify-between px-1">
+    <h2 class="title-section">Filtros</h2>
+    @if (activeCount() > 0) {
+      <button type="button" class="link text-[12px]" (click)="cleared.emit()">
+        limpar tudo
+      </button>
+    }
+  </header>
+
+  <div class="groups">
+    <!-- Texto da carta: o mesmo eixo da linha de sugestão da tela. Em inglês,
+         porque é a única língua que toda impressão da Scryfall carrega. -->
+    <div class="group">
+      <span class="label-caps">Texto da carta</span>
+      <label class="well">
+        <ng-icon hlm name="lucideScrollText" class="field-icon !size-4" />
+        <input class="well-input" type="search" autocomplete="off"
+               placeholder="connive, draw a card, gain life…"
+               [value]="text()" (input)="textChanged.emit($any($event.target).value)"
+               aria-label="Buscar no texto da carta" />
+        @if (text()) {
+          <button type="button" class="clear" (click)="textChanged.emit('')"
+                  aria-label="Limpar o texto">
+            <ng-icon hlm name="lucideX" class="!size-[14px]" />
+          </button>
+        }
+      </label>
+      <p class="help">
+        Em inglês, como a Scryfall publica — acha a carta mesmo que a sua cópia
+        seja a brasileira.
+      </p>
+    </div>
+
+    <!-- Habilidades: só as que existem na estante, como o filtro de coleções.
+         Os nomes ficam em inglês porque a API não publica as palavras-chave em
+         português. -->
+    @if (facets().length > 0) {
+      <div class="group">
+        <span class="label-caps flex items-baseline justify-between gap-2">
+          Habilidades
+          <span class="hint">só o que você tem</span>
+        </span>
+
+        @if (searchableKeywords()) {
+          <label class="well well-sm">
+            <ng-icon hlm name="lucideSparkles" class="field-icon !size-[15px]" />
+            <input class="well-input" type="search" autocomplete="off"
+                   placeholder="Buscar habilidade" [value]="keywordQuery()"
+                   (input)="keywordQuery.set($any($event.target).value)"
+                   aria-label="Buscar habilidade" />
+            @if (keywordQuery()) {
+              <button type="button" class="clear" (click)="keywordQuery.set('')"
+                      aria-label="Limpar busca de habilidade">
+                <ng-icon hlm name="lucideX" class="!size-[14px]" />
+              </button>
+            }
+          </label>
+        }
+
+        @if (visibleFacets().length === 0) {
+          <p class="help">Nenhuma habilidade com esse nome na sua estante.</p>
+        } @else {
+          <div class="cloud" [class.tall]="searchableKeywords()">
+            @for (facet of visibleFacets(); track facet.keyword) {
+              <button type="button" class="chip-small" [class.on]="keywordOn(facet.keyword)"
+                      [attr.aria-pressed]="keywordOn(facet.keyword)"
+                      (click)="keywordToggled.emit(facet.keyword)">
+                {{ facet.keyword }}
+                <span class="count">{{ facet.count }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="group">
+      <span class="label-caps">Cores</span>
+      <div class="cloud">
+        @for (chip of colorChips; track chip.value) {
+          <button type="button" class="chip-small" [class.on]="on(chip)"
+                  [attr.aria-pressed]="on(chip)" (click)="chipToggled.emit(chip)">
+            <span class="pip" [style.background]="'var(--color-mana-' + chip.value.toLowerCase() + ')'"
+                  aria-hidden="true"></span>
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="label-caps">Tipo</span>
+      <div class="cloud">
+        @for (chip of typeChips; track chip.value) {
+          <button type="button" class="chip-small" [class.on]="on(chip)"
+                  [attr.aria-pressed]="on(chip)" (click)="chipToggled.emit(chip)">
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Edição não cabe em chip: são dezenas e crescem a cada importação. A
+         linha abre a folha que já lista só o que está na estante, com busca. -->
+    <div class="group">
+      <span class="label-caps">Coleção</span>
+      <button type="button" class="drill" (click)="setsRequested.emit()"
+              [class.on]="setLabels().length > 0" [disabled]="setsAvailable() === 0">
+        <ng-icon hlm name="lucideLibraryBig" class="!size-[15px] text-faint" />
+        <span class="min-w-0 flex-1 text-left">
+          <span class="block text-[13.5px]">Escolher coleções</span>
+          <span class="mt-[2px] block truncate font-data text-[10.5px] text-faint">
+            {{ setsLine() }}
+          </span>
+        </span>
+        <ng-icon hlm name="lucideChevronRight" class="!size-4 text-faint" />
+      </button>
+    </div>
+
+    <div class="group">
+      <span class="label-caps">Acabamento</span>
+      <div class="cloud">
+        @for (chip of foilChips; track chip.value) {
+          <button type="button" class="chip-small" [class.on]="on(chip)"
+                  [attr.aria-pressed]="on(chip)" (click)="chipToggled.emit(chip)">
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="label-caps">Idioma</span>
+      <div class="cloud">
+        @for (chip of languageChips; track chip.value) {
+          <button type="button" class="chip-small" [class.on]="on(chip)"
+                  [attr.aria-pressed]="on(chip)" (click)="chipToggled.emit(chip)">
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Preso ao rodapé: a contagem é o retorno imediato de cada toque, e é o
+       que dispensa fechar o modal para saber se o filtro fez sentido. -->
+  <footer class="foot">
+    <span class="font-data text-[11px] text-faint">
+      {{ activeCount() === 0 ? 'nenhum filtro' : activeCount() + (activeCount() === 1 ? ' filtro' : ' filtros') }}
+    </span>
+    <button type="button" class="btn-primary pill" (click)="close()">
+      Ver {{ resultCount() }} {{ resultCount() === 1 ? 'carta' : 'cartas' }}
+    </button>
+  </footer>
+</section>

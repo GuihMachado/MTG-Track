@@ -55,11 +55,46 @@
         </section>
       }
 
+      <!-- Busca dentro do deck: um campo só, casando nome e efeito. Cem cartas
+           não produzem o ruído que obrigou a coleção a ter dois modos. -->
+      @if (counted().length > 0) {
+        <label class="well mt-4">
+          <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
+          <input class="well-input" type="search" autocomplete="off"
+                 placeholder="Buscar por nome ou efeito" [value]="query()"
+                 (input)="query.set($any($event.target).value)"
+                 aria-label="Buscar carta do deck por nome ou efeito" />
+          @if (query()) {
+            <button type="button" class="clear" (click)="query.set('')"
+                    aria-label="Limpar busca">
+              <ng-icon hlm name="lucideX" class="!size-[14px]" />
+            </button>
+          }
+        </label>
+
+        @if (searching() && !noMatches()) {
+          <p class="mt-1.5 font-data text-[10.5px] text-faint">
+            {{ matchedMissing().length + matchedOwned().length }} de {{ counted().length }} cartas ·
+            o efeito é buscado em inglês
+          </p>
+        }
+      }
+
+      @if (noMatches()) {
+        <p class="mt-6 text-center text-[13.5px] text-foreground-muted">
+          Nenhuma carta deste deck casa com “{{ query().trim() }}”.
+          <span class="mt-1 block font-data text-[11px] text-faint">
+            o texto da carta é buscado em inglês
+          </span>
+        </p>
+      }
+
       <!-- Falta comprar primeiro: é a informação que leva a uma ação. -->
-      @if (missing().length > 0) {
+      @if (visibleMissing().length > 0) {
         <h2 class="section-head mt-5 text-danger">
           <ng-icon hlm name="lucideCircleDashed" class="!size-[15px]" />
-          Falta comprar · {{ missing().length }}
+          Falta comprar ·
+          {{ searching() ? matchedMissing().length + ' de ' + missing().length : missing().length }}
         </h2>
 
         <ul class="mt-2.5 flex flex-col gap-2">
@@ -88,19 +123,24 @@
         }
       }
 
-      <!-- Você já tem: recolhido por padrão. -->
-      @if (owned().length > 0) {
+      <!-- Você já tem: recolhido por padrão, mas buscando abre — esconder o
+           que casou atrás de uma seção fechada é esconder o resultado. -->
+      @if (visibleOwned().length > 0) {
         <button type="button" class="section-head mt-5 w-full text-success"
-                (click)="ownedOpen.set(!ownedOpen())" [attr.aria-expanded]="ownedOpen()">
+                (click)="ownedOpen.set(!ownedOpen())"
+                [attr.aria-expanded]="ownedOpen() || searching()">
           <ng-icon hlm name="lucideCircleCheck" class="!size-[15px]" />
-          <span class="flex-1 text-left">Você já tem · {{ owned().length }}</span>
+          <span class="flex-1 text-left">
+            Você já tem ·
+            {{ searching() ? matchedOwned().length + ' de ' + owned().length : owned().length }}
+          </span>
           <ng-icon hlm name="lucideChevronDown" class="chevron !size-4"
-                   [class.open]="ownedOpen()" />
+                   [class.open]="ownedOpen() || searching()" />
         </button>
 
-        @if (ownedOpen()) {
+        @if (ownedOpen() || searching()) {
           <ul class="mt-2.5 flex flex-col gap-1.5">
-            @for (card of owned(); track card.id) {
+            @for (card of visibleOwned(); track card.id) {
               <li class="owned-row">
                 <span class="w-[22px] flex-none font-data text-[11px] text-faint">
                   {{ card.quantity }}×

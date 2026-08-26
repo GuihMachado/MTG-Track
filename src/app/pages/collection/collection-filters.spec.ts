@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   activeFilterCount,
   applyCollectionView,
+  countTextMatches,
   fold,
+  keywordFacets,
+  matchesDeckCardQuery,
   matchesFilters,
   matchesQuery,
+  matchesText,
   sortEntries,
 } from './collection-filters';
 import { deckProgress } from './deck-progress';
@@ -37,6 +41,8 @@ function entry(overrides: Partial<CollectionEntryDto> = {}): CollectionEntryDto 
     priceUsd: 2,
     colors: [],
     typeLine: 'Artefato',
+    oracleText: '{T}: Add {C}{C}.',
+    keywords: [],
     addedAt: '2026-08-01T00:00:00.000Z',
     pricedAt: null,
     ...overrides,
@@ -180,7 +186,13 @@ describe('applyCollectionView', () => {
       entry({ id: 'c', name: 'Fenda Ciclônica', nameEn: 'Cyclonic Rift', priceUsd: 40, colors: ['U'] }),
     ];
 
-    const result = applyCollectionView(entries, '', { ...NO_FILTERS, colors: ['U'] }, 'price');
+    const result = applyCollectionView(
+      entries,
+      '',
+      'name',
+      { ...NO_FILTERS, colors: ['U'] },
+      'price',
+    );
     expect(result.map(item => item.id)).toEqual(['b', 'c']);
   });
 });
@@ -195,6 +207,7 @@ describe('activeFilterCount', () => {
         foil: true,
         language: 'pt',
         sets: ['hob'],
+        keywords: [],
       }),
     ).toBe(6);
   });
@@ -298,5 +311,137 @@ describe('matchesQuery · nome da edição', () => {
 
     expect(matchesQuery(card, 'hobbit')).toBe(true);
     expect(matchesQuery(card, 'HOB')).toBe(true);
+  });
+});
+
+describe('busca por efeito', () => {
+  const shredder = entry({
+    id: 'shredder',
+    name: 'Picotador de Livros-caixa',
+    nameEn: 'Ledger Shredder',
+    oracleText:
+      'Flying\nWhenever a player casts their second spell each turn, this creature connives.',
+    keywords: ['Flying', 'Connive'],
+  });
+
+  const launderer = entry({
+    id: 'launderer',
+    name: 'Eliminador de Cadáveres',
+    nameEn: 'Body Launderer',
+    oracleText:
+      'Deathtouch\nWhenever another nontoken creature you control dies, this creature connives.',
+    keywords: ['Connive', 'Deathtouch'],
+  });
+
+  const solRing = entry({ id: 'sol', oracleText: '{T}: Add {C}{C}.', keywords: [] });
+
+  it('casa o texto de regras, sem caixa e sem acento', () => {
+    expect(matchesText(shredder, 'connives')).toBe(true);
+    expect(matchesText(shredder, 'CONNIVE')).toBe(true);
+    expect(matchesText(solRing, 'connive')).toBe(false);
+  });
+
+  it('a busca é em inglês: o termo em português não acha', () => {
+    // A tradução oficial de "connive" é "acobertar", mas o texto gravado é o
+    // oracle_text — que a Scryfall só publica em inglês.
+    expect(matchesText(launderer, 'acoberta')).toBe(false);
+  });
+
+  it('acha a carta pelo efeito mesmo quando a impressão é em português', () => {
+    // O Picotador é a impressão pt-BR; o texto gravado é o inglês dela.
+    expect(shredder.language).toBe('pt');
+    expect(matchesText(shredder, 'connive')).toBe(true);
+  });
+
+  it('termo vazio casa tudo, como a busca por nome', () => {
+    expect(matchesText(solRing, '')).toBe(true);
+    expect(matchesText(solRing, '   ')).toBe(true);
+  });
+
+  it('carta sem texto gravado não casa nada', () => {
+    const antiga = entry({ oracleText: null });
+    expect(matchesText(antiga, 'connive')).toBe(false);
+  });
+
+  it('a contagem da sugestão respeita os filtros já ligados', () => {
+    const entries = [
+      shredder,
+      launderer,
+      entry({ id: 'outra', oracleText: 'This creature connives.', colors: ['R'] }),
+    ];
+
+    expect(countTextMatches(entries, 'connive', NO_FILTERS)).toBe(3);
+    // Com o filtro de vermelho aceso, a linha promete só o que vai aparecer.
+    expect(countTextMatches(entries, 'connive', { ...NO_FILTERS, colors: ['R'] })).toBe(1);
+  });
+
+  it('contagem de termo vazio é zero, não a coleção inteira', () => {
+    expect(countTextMatches([shredder, launderer], '', NO_FILTERS)).toBe(0);
+  });
+
+  it('applyCollectionView troca o alvo do termo conforme o modo', () => {
+    const entries = [shredder, solRing];
+
+    const byName = applyCollectionView(entries, 'connive', 'name', NO_FILTERS, 'name');
+    expect(byName).toHaveLength(0);
+
+    const byText = applyCollectionView(entries, 'connive', 'text', NO_FILTERS, 'name');
+    expect(byText.map(e => e.id)).toEqual(['shredder']);
+  });
+});
+
+describe('chips de habilidade', () => {
+  it('lista só as habilidades da estante, da mais comum para a mais rara', () => {
+    const entries = [
+      entry({ id: 'a', keywords: ['Flying', 'Connive'] }),
+      entry({ id: 'b', keywords: ['Connive', 'Deathtouch'] }),
+      entry({ id: 'c', keywords: ['Connive'] }),
+    ];
+
+    expect(keywordFacets(entries)).toEqual([
+      { keyword: 'Connive', count: 3 },
+      { keyword: 'Deathtouch', count: 1 },
+      { keyword: 'Flying', count: 1 },
+    ]);
+  });
+
+  it('estante sem palavra-chave nenhuma não gera chip', () => {
+    expect(keywordFacets([entry({ keywords: [] })])).toEqual([]);
+  });
+
+  it('filtra por OU dentro do eixo, como cor e tipo', () => {
+    const flyer = entry({ keywords: ['Flying'] });
+    const conniver = entry({ keywords: ['Connive'] });
+    const vanilla = entry({ keywords: [] });
+    const filters = { ...NO_FILTERS, keywords: ['Flying', 'Connive'] };
+
+    expect(matchesFilters(flyer, filters)).toBe(true);
+    expect(matchesFilters(conniver, filters)).toBe(true);
+    expect(matchesFilters(vanilla, filters)).toBe(false);
+  });
+
+  it('cada habilidade marcada conta um no contador do botão', () => {
+    expect(activeFilterCount({ ...NO_FILTERS, keywords: ['Flying', 'Connive'] })).toBe(2);
+  });
+
+  it('o termo da busca não entra no contador — ele já está à vista no campo', () => {
+    expect(activeFilterCount(NO_FILTERS)).toBe(0);
+  });
+});
+
+describe('busca no detalhe do deck', () => {
+  it('um campo só: casa nome e efeito', () => {
+    const card = { name: 'Ledger Shredder', oracleText: 'Flying\nThis creature connives.' };
+
+    expect(matchesDeckCardQuery(card, 'shredder')).toBe(true);
+    expect(matchesDeckCardQuery(card, 'connives')).toBe(true);
+    expect(matchesDeckCardQuery(card, 'lifelink')).toBe(false);
+  });
+
+  it('carta que falta e ainda não tem texto casa pelo nome', () => {
+    const card = { name: 'Sol Ring', oracleText: null };
+
+    expect(matchesDeckCardQuery(card, 'sol')).toBe(true);
+    expect(matchesDeckCardQuery(card, 'add {c}')).toBe(false);
   });
 });

@@ -14,6 +14,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import {
+  lucideArrowRight,
   lucideArrowUpDown,
   lucideChevronDown,
   lucideChevronUp,
@@ -24,6 +25,7 @@ import {
   lucideLibraryBig,
   lucideList,
   lucidePlus,
+  lucideScrollText,
   lucideSearch,
   lucideSlidersHorizontal,
   lucideX,
@@ -38,8 +40,17 @@ import {
   CollectionSort,
   CollectionView,
   NO_FILTERS,
+  SearchMode,
 } from '../../models/collection.models';
-import { activeFilterCount, applyCollectionView } from './collection-filters';
+import {
+  FilterChip,
+  activeFilterCount,
+  applyCollectionView,
+  countTextMatches,
+  keywordFacets,
+  toggleChip,
+  toggleValue,
+} from './collection-filters';
 import { groupSets } from './collection-sets';
 import { formatCount, formatTotal, formatUsd } from './money';
 import { EntryRow } from './entry-row/entry-row';
@@ -48,6 +59,7 @@ import { AddCard } from './add-card/add-card';
 import { DeckRow } from './deck-row/deck-row';
 import { SetRow } from './set-row/set-row';
 import { SetFilter } from './set-filter/set-filter';
+import { FiltersSheet } from './filters-sheet/filters-sheet';
 
 type CollectionTab = 'cards' | 'sets' | 'decks';
 
@@ -58,11 +70,8 @@ const SUMMARY_KEY = 'collection-summary';
 /** Altura da linha da lista, em px — o virtual scroll precisa dela fixa. */
 const ROW_SIZE = 69;
 
-interface FilterChip {
-  label: string;
-  axis: 'color' | 'type' | 'foil' | 'language';
-  value: string;
-}
+/** Menos letras que isto e quase toda carta casa — a contagem não informaria nada. */
+const TEXT_HINT_FROM = 3;
 
 /**
  * Coleção pessoal. Responde três perguntas, nesta ordem: eu tenho essa carta,
@@ -89,6 +98,7 @@ interface FilterChip {
     DeckRow,
     SetRow,
     SetFilter,
+    FiltersSheet,
     AddCard,
   ],
   providers: [
@@ -106,6 +116,8 @@ interface FilterChip {
       lucideCloudOff,
       lucideLibraryBig,
       lucideDownload,
+      lucideScrollText,
+      lucideArrowRight,
     }),
   ],
   templateUrl: './collection.html',
@@ -126,7 +138,14 @@ export class Collection implements OnInit {
   protected view = signal<CollectionView>('list');
   protected sort = signal<CollectionSort>('name');
   protected query = signal('');
+  /**
+   * Como o termo do campo é aplicado. Um campo só, dois alvos: nome (padrão) ou
+   * texto de regras. A troca acontece na linha de sugestão sob o campo, que
+   * continua visível dizendo qual está valendo — não é modo escondido.
+   */
+  protected mode = signal<SearchMode>('name');
   protected filters = signal<CollectionFilters>(NO_FILTERS);
+  /** Modal de filtros. Antes eram chips na tela; ver `filters-sheet`. */
   protected filtersOpen = signal(false);
   /** Folha de coleções: o eixo de edição não cabe em pílula (são dezenas). */
   protected setsSheetOpen = signal(false);
@@ -158,33 +177,37 @@ export class Collection implements OnInit {
 
   protected readonly sortOptions: CollectionSort[] = ['name', 'price', 'quantity', 'recent'];
 
-  /**
-   * Eixos de filtro. Cor e tipo vêm gravados na entrada justamente para o
-   * filtro não precisar de rede.
-   */
-  protected readonly chips: FilterChip[] = [
-    { label: 'Branco', axis: 'color', value: 'W' },
-    { label: 'Azul', axis: 'color', value: 'U' },
-    { label: 'Preto', axis: 'color', value: 'B' },
-    { label: 'Vermelho', axis: 'color', value: 'R' },
-    { label: 'Verde', axis: 'color', value: 'G' },
-    { label: 'Incolor', axis: 'color', value: 'C' },
-    { label: 'Criatura', axis: 'type', value: 'criatura' },
-    { label: 'Artefato', axis: 'type', value: 'artefato' },
-    { label: 'Instantânea', axis: 'type', value: 'instant' },
-    { label: 'Feitiço', axis: 'type', value: 'sorcery' },
-    { label: 'Encantamento', axis: 'type', value: 'encantamento' },
-    { label: 'Terreno', axis: 'type', value: 'terreno' },
-    { label: 'Foil', axis: 'foil', value: 'true' },
-    { label: 'PT-BR', axis: 'language', value: 'pt' },
-    { label: 'EN', axis: 'language', value: 'en' },
-  ];
-
   protected visible = computed(() =>
-    applyCollectionView(this.entries(), this.query(), this.filters(), this.sort()),
+    applyCollectionView(this.entries(), this.query(), this.mode(), this.filters(), this.sort()),
   );
 
   protected activeFilters = computed(() => activeFilterCount(this.filters()));
+
+  /** As habilidades da estante, para os chips do modal. */
+  protected facets = computed(() => keywordFacets(this.entries()));
+
+  /**
+   * Quantas cartas a busca acharia no texto de regras. É o número da linha de
+   * sugestão, e ele só é calculado no modo nome: já no texto, quem responde
+   * quantas casaram é a própria lista.
+   */
+  protected textMatches = computed(() => {
+    if (this.mode() === 'text') return this.visible().length;
+    return countTextMatches(this.entries(), this.query(), this.filters());
+  });
+
+  /**
+   * A linha de sugestão aparece quando há termo suficiente e há o que oferecer.
+   * Zero resultado, zero linha: uma linha que promete nada só rouba altura.
+   */
+  protected showTextHint = computed(() => {
+    if (this.tab() !== 'cards') return false;
+    if (this.query().trim().length < TEXT_HINT_FROM) return false;
+    // Zero em qualquer um dos dois modos, zero linha: no modo texto quem dá o
+    // recado (e a volta para o nome) é o painel de vazio, e dizer "0 cartas"
+    // logo acima dele é dizer duas vezes a mesma coisa.
+    return this.textMatches() > 0;
+  });
 
   /**
    * As coleções marcadas viram pílula na faixa de filtros ativos, como cor e
@@ -206,6 +229,9 @@ export class Collection implements OnInit {
     });
   });
 
+  /** Só os nomes, para a linha do eixo de edição dentro do modal. */
+  protected setLabels = computed(() => this.setChips().map(chip => chip.label));
+
   protected totalCards = computed(() => formatCount(this.summary().totalCards));
   protected uniqueCards = computed(() => formatCount(this.summary().uniqueCards));
   protected totalValue = computed(() => formatTotal(this.summary().totalValueUsd));
@@ -217,13 +243,18 @@ export class Collection implements OnInit {
   });
 
   /** Por que a lista está vazia muda o que a tela oferece como saída. */
-  protected emptyReason = computed<'none' | 'query' | 'filters' | null>(() => {
+  protected emptyReason = computed<'none' | 'query' | 'text' | 'filters' | null>(() => {
     if (this.visible().length > 0) return null;
     if (this.entries().length === 0) return 'none';
-    if (this.query().trim().length > 0) return 'query';
+    // Vazio buscando efeito não se resolve na Scryfall: o termo pode estar
+    // errado, ou você simplesmente não tem carta que faça aquilo.
+    if (this.query().trim().length > 0) return this.mode() === 'text' ? 'text' : 'query';
     if (this.activeFilters() > 0) return 'filters';
     return 'none';
   });
+
+  /** O termo valendo como texto de regras — o que o campo do modal mostra. */
+  protected textTerm = computed(() => (this.mode() === 'text' ? this.query() : ''));
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
@@ -283,34 +314,15 @@ export class Collection implements OnInit {
     this.remember(SORT_KEY, sort);
   }
 
-  protected isChipOn(chip: FilterChip): boolean {
-    const filters = this.filters();
-
-    switch (chip.axis) {
-      case 'color':
-        return filters.colors.includes(chip.value);
-      case 'type':
-        return filters.types.includes(chip.value);
-      case 'foil':
-        return filters.foil === true;
-      case 'language':
-        return filters.language === chip.value;
-    }
+  protected onChipToggled(chip: FilterChip): void {
+    this.filters.update(filters => toggleChip(chip, filters));
   }
 
-  protected toggleChip(chip: FilterChip): void {
-    this.filters.update(filters => {
-      switch (chip.axis) {
-        case 'color':
-          return { ...filters, colors: toggle(filters.colors, chip.value) };
-        case 'type':
-          return { ...filters, types: toggle(filters.types, chip.value) };
-        case 'foil':
-          return { ...filters, foil: filters.foil === true ? null : true };
-        case 'language':
-          return { ...filters, language: filters.language === chip.value ? null : chip.value };
-      }
-    });
+  protected toggleKeyword(keyword: string): void {
+    this.filters.update(filters => ({
+      ...filters,
+      keywords: toggleValue(filters.keywords, keyword),
+    }));
   }
 
   protected clearFilters(): void {
@@ -318,7 +330,7 @@ export class Collection implements OnInit {
   }
 
   protected toggleSet(code: string): void {
-    this.filters.update(filters => ({ ...filters, sets: toggle(filters.sets, code) }));
+    this.filters.update(filters => ({ ...filters, sets: toggleValue(filters.sets, code) }));
   }
 
   protected clearSets(): void {
@@ -329,8 +341,33 @@ export class Collection implements OnInit {
     this.router.navigate(['/colecao/edicao', code]);
   }
 
+  /**
+   * Digitar volta a busca para nome, exceto quando ela já está no texto: quem
+   * aceitou a sugestão está refinando o efeito, não recomeçando pelo nome.
+   */
+  protected onQueryInput(value: string): void {
+    this.query.set(value);
+    if (value.trim().length === 0) this.mode.set('name');
+  }
+
+  /** Aceitar a sugestão: o termo fica onde está, só o alvo muda. */
+  protected searchInText(): void {
+    this.mode.set('text');
+  }
+
+  protected searchInName(): void {
+    this.mode.set('name');
+  }
+
+  /** O campo de texto do modal é o mesmo estado da linha de sugestão. */
+  protected onTextFilterChanged(value: string): void {
+    this.query.set(value);
+    this.mode.set(value.trim().length > 0 ? 'text' : 'name');
+  }
+
   protected clearQuery(): void {
     this.query.set('');
+    this.mode.set('name');
   }
 
   protected openAdd(): void {
@@ -379,8 +416,4 @@ export class Collection implements OnInit {
     if (!this.isBrowser) return;
     localStorage.setItem(key, value);
   }
-}
-
-function toggle(list: string[], value: string): string[] {
-  return list.includes(value) ? list.filter(item => item !== value) : [...list, value];
 }
