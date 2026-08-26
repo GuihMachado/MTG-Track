@@ -1,13 +1,6 @@
 @if (card(); as found) {
   <!-- ═══════════ DETALHE DA CARTA ═══════════ -->
   <div class="page" [style.--face-rgb]="faceRgb()">
-    @if (artUrl(); as art) {
-      <button type="button" class="art-hit" (click)="fullscreen.set(true)"
-              [attr.aria-label]="'Ver ' + found.name + ' em tela cheia'">
-        <img class="art" [src]="art" alt="" />
-      </button>
-    }
-    <div class="veil" aria-hidden="true"></div>
     @if (isBackFace()) {
       <!-- O verso ganha a luz da própria cor: é outra carta, na prática. -->
       <div class="face-glow" aria-hidden="true"></div>
@@ -32,8 +25,9 @@
       </div>
     </div>
 
-    <!-- Cabeçalho da carta -->
-    <header class="relative px-4 pt-[82px]">
+    <!-- Cabeçalho da carta: o nome em cima, a carta impressa centralizada
+         embaixo dele — tocar a carta abre em tela cheia. -->
+    <header class="relative px-4 pt-2">
       <div class="flex items-start justify-between gap-3">
         <h1 class="text-[26px] leading-[1.12] font-bold tracking-[-0.02em] text-pretty">
           {{ face()?.name ?? found.name }}
@@ -47,6 +41,13 @@
           <span class="no-cost">Sem custo</span>
         }
       </div>
+
+      @if (printUrl(); as print) {
+        <button type="button" class="print-hit" (click)="fullscreen.set(true)"
+                [attr.aria-label]="'Ver ' + found.name + ' em tela cheia'">
+          <img class="print-card" [src]="print" alt="" />
+        </button>
+      }
 
       @if (face()?.typeLine) {
         <p class="mt-2 text-[13.5px] leading-[1.5] text-ink-200 text-pretty">{{ face()?.typeLine }}</p>

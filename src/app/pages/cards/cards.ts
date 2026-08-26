@@ -120,12 +120,6 @@ export class Cards {
   /** Só a face frontal traz coleção e artista; a de trás diz de quem é o verso. */
   protected isBackFace = computed(() => this.activeFaceIndex() > 0);
 
-  protected artUrl = computed(() => {
-    const card = this.card();
-    if (!card) return null;
-    return this.face()?.artCropUrl ?? card.artCropUrl;
-  });
-
   protected printUrl = computed(() => {
     const card = this.card();
     if (!card) return null;

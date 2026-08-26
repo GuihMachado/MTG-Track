@@ -14,41 +14,30 @@
   background: var(--background);
 }
 
-/* A arte é botão: tocar abre a carta impressa em tela cheia. */
-.art-hit {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 236px;
+/* A carta impressa, centralizada sob o nome — não a arte recortada. É botão:
+   tocar abre em tela cheia. Troca junto com a aba de face. */
+.print-hit {
+  display: block;
+  margin: 18px auto 2px;
   padding: 0;
   border: 0;
   background: transparent;
+  border-radius: 12px;
   cursor: zoom-in;
 }
 
-.art {
-  width: 100%;
-  height: 236px;
-  object-fit: cover;
-  opacity: 0.85;
+.print-hit:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
 }
 
-/* Véu de 290px: a arte nasce visível e morre no fundo, sem linha de corte. */
-.veil {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 290px;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--background) 72%, transparent) 0%,
-    color-mix(in oklab, var(--background) 15%, transparent) 34%,
-    color-mix(in oklab, var(--background) 94%, transparent) 84%,
-    var(--background) 100%
-  );
+.print-card {
+  display: block;
+  width: 196px;
+  aspect-ratio: 63 / 88;
+  object-fit: cover;
+  border-radius: var(--radius-card-art);
+  box-shadow: 0 22px 40px -20px rgba(0, 0, 0, 0.95);
 }
 
 .face-glow {
