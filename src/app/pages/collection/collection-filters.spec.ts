@@ -22,6 +22,7 @@ function entry(overrides: Partial<CollectionEntryDto> = {}): CollectionEntryDto 
     name: 'Anel Solar',
     nameEn: 'Sol Ring',
     artCropUrl: null,
+    imageUrl: null,
     setCode: 'C21',
     setName: 'Commander 2021',
     setFamilyCode: 'c21',

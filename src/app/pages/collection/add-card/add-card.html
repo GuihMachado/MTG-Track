@@ -7,16 +7,20 @@
   <span class="handle" aria-hidden="true"></span>
 
   @if (!print() && !isEditing()) {
-    <!-- Passo 1: achar a carta. -->
-    <label class="well">
-      <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
-      <input #searchField class="well-input" type="search" autocomplete="off"
-             placeholder="Buscar carta na Scryfall" [value]="query()"
-             (input)="onSearch($any($event.target).value)" aria-label="Buscar carta" />
-      @if (searching()) {
-        <ng-icon hlm name="lucideLoader" class="field-icon animate-spin !size-4" />
-      }
-    </label>
+    <!-- Passo 1: achar a carta. O campo fica preso ao topo da folha: com o
+         teclado aberto e a lista longa, rolar não pode levar embora o que o
+         usuário está digitando. -->
+    <div class="search-hold">
+      <label class="well">
+        <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
+        <input #searchField class="well-input" type="search" autocomplete="off"
+               placeholder="Buscar carta na Scryfall" [value]="query()"
+               (input)="onSearch($any($event.target).value)" aria-label="Buscar carta" />
+        @if (searching()) {
+          <ng-icon hlm name="lucideLoader" class="field-icon animate-spin !size-4" />
+        }
+      </label>
+    </div>
 
     @if (loadingPrints()) {
       <p class="mt-4 text-center font-data text-[11px] text-faint">carregando impressões…</p>
@@ -48,12 +52,12 @@
   } @else if (print(); as chosen) {
     <!-- Passo 2: a carta está escolhida; o que falta é como ela entra. -->
     <div class="flex gap-3.5">
-      <!-- A arte é a porta para a carta inteira: abre a tela de tradução com o
-           texto completo — a lupa no canto é o convite. -->
+      <!-- A carta inteira é a porta para o texto completo: abre a tela de
+           tradução — a lupa no canto é o convite. -->
       <button type="button" class="identity-art-btn" (click)="viewCard()"
               aria-label="Ver a carta inteira">
-        @if (chosen.artCropUrl; as art) {
-          <img class="identity-art" [src]="art" alt="" />
+        @if (chosen.imageUrl ?? chosen.artCropUrl; as image) {
+          <img class="identity-art" [src]="image" alt="" />
         } @else {
           <span class="identity-art identity-art-empty" aria-hidden="true"></span>
         }
@@ -106,6 +110,9 @@
 
       <button type="button" class="print-field" (click)="togglePrints()"
               [class.static]="isEditing()" [attr.aria-expanded]="printsOpen()">
+        @if (chosen.setIconUrl; as icon) {
+          <img class="set-icon" [src]="icon" alt="" aria-hidden="true" />
+        }
         <span class="set-code">{{ chosen.setCode }}</span>
         <span class="min-w-0 flex-1 truncate text-left text-[14.5px]">
           {{ chosen.setName || 'Impressão' }}
@@ -130,6 +137,9 @@
               <button type="button" class="print-option"
                       [class.on]="option.scryfallId === chosen.scryfallId"
                       (click)="selectPrint(option)">
+                @if (option.setIconUrl; as icon) {
+                  <img class="set-icon" [src]="icon" alt="" aria-hidden="true" loading="lazy" />
+                }
                 <span class="set-code">{{ option.setCode }}</span>
                 <span class="min-w-0 flex-1 truncate text-left text-[13px]">
                   {{ option.setName }}

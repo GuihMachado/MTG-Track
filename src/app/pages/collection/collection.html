@@ -21,43 +21,63 @@
     </header>
 
     @if (tab() === 'cards') {
-      <!-- Painel de resumo: cartas à esquerda, valor à direita. -->
-      <div class="mt-3.5 flex flex-none gap-2.5">
-        <div class="summary plate">
-          <span class="label-caps">Cartas</span>
-          <span class="mt-1 block text-[26px] font-bold leading-none">{{ totalCards() }}</span>
-          <span class="mt-1.5 block font-data text-[11px] text-foreground-subtle">
-            {{ uniqueCards() }} únicas
-          </span>
+      @if (summaryOpen()) {
+        <!-- Painel de resumo: cartas à esquerda, valor à direita. O botão de
+             recolher devolve a altura dos painéis para a lista. -->
+        <div class="relative mt-3.5 flex flex-none gap-2.5">
+          <div class="summary plate">
+            <span class="label-caps">Cartas</span>
+            <span class="mt-1 block text-[26px] font-bold leading-none">{{ totalCards() }}</span>
+            <span class="mt-1.5 block font-data text-[11px] text-foreground-subtle">
+              {{ uniqueCards() }} únicas
+            </span>
+          </div>
+
+          <div class="summary plate value">
+            <span class="value-blob" aria-hidden="true"></span>
+            <span class="label-caps relative">Valor</span>
+            <span class="relative mt-1 block leading-none">
+              <span class="font-data text-[13px] text-[#9A8C6A]">US$</span>
+              <span class="value-number">{{ totalValue() }}</span>
+            </span>
+            @if (mostValuable(); as top) {
+              <span class="relative mt-1.5 block truncate font-data text-[11px] text-foreground-subtle">
+                {{ top.name }}
+              </span>
+              <span class="relative mt-[2px] block font-data text-[11px] text-foreground-subtle">
+                {{ top.price }}
+              </span>
+            } @else {
+              <span class="relative mt-1.5 block font-data text-[11px] text-foreground-subtle">
+                sem preço ainda
+              </span>
+            }
+          </div>
+
+          <button type="button" class="summary-fold" (click)="toggleSummary()"
+                  aria-expanded="true" aria-label="Recolher o resumo">
+            <ng-icon hlm name="lucideChevronUp" class="!size-[14px]" />
+          </button>
         </div>
 
-        <div class="summary plate value">
-          <span class="value-blob" aria-hidden="true"></span>
-          <span class="label-caps relative">Valor</span>
-          <span class="relative mt-1 block leading-none">
-            <span class="font-data text-[13px] text-[#9A8C6A]">US$</span>
-            <span class="value-number">{{ totalValue() }}</span>
+        @if (summary().withoutPrice > 0) {
+          <p class="mt-1.5 flex-none font-data text-[10px] text-faint">
+            {{ summary().withoutPrice }} carta{{ summary().withoutPrice > 1 ? 's' : '' }} sem preço,
+            fora do total
+          </p>
+        }
+      } @else {
+        <!-- Recolhido: os dois números numa linha só — o resumo continua
+             respondendo "quantas e quanto valem" sem gastar a altura. -->
+        <button type="button" class="summary-mini mt-3.5" (click)="toggleSummary()"
+                aria-expanded="false" aria-label="Mostrar o resumo">
+          <span class="font-data text-[11.5px]">
+            {{ totalCards() }} carta{{ summary().totalCards === 1 ? '' : 's' }}
           </span>
-          @if (mostValuable(); as top) {
-            <span class="relative mt-1.5 block truncate font-data text-[11px] text-foreground-subtle">
-              {{ top.name }}
-            </span>
-            <span class="relative mt-[2px] block font-data text-[11px] text-foreground-subtle">
-              {{ top.price }}
-            </span>
-          } @else {
-            <span class="relative mt-1.5 block font-data text-[11px] text-foreground-subtle">
-              sem preço ainda
-            </span>
-          }
-        </div>
-      </div>
-
-      @if (summary().withoutPrice > 0) {
-        <p class="mt-1.5 flex-none font-data text-[10px] text-faint">
-          {{ summary().withoutPrice }} carta{{ summary().withoutPrice > 1 ? 's' : '' }} sem preço,
-          fora do total
-        </p>
+          <span class="dot" aria-hidden="true"></span>
+          <span class="font-data text-[11.5px] text-price-strong">US$ {{ totalValue() }}</span>
+          <ng-icon hlm name="lucideChevronDown" class="ml-auto !size-[14px] text-foreground-subtle" />
+        </button>
       }
     }
 

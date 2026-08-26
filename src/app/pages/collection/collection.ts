@@ -15,6 +15,8 @@ import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import {
   lucideArrowUpDown,
+  lucideChevronDown,
+  lucideChevronUp,
   lucideCirclePlus,
   lucideCloudOff,
   lucideDownload,
@@ -51,9 +53,11 @@ type CollectionTab = 'cards' | 'sets' | 'decks';
 
 const VIEW_KEY = 'collection-view';
 const SORT_KEY = 'collection-sort';
+const SUMMARY_KEY = 'collection-summary';
 
-/** Altura da linha da lista, em px — o virtual scroll precisa dela fixa. */
-const ROW_SIZE = 69;
+/** Altura da linha da lista, em px — o virtual scroll precisa dela fixa.
+ *  A conta: miniatura de carta 50 + padding 18 + borda 2 + vão do slot 5. */
+const ROW_SIZE = 75;
 
 interface FilterChip {
   label: string;
@@ -95,6 +99,8 @@ interface FilterChip {
       lucideLayoutGrid,
       lucideList,
       lucideArrowUpDown,
+      lucideChevronDown,
+      lucideChevronUp,
       lucidePlus,
       lucideX,
       lucideCirclePlus,
@@ -125,6 +131,9 @@ export class Collection implements OnInit {
   protected filtersOpen = signal(false);
   /** Folha de coleções: o eixo de edição não cabe em pílula (são dezenas). */
   protected setsSheetOpen = signal(false);
+  /** Resumo (Cartas/Valor) recolhível: recolhido vira uma linha só, para a
+   *  lista ganhar a altura dos painéis. A escolha fica no localStorage. */
+  protected summaryOpen = signal(true);
 
   /** Folha de adicionar/editar: null fechada, 'new' ou a entrada em edição. */
   protected sheet = signal<'new' | CollectionEntryDto | null>(null);
@@ -224,6 +233,7 @@ export class Collection implements OnInit {
     this.sort.set(
       this.stored(SORT_KEY, ['name', 'price', 'quantity', 'recent'], 'name') as CollectionSort,
     );
+    this.summaryOpen.set(this.stored(SUMMARY_KEY, ['open', 'closed'], 'open') === 'open');
 
     // Voltar do fichário com "ver as minhas" já entra filtrado pela coleção.
     const fromBinder = this.route.snapshot.queryParamMap.get('edicao');
@@ -262,6 +272,11 @@ export class Collection implements OnInit {
   protected toggleView(): void {
     this.view.update(current => (current === 'list' ? 'grid' : 'list'));
     this.remember(VIEW_KEY, this.view());
+  }
+
+  protected toggleSummary(): void {
+    this.summaryOpen.update(open => !open);
+    this.remember(SUMMARY_KEY, this.summaryOpen() ? 'open' : 'closed');
   }
 
   protected setSort(sort: CollectionSort): void {

@@ -1,5 +1,5 @@
 import { Component, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -24,6 +24,7 @@ import { ScryfallService } from '../../services/scryfall-service';
 import { ProxyListService } from '../../services/proxy-list-service';
 import { ManaSymbolPipe } from '../../shared/pipes/mana-symbol-pipe';
 import { NotificationService } from '../../shared/notification/notification.service';
+import { NavigationHistoryService } from '../../shared/navigation/navigation-history.service';
 import { CardDto, CardFaceDto } from '../../models/card.models';
 import { extractImageUris, ScryfallCard } from '../../models/proxy.models';
 import { manaRgbVar } from '../../shared/match-utils';
@@ -66,6 +67,8 @@ type CardLanguage = 'pt' | 'en';
 export class Cards {
   private platformId = inject(PLATFORM_ID);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private history = inject(NavigationHistoryService);
   private cardService = inject(CardService);
   private scryfall = inject(ScryfallService);
   private proxyList = inject(ProxyListService);
@@ -89,6 +92,12 @@ export class Cards {
 
   /** Descarta resposta de busca já superada por uma digitação mais nova. */
   private searchSeq = 0;
+
+  /**
+   * A carta abriu por link (?carta=, vindo da coleção): o voltar deve devolver
+   * o usuário à tela de onde veio, não à busca desta tela — ele nunca a viu.
+   */
+  protected fromLink = false;
 
   protected faces = computed(() => {
     const card = this.card();
@@ -163,6 +172,7 @@ export class Cards {
     // detalhe, sem obrigar a digitar de novo um nome que a outra tela já sabia.
     const preset = this.route.snapshot.queryParamMap.get('carta');
     if (preset && isPlatformBrowser(this.platformId)) {
+      this.fromLink = true;
       // Sem emitir: o valueChanges dispararia a busca e a lista de resultados
       // ficaria carregando atrás do detalhe, à toa.
       this.query.setValue(preset, { emitEvent: false });
@@ -226,8 +236,23 @@ export class Cards {
     });
   }
 
-  /** Fecha o detalhe e volta para a lista de resultados. */
+  /**
+   * Fecha o detalhe. Quem chegou pela busca volta à lista de resultados; quem
+   * chegou por link volta à tela de onde veio (a coleção) — mostrar a busca
+   * vazia a essa pessoa é jogá-la num lugar que ela não pediu.
+   */
   protected close(): void {
+    if (this.fromLink) {
+      if (this.history.canGoBack) {
+        window.history.back();
+      } else {
+        // Link aberto direto, sem histórico no app: a coleção é de onde os
+        // links de carta saem.
+        this.router.navigateByUrl('/colecao');
+      }
+      return;
+    }
+
     this.card.set(null);
     this.chosen.set(null);
     this.fullscreen.set(false);

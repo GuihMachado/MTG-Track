@@ -10,6 +10,7 @@ function entry(overrides: Partial<CollectionEntryDto> = {}): CollectionEntryDto 
     name: 'Bilbo',
     nameEn: 'Bilbo',
     artCropUrl: null,
+    imageUrl: null,
     setCode: 'HOB',
     setName: 'The Hobbit',
     setFamilyCode: 'hob',

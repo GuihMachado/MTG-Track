@@ -8,9 +8,14 @@
        toque; `viewport-fit=cover` deixa o app pintar por baixo do entalhe e da
        barra de gestos quando o Android abre em fullscreen. O zoom ao focar um
        input NÃO se resolve aqui (o iOS ignora estes dois no Safari): quem
-       resolve é a regra de 16px em styles.css. -->
+       resolve é a regra de 16px em styles.css.
+       `interactive-widget=resizes-content`: o teclado passa a ENCOLHER o
+       viewport de layout em vez de cobri-lo — sem isso, folha inferior fixa
+       (adicionar carta) fica atrás do teclado e o campo de busca some. Os
+       `dvh` do app acompanham o encolhimento. O iOS ignora e segue com o
+       comportamento próprio de rolar o focado para a vista. -->
   <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#06050B">
 
   <!-- App instalado: sem barra de endereço no Android (o `display: fullscreen`

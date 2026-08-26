@@ -466,6 +466,8 @@ export class AddCard {
       priceUsd: entry.foil ? null : entry.priceUsd,
       priceUsdFoil: entry.foil ? entry.priceUsd : null,
       artCropUrl: entry.artCropUrl,
+      imageUrl: entry.imageUrl,
+      setIconUrl: entry.setIconUrl,
       typeLine: entry.typeLine,
       colors: entry.colors,
       rarity: '',

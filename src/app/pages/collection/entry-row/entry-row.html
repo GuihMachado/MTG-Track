@@ -1,7 +1,9 @@
 <button type="button" class="row" (click)="edit.emit(entry())"
         [attr.aria-label]="'Editar ' + entry().name + ', ' + copies()">
-  @if (entry().artCropUrl; as art) {
-    <img class="thumb" [src]="art" alt="" loading="lazy" decoding="async" />
+  @if (entry().imageUrl ?? entry().artCropUrl; as image) {
+    <!-- A carta inteira quando o dado existe; linha antiga cai na arte até o
+         refresh de preços preencher a imagem. -->
+    <img class="thumb" [src]="image" alt="" loading="lazy" decoding="async" />
   } @else {
     <!-- Imagem que não carrega cai na placa neutra; nunca deixa buraco. -->
     <span class="thumb thumb-empty" aria-hidden="true"></span>

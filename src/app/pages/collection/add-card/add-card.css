@@ -62,6 +62,19 @@
 }
 
 /* ─── Busca ─────────────────────────────────────────────────── */
+/* O campo fica preso ao topo da folha (que é quem rola): com o teclado aberto
+   e a lista longa, rolar não pode levar embora o que está sendo digitado. As
+   margens negativas cobrem as calhas do padding da folha, senão a lista
+   apareceria passando pelos lados do campo. */
+.search-hold {
+  position: sticky;
+  top: -12px;
+  z-index: 2;
+  margin-inline: -20px;
+  padding: 12px 20px 10px;
+  background: var(--surface-plate-top);
+}
+
 .results {
   display: flex;
   flex-direction: column;
@@ -138,12 +151,13 @@
   pointer-events: none;
 }
 
+/* Proporção de carta (63×88): a caixa mostra a carta inteira, não a arte. */
 .identity-art {
   display: block;
   flex: none;
-  width: 78px;
-  height: 98px;
-  border-radius: 10px;
+  width: 76px;
+  height: 106px;
+  border-radius: 6px;
   object-fit: cover;
   box-shadow: 0 12px 22px -12px rgba(0, 0, 0, 0.95);
 }
@@ -267,6 +281,22 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
+}
+
+/* O símbolo da Scryfall é um SVG preto sem `fill` declarado: no escuro ele
+   sumiria, então inverte. No claro fica como veio (mesma regra do set-row). */
+.set-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: invert(1);
+  opacity: 0.85;
+}
+
+:host-context(.light) .set-icon {
+  filter: none;
+  opacity: 0.72;
 }
 
 .chevron {

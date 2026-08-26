@@ -60,6 +60,58 @@
   pointer-events: none;
 }
 
+/* O recolher vive no canto do painel de valor: ghost pequeno, para não brigar
+   com o numeral que é o assunto do painel. */
+.summary-fold {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground-subtle);
+  cursor: pointer;
+}
+
+.summary-fold:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Resumo recolhido: uma linha de placa quieta com os dois números. A linha
+   inteira é o botão de reabrir — alvo grande, sem ícone escondido. */
+.summary-mini {
+  display: flex;
+  flex: none;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding-inline: 12px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--foreground) 3%, transparent);
+  border: 1px solid var(--hairline);
+  color: var(--foreground-muted);
+  cursor: pointer;
+}
+
+.summary-mini:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.summary-mini .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--foreground-subtle);
+  opacity: 0.6;
+}
+
 /* O gótico no valor é deliberado e é o único da tela: ele marca o número como
    troféu, o que a lei 3 reserva a "numerais grandes". */
 .value-number {
@@ -198,7 +250,7 @@
 }
 
 .skeleton-row {
-  height: 62px;
+  height: 70px;
 }
 
 .skeleton-deck {

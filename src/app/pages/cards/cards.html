@@ -15,7 +15,8 @@
 
     <!-- Barra de ações sobre a arte -->
     <div class="relative flex h-[58px] items-center justify-between px-4">
-      <button type="button" class="act" (click)="close()" aria-label="Voltar para a busca">
+      <button type="button" class="act" (click)="close()"
+              [attr.aria-label]="fromLink ? 'Voltar' : 'Voltar para a busca'">
         <ng-icon hlm size="sm" name="lucideChevronLeft" />
       </button>
 

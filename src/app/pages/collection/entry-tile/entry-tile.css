@@ -31,10 +31,21 @@
   outline-offset: 2px;
 }
 
+/* A carta inteira, na proporção real (63×88). A altura sai da largura da
+   coluna, então a grade continua com três por linha. */
+.card {
+  display: block;
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  object-fit: cover;
+}
+
+/* Linha antiga sem imagem da carta: a arte preenche a mesma caixa de carta,
+   para a grade não ficar com células de duas alturas. */
 .art {
   display: block;
   width: 100%;
-  height: 132px;
+  aspect-ratio: 63 / 88;
   object-fit: cover;
 }
 
