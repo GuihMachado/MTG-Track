@@ -156,9 +156,7 @@
 .viewport.tiles {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  /* Mais vão entre linhas do que entre colunas: o nome embaixo da carta
-     precisa de respiro antes da próxima fileira. */
-  gap: 14px 9px;
+  gap: 9px;
   align-content: start;
 }
 
