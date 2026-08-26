@@ -55,9 +55,8 @@ const VIEW_KEY = 'collection-view';
 const SORT_KEY = 'collection-sort';
 const SUMMARY_KEY = 'collection-summary';
 
-/** Altura da linha da lista, em px — o virtual scroll precisa dela fixa.
- *  A conta: miniatura de carta 50 + padding 18 + borda 2 + vão do slot 5. */
-const ROW_SIZE = 75;
+/** Altura da linha da lista, em px — o virtual scroll precisa dela fixa. */
+const ROW_SIZE = 69;
 
 interface FilterChip {
   label: string;

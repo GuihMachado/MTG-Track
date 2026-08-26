@@ -33,6 +33,10 @@ export interface CollectionEntryDto {
   priceUsd: number | null;
   colors: string[];
   typeLine: string;
+  /** Custo de mana da face frontal; null em terreno e em linha antiga. */
+  manaCost: string | null;
+  /** common | uncommon | rare | mythic; "" em linha antiga até o refresh. */
+  rarity: string;
   addedAt: string;
   pricedAt: string | null;
 }

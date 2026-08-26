@@ -2,18 +2,18 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { lucideSparkles } from '@ng-icons/lucide';
+import { ManaSymbolPipe } from '../../../shared/pipes/mana-symbol-pipe';
 import { CollectionEntryDto } from '../../../models/collection.models';
 
 /**
- * Célula da grade. Mostra arte, nome, quantidade e foil — e **não** mostra
- * preço: a grade é para folhear, e é a lista que responde "quanto vale". Se a
- * falta do preço incomodar no uso real, é o sinal de que a lista era a escolha
- * certa.
+ * Célula da grade. A arte é o convite e os indicadores respondem embaixo:
+ * nome, custo de mana, tipo e raridade — e **não** o preço: a grade é para
+ * folhear, e é a lista que responde "quanto vale".
  */
 @Component({
   selector: 'app-entry-tile',
   standalone: true,
-  imports: [NgIcon, HlmIcon],
+  imports: [NgIcon, HlmIcon, ManaSymbolPipe],
   providers: [provideIcons({ lucideSparkles })],
   templateUrl: './entry-tile.html',
   styleUrl: './entry-tile.css',
@@ -29,5 +29,15 @@ export class EntryTile {
   protected copies = computed(() => {
     const quantity = this.entry().quantity;
     return quantity === 1 ? '1 cópia' : quantity + ' cópias';
+  });
+
+  /**
+   * Só o tipo principal, sem subtipo: "Criatura — Humano Guerreiro" não cabe
+   * numa célula de 110px, e o travessão é onde a informação nova acaba.
+   */
+  protected mainType = computed(() => {
+    const line = this.entry().typeLine;
+    const cut = line.search(/\s[—–-]\s/);
+    return cut > 0 ? line.slice(0, cut) : line;
   });
 }

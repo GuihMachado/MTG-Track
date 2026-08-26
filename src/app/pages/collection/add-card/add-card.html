@@ -50,39 +50,39 @@
       </p>
     }
   } @else if (print(); as chosen) {
-    <!-- Passo 2: a carta está escolhida; o que falta é como ela entra. -->
-    <div class="flex gap-3.5">
-      <!-- A carta inteira é a porta para o texto completo: abre a tela de
-           tradução — a lupa no canto é o convite. -->
-      <button type="button" class="identity-art-btn" (click)="viewCard()"
-              aria-label="Ver a carta inteira">
-        @if (chosen.imageUrl ?? chosen.artCropUrl; as image) {
-          <img class="identity-art" [src]="image" alt="" />
-        } @else {
-          <span class="identity-art identity-art-empty" aria-hidden="true"></span>
-        }
-        <span class="identity-art-hint" aria-hidden="true">
-          <ng-icon hlm name="lucideExpand" class="!size-[11px]" />
-        </span>
-      </button>
-
-      <div class="min-w-0 flex-1">
-        <h2 class="text-[19px] font-bold leading-tight">{{ chosen.name }}</h2>
-        <p class="mt-1 truncate text-[13px] text-foreground-muted">{{ chosen.typeLine }}</p>
-
-        <div class="mt-2 flex items-center gap-2">
-          @if (chosen.rarity) {
-            <span class="rarity" [class]="'rarity ' + chosen.rarity">{{ chosen.rarity }}</span>
-          }
-          @if (chosen.manaCost) {
-            <span class="flex gap-1 text-[14px]" [innerHTML]="chosen.manaCost | manaSymbol"></span>
-          }
-        </div>
-      </div>
+    <!-- Passo 2: a carta está escolhida; o que falta é como ela entra.
+         O nome em cima, a carta inteira centralizada, e o resto embaixo. -->
+    <div class="flex items-start gap-3">
+      <h2 class="min-w-0 flex-1 text-[19px] font-bold leading-tight">{{ chosen.name }}</h2>
 
       <button type="button" class="close-btn" (click)="close()" aria-label="Fechar">
         <ng-icon hlm name="lucideX" class="!size-4" />
       </button>
+    </div>
+
+    <!-- A carta é a porta para o texto completo: abre a tela de tradução —
+         a lupa no canto é o convite. -->
+    <button type="button" class="identity-card-btn" (click)="viewCard()"
+            aria-label="Ver a carta inteira">
+      @if (chosen.imageUrl ?? chosen.artCropUrl; as image) {
+        <img class="identity-card" [src]="image" alt="" />
+      } @else {
+        <span class="identity-card identity-card-empty" aria-hidden="true"></span>
+      }
+      <span class="identity-card-hint" aria-hidden="true">
+        <ng-icon hlm name="lucideExpand" class="!size-[11px]" />
+      </span>
+    </button>
+
+    <p class="mt-3 truncate text-[13px] text-foreground-muted">{{ chosen.typeLine }}</p>
+
+    <div class="mt-2 flex items-center gap-2">
+      @if (chosen.rarity) {
+        <span class="rarity" [class]="'rarity ' + chosen.rarity">{{ chosen.rarity }}</span>
+      }
+      @if (chosen.manaCost) {
+        <span class="flex gap-1 text-[14px]" [innerHTML]="chosen.manaCost | manaSymbol"></span>
+      }
     </div>
 
     <hr class="divider" />

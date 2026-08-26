@@ -153,11 +153,20 @@
   padding-bottom: 92px;
 }
 
+/* Duas colunas no celular: a célula agora carrega quatro indicadores, e a
+   110px (três colunas) o tipo e a raridade não se leriam. Em tela larga volta
+   a três, como a busca de proxies. */
 .viewport.tiles {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 9px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   align-content: start;
+}
+
+@media (min-width: 640px) {
+  .viewport.tiles {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }
 
 .viewport.decks {
@@ -250,7 +259,7 @@
 }
 
 .skeleton-row {
-  height: 70px;
+  height: 62px;
 }
 
 .skeleton-deck {

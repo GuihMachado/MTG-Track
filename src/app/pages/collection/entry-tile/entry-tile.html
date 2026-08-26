@@ -1,28 +1,37 @@
 <button type="button" class="tile" [class.plenty]="plenty()" (click)="edit.emit(entry())"
         [attr.aria-label]="entry().name + ', ' + copies()">
-  @if (entry().imageUrl; as image) {
-    <!-- A carta inteira: nome, moldura e arte já vêm na imagem — véu e rótulo
-         em cima dela só cobririam o que a carta mesma escreve. -->
-    <img class="card" [src]="image" alt="" loading="lazy" decoding="async" />
-  } @else {
+  <span class="art-box">
     @if (entry().artCropUrl; as art) {
       <img class="art" [src]="art" alt="" loading="lazy" decoding="async" />
     } @else {
       <span class="art art-empty" aria-hidden="true"></span>
     }
 
-    <span class="veil" aria-hidden="true"></span>
-    <span class="name">{{ entry().name }}</span>
-  }
+    <span class="qty-badge tile-qty" [class.plenty]="plenty()"
+          [attr.aria-label]="copies()">
+      ×{{ entry().quantity }}
+    </span>
 
-  <span class="qty-badge tile-qty" [class.plenty]="plenty()"
-        [attr.aria-label]="copies()">
-    ×{{ entry().quantity }}
+    @if (entry().foil) {
+      <span class="foil-square tile-foil" aria-label="foil">
+        <ng-icon hlm name="lucideSparkles" class="!size-[11px]" />
+      </span>
+    }
   </span>
 
-  @if (entry().foil) {
-    <span class="foil-square tile-foil" aria-label="foil">
-      <ng-icon hlm name="lucideSparkles" class="!size-[11px]" />
+  <!-- Os indicadores: nome, mana, tipo e raridade. -->
+  <span class="info">
+    <span class="name">{{ entry().name }}</span>
+
+    @if (entry().manaCost; as cost) {
+      <span class="mana" [innerHTML]="cost | manaSymbol"></span>
+    }
+
+    <span class="meta">
+      <span class="type">{{ mainType() }}</span>
+      @if (entry().rarity) {
+        <span class="rarity" [class]="'rarity ' + entry().rarity">{{ entry().rarity }}</span>
+      }
     </span>
-  }
+  </span>
 </button>
