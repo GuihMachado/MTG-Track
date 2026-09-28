@@ -4,6 +4,7 @@ import { DeckDto } from '../../../models/collection.models';
 import { deckProgress } from '../deck-progress';
 import { seatPaint, SeatColorCode } from '../../match/seat-colors';
 import { usd } from '../money';
+import { deckArt } from '../../../shared/deck-choice';
 
 /**
  * Cartão de deck. A placa é tingida pela identidade de cor com a mesma receita
@@ -32,6 +33,15 @@ export class DeckRow {
     const first = this.deck().colors[0] as SeatColorCode | undefined;
     return first ? seatPaint(first).rgb : null;
   });
+
+  /** Deck do histórico não guarda arte: cai na busca por nome da Scryfall. */
+  protected art = computed(() => deckArt(this.deck()));
+
+  /**
+   * Deck sem lista: a barra sairia em 0/0 e pareceria um deck vazio de
+   * cartas. No lugar dela vai a etiqueta — o deck está pronto para a mesa.
+   */
+  protected withoutList = computed(() => this.deck().totalCards === 0);
 
   protected symbols = computed(() => this.deck().colors.map(color => `{${color}}`).join(''));
 

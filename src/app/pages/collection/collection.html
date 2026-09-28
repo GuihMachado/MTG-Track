@@ -258,14 +258,14 @@
             <app-deck-row class="rise-stagger" [deck]="deck" (open)="openDeck($event)" />
           }
 
-          <button type="button" class="new-deck" (click)="goToImport('deck')">
+          <button type="button" class="new-deck" (click)="newDeck()">
             <ng-icon hlm name="lucideCirclePlus" class="!size-4" />
             Novo deck
           </button>
 
           @if (decks().length === 0) {
             <p class="mt-1 text-center font-data text-[10.5px] text-faint">
-              ou importe do Archidekt, Deckstats ou TappedOut
+              nome, commander e cores; a lista é opcional
             </p>
           }
         </div>

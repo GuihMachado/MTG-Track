@@ -1,0 +1,48 @@
+/* Formulário de deck: poço de nome, busca de commander e orbes de mana. As
+   orbes são as mesmas que moravam no assento da nova partida — a escolha de
+   cor saiu da mesa e veio morar no deck. */
+:host {
+  display: block;
+}
+
+.hint {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+/* Orbe de mana: apagada é placa fria a 35%; acesa é luz. */
+.orb {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  background-image: linear-gradient(180deg, #26221c, #171420);
+  border: 1px solid var(--hairline);
+  opacity: 0.35;
+  transition: opacity 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
+}
+
+.orb.on {
+  background-image: radial-gradient(circle at 50% 30%, rgb(var(--mana-rgb) / 0.55), #141223);
+  border-color: rgb(var(--mana-rgb) / 0.75);
+  box-shadow: 0 0 20px -3px rgb(var(--mana-rgb) / 0.9);
+  opacity: 1;
+}
+
+.orb:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+:host-context(.light) .orb {
+  background-image: linear-gradient(180deg, #f1eef9, #e4e0ee);
+}
+
+:host-context(.light) .orb.on {
+  background-image: radial-gradient(circle at 50% 30%, rgb(var(--mana-rgb) / 0.45), #ffffff);
+}

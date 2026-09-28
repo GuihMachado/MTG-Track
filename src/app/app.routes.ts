@@ -5,7 +5,6 @@ import { inject, PLATFORM_ID } from '@angular/core'; // <--- Importe PLATFORM_ID
 import { isPlatformBrowser } from '@angular/common'; // <--- Importe isPlatformBrowser
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Cards } from './pages/cards/cards';
-import { NewMatch } from './pages/new-match/new-match';
 import { Match } from './pages/match/match';
 import { Matches } from './pages/matches/matches';
 import { Ranking } from './pages/ranking/ranking';
@@ -66,7 +65,9 @@ export const routes: Routes = [
     },
     {
         path: 'play',
-        component: NewMatch,
+        // Sob demanda: tela de fluxo (a maior do grupo de decks) que não
+        // precisa pesar na primeira carga do app.
+        loadComponent: () => import('./pages/new-match/new-match').then(m => m.NewMatch),
         canActivate: [authGuard]
     },
     {
@@ -117,6 +118,17 @@ export const routes: Routes = [
     {
         path: 'colecao/edicao/:code',
         component: SetBinder,
+        canActivate: [authGuard]
+    },
+    // 'decks/novo' antes de 'decks/:id', senão "novo" vira id de deck.
+    {
+        path: 'decks/novo',
+        loadComponent: () => import('./pages/decks/deck-edit/deck-edit').then(m => m.DeckEdit),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'decks/:id/editar',
+        loadComponent: () => import('./pages/decks/deck-edit/deck-edit').then(m => m.DeckEdit),
         canActivate: [authGuard]
     },
     {

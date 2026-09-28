@@ -1,5 +1,6 @@
 /* Nova partida — a mesa se monta em placas. Cada assento é tingido pela cor
-   escolhida (luz, nunca fill), e a única ação da tela levita no rodapé. */
+   do deck escolhido (luz, nunca fill), e a única ação da tela levita no
+   rodapé. As orbes de cor saíram daqui: moram no formulário de deck. */
 :host {
   display: block;
 }
@@ -113,33 +114,6 @@
   object-fit: cover;
 }
 
-/* Orbe de mana: apagada é placa fria a 35%; acesa é luz. */
-.orb {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  font-size: 16px;
-  cursor: pointer;
-  background-image: linear-gradient(180deg, #26221c, #171420);
-  border: 1px solid var(--hairline);
-  opacity: 0.35;
-  transition: opacity 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
-}
-
-.orb.on {
-  background-image: radial-gradient(circle at 50% 30%, rgb(var(--mana-rgb) / 0.55), #141223);
-  border-color: rgb(var(--mana-rgb) / 0.75);
-  box-shadow: 0 0 20px -3px rgb(var(--mana-rgb) / 0.9);
-  opacity: 1;
-}
-
-.orb:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
 /* Adicionar jogador: contorno tracejado, o único da tela — é um lugar vazio. */
 .add-seat {
   display: flex;
@@ -245,10 +219,6 @@
 .quick:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
-}
-
-:root.light .orb {
-  background-image: linear-gradient(180deg, #f1eef9, #e4e0ee);
 }
 
 /* Nada aqui anima por conta própria: o movimento da tela mora na pílula. */

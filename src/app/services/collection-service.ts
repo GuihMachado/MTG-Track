@@ -137,6 +137,10 @@ export class CollectionService {
     destination: 'collection' | 'deck';
     deckName?: string;
     commanderScryfallId?: string;
+    /** Cores escolhidas no formulário; vencem a identidade do commander. */
+    colors?: string[];
+    /** Deck que já existe e recebe a lista ("Adicionar lista"). */
+    deckId?: string;
     items: ImportItem[];
   }): Observable<ImportResult> {
     return this.http.post<ImportResult>(`${this.API_URL}/import`, payload).pipe(

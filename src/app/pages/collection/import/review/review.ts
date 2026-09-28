@@ -23,7 +23,7 @@ import {
 import { NotificationService } from '../../../../shared/notification/notification.service';
 import { CollectionService } from '../../../../services/collection-service';
 import { DeckService } from '../../../../services/deck-service';
-import { CardPrint, ImportItem, ResolutionDto } from '../../../../models/collection.models';
+import { CardPrint, DeckDto, ImportItem, ResolutionDto } from '../../../../models/collection.models';
 
 /** Decisão do usuário sobre uma pendência. */
 type Verdict = 'pending' | 'accepted' | 'discarded';
@@ -63,9 +63,15 @@ export class Review {
   resolutions = input.required<ResolutionDto[]>();
   destination = input.required<'deck' | 'collection'>();
   deckName = input<string | null>(null);
+  /** Commander e cores escolhidos no formulário de deck (só quando vem de lá). */
+  commanderScryfallId = input<string | null>(null);
+  colors = input<string[] | null>(null);
+  /** Deck que já existe e recebe a lista: o "Adicionar lista". */
+  deckId = input<string | null>(null);
 
   back = output<void>();
-  imported = output<void>();
+  /** O deck gravado (criado ou com a lista nova); null quando o destino é a coleção. */
+  imported = output<DeckDto | null>();
 
   private collection = inject(CollectionService);
   private decks = inject(DeckService);
@@ -140,9 +146,10 @@ export class Review {
     const cards = this.cardCount();
     const plural = cards === 1 ? 'carta' : 'cartas';
 
-    return this.destination() === 'deck'
-      ? `Criar deck com ${cards} ${plural}`
-      : `Somar ${cards} ${plural} à coleção`;
+    if (this.destination() === 'collection') return `Somar ${cards} ${plural} à coleção`;
+    return this.deckId()
+      ? `Pôr ${cards} ${plural} no deck`
+      : `Criar deck com ${cards} ${plural}`;
   });
 
   protected verdictOf(line: number): Verdict {
@@ -177,6 +184,9 @@ export class Review {
       .importList({
         destination: this.destination(),
         ...(this.deckName() ? { deckName: this.deckName()! } : {}),
+        ...(this.commanderScryfallId() ? { commanderScryfallId: this.commanderScryfallId()! } : {}),
+        ...(this.colors() ? { colors: this.colors()! } : {}),
+        ...(this.deckId() ? { deckId: this.deckId()! } : {}),
         items,
       })
       .subscribe({
@@ -190,7 +200,7 @@ export class Review {
             this.notify.success(`${this.cardCount()} cartas somadas à coleção.`);
           }
 
-          this.imported.emit();
+          this.imported.emit(result.deck ?? null);
         },
         error: error => {
           this.saving.set(false);

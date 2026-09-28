@@ -27,7 +27,7 @@
     0 12px 24px -14px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-:root.light .deck.tinted {
+:host-context(.light) .deck.tinted {
   box-shadow: 0 12px 24px -16px rgb(var(--mana-rgb) / 0.5), var(--elev-1);
 }
 
@@ -102,4 +102,20 @@
   .deck:active {
     scale: 1;
   }
+}
+
+/* Sem lista: etiqueta tracejada no lugar da barra. Tracejado é o vocabulário
+   do app para "lugar que ainda não foi preenchido". */
+.no-list {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px dashed var(--hairline-strong);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--foreground-muted);
 }

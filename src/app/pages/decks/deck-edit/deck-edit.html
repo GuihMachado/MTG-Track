@@ -1,0 +1,64 @@
+@if (resolutions(); as resolved) {
+  <app-import-review [resolutions]="resolved" destination="deck"
+                     [deckName]="reviewName()"
+                     [commanderScryfallId]="form().commanderScryfallId"
+                     [colors]="reviewColors()"
+                     (back)="backToForm()" (imported)="onImported($event)" />
+} @else {
+  <div class="page">
+    <div class="halo" aria-hidden="true"></div>
+
+    <div class="container-page relative pb-32 pt-3">
+      <header class="flex items-center gap-3">
+        <app-back-button [fallbackRoute]="editing() ? '/decks/' + deckId() : '/colecao'" />
+        <div class="min-w-0 flex-1">
+          <h1 class="title-screen">{{ editing() ? 'Editar deck' : 'Novo deck' }}</h1>
+          <p class="mt-0.5 text-[13px] text-foreground-subtle">
+            {{ editing() ? 'Partidas já jogadas não mudam' : 'Pronto para a mesa, com ou sem lista' }}
+          </p>
+        </div>
+      </header>
+
+      @if (loading()) {
+        <div class="mt-5 flex flex-col gap-4">
+          @for (i of [1, 2, 3]; track i) {
+            <div class="skeleton h-[66px] rounded-[14px]"></div>
+          }
+        </div>
+      } @else {
+        <app-deck-form class="mt-5" [(value)]="form" idPrefix="deck-edit" />
+
+        <!-- A lista é opcional: recolhida, é uma linha tracejada; aberta, são
+             as mesmas três entradas da importação. Só na criação — no deck que
+             já existe, o "Adicionar lista" mora no detalhe. -->
+        @if (!editing()) {
+          <section class="list-plate mt-5" [class.open]="listOpen()">
+            <button type="button" class="list-head" (click)="listOpen.set(!listOpen())"
+                    [attr.aria-expanded]="listOpen()">
+              <ng-icon hlm name="lucideListPlus" class="!size-[18px] text-foreground-muted" />
+              <span class="min-w-0 flex-1 text-left">
+                <span class="block text-[14.5px] font-semibold">Tenho a lista</span>
+                <span class="mt-0.5 block text-[12px] leading-snug text-foreground-muted">
+                  Com a lista, o deck mostra quantas cartas você já tem na coleção.
+                </span>
+              </span>
+              <span class="optional">opcional</span>
+              <ng-icon hlm name="lucideChevronDown" class="chevron !size-4" [class.open]="listOpen()" />
+            </button>
+
+            @if (listOpen()) {
+              <app-list-source class="mt-4" [(text)]="listText" (fetchedName)="onFetchedName($event)" />
+            }
+          </section>
+        }
+      }
+    </div>
+
+    <button type="button" class="cta-pill" (click)="save()" [disabled]="!canSave()">
+      {{ actionLabel() }}
+      @if (withList() && !saving()) {
+        <ng-icon hlm name="lucideArrowRight" class="!size-[18px]" />
+      }
+    </button>
+  </div>
+}

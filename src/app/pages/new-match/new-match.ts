@@ -1,21 +1,23 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { UserService } from '../../services/user-service';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { lucideCirclePlus, lucideDice5, lucidePlay, lucideX } from '@ng-icons/lucide';
-import { ManaSymbolPipe } from '../../shared/pipes/mana-symbol-pipe';
 import { MatchService } from '../../services/match-service';
+import { DeckService } from '../../services/deck-service';
 import { Subject, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { CreateMatchPayload } from '../../models/match.models';
 import { PlayerOption } from '../../models/user.models';
-import { CardPicker } from '../../shared/card-picker/card-picker';
-import { FormControl } from '@angular/forms';
+import { DeckOption, TableDecks } from '../../models/collection.models';
+import { colorsRgb, preselectDeck } from '../../shared/deck-choice';
+import { DeckSelect } from './deck-select/deck-select';
+import { LendSheet } from './lend-sheet/lend-sheet';
+import { QuickDeckSheet } from './quick-deck-sheet/quick-deck-sheet';
 
 /** Id fixo: um novo aviso substitui o anterior em vez de empilhar. */
 const FORM_WARNING = 'form-validation';
@@ -32,6 +34,25 @@ const STARTING_LIFE_KEY = 'match-starting-life';
 
 type FirstTurnMode = 'manual' | 'random';
 
+/** Um assento: jogador e deck. `key` só dá identidade estável ao @for. */
+interface Seat {
+  key: number;
+  userId: number | null;
+  deckId: string | null;
+}
+
+/** A folha aberta sobre a mesa, e para qual assento. */
+type SeatSheet = { kind: 'lend' | 'new'; seat: number } | null;
+
+/**
+ * Nova partida. Cada assento pede duas coisas: o jogador e um deck. O deck já
+ * traz commander, arte e cores — o que antes era busca de commander e cinco
+ * orbes a cada partida virou cadastro de uma vez só.
+ *
+ * O deck pode ser do próprio jogador ou emprestado de outra conta; quem joga é
+ * o assento (vitória e estatística são dele), o deck só empresta commander e
+ * cores ao retrato da partida.
+ */
 @Component({
   selector: 'app-game',
   imports: [
@@ -39,58 +60,85 @@ type FirstTurnMode = 'manual' | 'random';
     HlmSelectImports,
     NgIcon,
     HlmIconImports,
-    ManaSymbolPipe,
-    ReactiveFormsModule,
     BackButton,
-    CardPicker
+    DeckSelect,
+    LendSheet,
+    QuickDeckSheet,
   ],
   providers: [provideIcons({ lucideCirclePlus, lucideDice5, lucidePlay, lucideX })],
   templateUrl: './new-match.html',
   styleUrl: './new-match.css',
 })
-export class NewMatch {
+export class NewMatch implements OnInit, OnDestroy {
   private readonly destroy = new Subject<void>();
   private router = inject(Router);
-  protected gameForm: FormGroup;
-  protected usersList: PlayerOption[] = [];
-  // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
-  protected loading = signal(false);
-  /** Vida com que a mesa começa; a mesa lê pelo localStorage. */
-  protected startingLife = signal<number>(40);
-  /** Sortear anuncia quem começa assim que a partida abre. */
-  protected firstTurnMode = signal<FirstTurnMode>('random');
-
   private userService = inject(UserService);
   private matchService = inject(MatchService);
+  private deckService = inject(DeckService);
   private notify = inject(NotificationService);
 
   protected readonly minPlayers = MIN_PLAYERS;
   protected readonly maxPlayers = MAX_PLAYERS;
 
-  /* Identidade de mana do deck. `rgb` alimenta a camada de luz da orbe e da
-     placa do assento — a cor nunca preenche a área. */
-  protected manaColors = [
-    { code: 'W', label: 'White', rgb: 'var(--mana-w-rgb)' },
-    { code: 'U', label: 'Blue', rgb: 'var(--mana-u-rgb)' },
-    { code: 'B', label: 'Black', rgb: 'var(--mana-b-rgb)' },
-    { code: 'R', label: 'Red', rgb: 'var(--mana-r-rgb)' },
-    { code: 'G', label: 'Green', rgb: 'var(--mana-g-rgb)' },
-  ];
+  // Zoneless: tudo o que muda dentro de subscribe é signal, senão a view não reage.
+  protected users = signal<PlayerOption[]>([]);
+  protected table = signal<TableDecks | null>(null);
+  protected loadingDecks = signal(true);
+  protected loading = signal(false);
 
-  constructor(private fb: FormBuilder) {
-    this.gameForm = this.fb.group({
-      players: this.fb.array([]),
-      // Flag de partida (não de jogador): 4Fun entra no histórico, fora do ranking.
-      isFun: [false]
+  protected seats = signal<Seat[]>([]);
+  protected isFun = signal(false);
+  /** Vida com que a mesa começa; a mesa lê pelo localStorage. */
+  protected startingLife = signal<number>(40);
+  /** Sortear anuncia quem começa assim que a partida abre. */
+  protected firstTurnMode = signal<FirstTurnMode>('random');
+
+  protected sheet = signal<SeatSheet>(null);
+
+  private nextKey = 0;
+
+  private decksById = computed(
+    () => new Map((this.table()?.decks ?? []).map(deck => [deck.id, deck] as const)),
+  );
+
+  /** Deck → número do assento que o usa. Um deck físico não joga em dois lugares. */
+  protected takenBy = computed(() => {
+    const taken: Record<string, number> = {};
+    this.seats().forEach((seat, index) => {
+      if (seat.deckId) taken[seat.deckId] = index + 1;
     });
+    return taken;
+  });
+
+  /**
+   * Cor da mesa: a primeira cor do primeiro assento com deck. Tinge o brilho
+   * do topo da tela — a luz vem do dado, não da marca.
+   */
+  protected tableRgb = computed(() => {
+    for (let i = 0; i < this.seats().length; i++) {
+      const rgb = this.seatRgb(i);
+      if (rgb) return rgb;
+    }
+    return null;
+  });
+
+  protected sheetPlayer = computed(() => {
+    const sheet = this.sheet();
+    return sheet ? this.userAt(sheet.seat) ?? null : null;
+  });
+
+  ngOnInit(): void {
+    // A mesa nasce com dois lugares: é o mínimo que a partida aceita.
+    this.addPlayer();
+    this.addPlayer();
 
     this.userService.getUsers()
       .pipe(takeUntil(this.destroy))
       .subscribe({
         next: users => {
-          this.usersList = users ?? [];
+          this.users.set(users ?? []);
 
-          if (this.usersList.length === 0) {
+          if (this.users().length === 0) {
             this.notify.warning('Nenhum jogador cadastrado ainda.', {
               description: 'Cadastre os jogadores antes de iniciar uma partida.'
             });
@@ -100,74 +148,113 @@ export class NewMatch {
           this.notify.apiError(error, { fallback: 'Não foi possível carregar a lista de jogadores.' });
         }
       });
+
+    this.loadDecks();
   }
 
-  ngOnInit() {
-    // A mesa nasce com dois lugares: é o mínimo que a partida aceita.
-    this.addPlayer();
-    this.addPlayer();
-  }
-
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy.next();
     this.destroy.complete();
   }
 
-  get playersArray(): FormArray {
-    return this.gameForm.get('players') as FormArray;
+  protected loadDecks(): void {
+    this.loadingDecks.set(true);
+    this.deckService.table()
+      .pipe(takeUntil(this.destroy))
+      .subscribe({
+        next: table => {
+          this.table.set(table);
+          this.loadingDecks.set(false);
+          // Jogador escolhido antes de os decks chegarem ganha a pré-seleção agora.
+          this.seats().forEach((seat, index) => {
+            if (seat.userId !== null && !seat.deckId) this.preselect(index);
+          });
+        },
+        error: error => {
+          this.loadingDecks.set(false);
+          this.notify.apiError(error, { fallback: 'Não foi possível carregar os decks.' });
+        }
+      });
   }
 
-  private createPlayerGroup(): FormGroup {
-    return this.fb.group({
-      userId: ['', Validators.required],
-      // Só aceita nome escolhido na busca da Scryfall (app-card-picker).
-      commander: ['', Validators.required],
-      colors: [[]]
-    });
-  }
+  /* ─── Assentos ─────────────────────────────────────────────── */
 
-  /** O card-picker recebe o controle do assento em vez de um formControlName. */
-  protected commanderControl(index: number): FormControl<string> {
-    return this.playersArray.at(index).get('commander') as FormControl<string>;
-  }
-
-  protected get isFunControl(): FormControl<boolean> {
-    return this.gameForm.get('isFun') as FormControl<boolean>;
-  }
-
-  protected toggleFun(): void {
-    this.isFunControl.setValue(!this.isFunControl.value);
-  }
-
-  protected cycleStartingLife(): void {
-    const index = LIFE_PRESETS.indexOf(this.startingLife() as (typeof LIFE_PRESETS)[number]);
-    this.startingLife.set(LIFE_PRESETS[(index + 1) % LIFE_PRESETS.length]!);
-  }
-
-  protected toggleFirstTurn(): void {
-    this.firstTurnMode.update(mode => (mode === 'random' ? 'manual' : 'random'));
-  }
-
-  /**
-   * Cor da mesa: a primeira cor escolhida em qualquer assento. Tinge o brilho
-   * do topo da tela, no lugar do antigo halo roxo da marca.
-   */
-  protected tableRgb(): string | null {
-    for (let i = 0; i < this.playersArray.length; i++) {
-      const rgb = this.seatRgb(i);
-      if (rgb) return rgb;
+  protected addPlayer(): void {
+    if (this.seats().length >= MAX_PLAYERS) {
+      this.notify.warning(`Uma partida aceita no máximo ${MAX_PLAYERS} jogadores.`, { id: FORM_WARNING });
+      return;
     }
-    return null;
+
+    this.seats.update(seats => [...seats, { key: this.nextKey++, userId: null, deckId: null }]);
+  }
+
+  protected removePlayer(index: number): void {
+    this.seats.update(seats => seats.filter((_, i) => i !== index));
+    this.notify.info(`Assento ${index + 1} removido da mesa.`);
+  }
+
+  /** Trocar o jogador limpa o deck: o deck do assento anterior não é dele. */
+  protected setPlayer(index: number, value: unknown): void {
+    const userId = value === null || value === undefined || value === '' ? null : Number(value);
+    this.patchSeat(index, { userId, deckId: null });
+    if (userId !== null) this.preselect(index);
+  }
+
+  protected pickDeck(index: number, deckId: string): void {
+    this.patchSeat(index, { deckId });
+  }
+
+  /** O último deck que o jogador levou à mesa (próprio ou emprestado), se estiver livre. */
+  private preselect(index: number): void {
+    const table = this.table();
+    const seat = this.seats()[index];
+    if (!table || !seat || seat.userId === null) return;
+
+    const taken = new Set(Object.keys(this.takenBy()));
+    if (seat.deckId) taken.delete(seat.deckId);
+
+    const deckId = preselectDeck(seat.userId, table.decks, table.lastDeckByUser, taken);
+    if (deckId) this.patchSeat(index, { deckId });
+  }
+
+  private patchSeat(index: number, patch: Partial<Seat>): void {
+    this.seats.update(seats => seats.map((seat, i) => (i === index ? { ...seat, ...patch } : seat)));
+  }
+
+  /* ─── Leitura do assento, para o template ──────────────────── */
+
+  protected userAt(index: number): PlayerOption | undefined {
+    const userId = this.seats()[index]?.userId;
+    return userId === null || userId === undefined
+      ? undefined
+      : this.users().find(user => user.id === userId);
+  }
+
+  protected deckAt(index: number): DeckOption | null {
+    const deckId = this.seats()[index]?.deckId;
+    return deckId ? this.decksById().get(deckId) ?? null : null;
+  }
+
+  /** Decks do próprio jogador — os emprestados entram pela folha. */
+  protected ownDecks(index: number): DeckOption[] {
+    const userId = this.seats()[index]?.userId;
+    if (userId === null || userId === undefined) return [];
+    return (this.table()?.decks ?? []).filter(deck => deck.owner.id === userId);
+  }
+
+  /** Existe deck de outra conta para emprestar a este assento? */
+  protected canBorrow(index: number): boolean {
+    const userId = this.seats()[index]?.userId;
+    return (this.table()?.decks ?? []).some(deck => deck.owner.id !== userId);
   }
 
   /**
-   * Canais RGB da primeira cor escolhida no assento — é o que tinge a placa.
-   * `null` (assento sem cor) deixa a placa neutra.
+   * Canais RGB da primeira cor do deck escolhido — é o que tinge a placa.
+   * `null` (assento sem deck, ou deck incolor) deixa a placa neutra.
    */
   protected seatRgb(index: number): string | null {
-    const colors: string[] = this.playersArray.at(index).get('colors')?.value ?? [];
-    const first = colors[0];
-    return first ? `var(--mana-${first.toLowerCase()}-rgb)` : null;
+    const deck = this.deckAt(index);
+    return deck ? colorsRgb(deck.colors) : null;
   }
 
   /** Inicial do jogador escolhido, para o avatar do assento. */
@@ -180,56 +267,63 @@ export class NewMatch {
     return this.userAt(index)?.avatar ?? null;
   }
 
-  private userAt(index: number): PlayerOption | undefined {
-    const userId = this.playersArray.at(index).get('userId')?.value;
-    return this.usersList.find(u => String(u.id) === String(userId));
+  /* ─── Folhas ───────────────────────────────────────────────── */
+
+  protected openSheet(kind: 'lend' | 'new', seat: number): void {
+    this.sheet.set({ kind, seat });
   }
 
-  protected addPlayer() {
-    if (this.playersArray.length >= MAX_PLAYERS) {
-      this.notify.warning(`Uma partida aceita no máximo ${MAX_PLAYERS} jogadores.`, { id: FORM_WARNING });
-      return;
-    }
-
-    this.playersArray.push(this.createPlayerGroup());
+  protected closeSheet(): void {
+    this.sheet.set(null);
   }
 
-  protected removePlayer(index: number) {
-    this.playersArray.removeAt(index);
-    this.notify.info(`Assento ${index + 1} removido da mesa.`);
+  protected onLent(deckId: string): void {
+    const sheet = this.sheet();
+    if (sheet) this.pickDeck(sheet.seat, deckId);
+    this.closeSheet();
   }
 
-  protected toggleColor(playerIndex: number, colorCode: string) {
-    const control = this.playersArray.at(playerIndex).get('colors');
-    const currentColors: string[] = control?.value || [];
-
-    if (currentColors.includes(colorCode)) {
-      control?.setValue(currentColors.filter(c => c !== colorCode));
-    } else {
-      control?.setValue([...currentColors, colorCode]);
-    }
+  /** O deck criado entra na lista da mesa e já fica escolhido no assento. */
+  protected onCreated(deck: DeckOption): void {
+    const sheet = this.sheet();
+    this.table.update(table =>
+      table ? { ...table, decks: [deck, ...table.decks] } : { decks: [deck], lastDeckByUser: {} },
+    );
+    if (sheet) this.pickDeck(sheet.seat, deck.id);
+    this.closeSheet();
   }
 
-  protected isColorSelected(playerIndex: number, colorCode: string): boolean {
-    const colors = this.playersArray.at(playerIndex).get('colors')?.value || [];
-    return colors.includes(colorCode);
+  /* ─── Ajustes da mesa ──────────────────────────────────────── */
+
+  protected toggleFun(): void {
+    this.isFun.update(value => !value);
   }
 
-  protected onSubmit() {
-    if (this.gameForm.invalid) {
-      this.gameForm.markAllAsTouched();
-      this.notify.warning('Escolha o jogador e o commander de cada assento antes de começar.', { id: FORM_WARNING });
-      return;
-    }
+  protected cycleStartingLife(): void {
+    const index = LIFE_PRESETS.indexOf(this.startingLife() as (typeof LIFE_PRESETS)[number]);
+    this.startingLife.set(LIFE_PRESETS[(index + 1) % LIFE_PRESETS.length]!);
+  }
 
-    if (this.playersArray.length < MIN_PLAYERS) {
+  protected toggleFirstTurn(): void {
+    this.firstTurnMode.update(mode => (mode === 'random' ? 'manual' : 'random'));
+  }
+
+  /* ─── Começar ──────────────────────────────────────────────── */
+
+  protected onSubmit(): void {
+    const seats = this.seats();
+
+    if (seats.length < MIN_PLAYERS) {
       this.notify.warning(`Uma partida precisa de pelo menos ${MIN_PLAYERS} jogadores.`, { id: FORM_WARNING });
       return;
     }
 
-    const rawValue = this.gameForm.getRawValue();
+    if (seats.some(seat => seat.userId === null || !seat.deckId)) {
+      this.notify.warning('Escolha o jogador e o deck de cada assento antes de começar.', { id: FORM_WARNING });
+      return;
+    }
 
-    const repeated = this.findRepeatedPlayer(rawValue.players);
+    const repeated = this.findRepeatedPlayer(seats);
     if (repeated) {
       this.notify.warning(`${repeated} está em mais de um assento.`, {
         id: FORM_WARNING,
@@ -239,13 +333,8 @@ export class NewMatch {
     }
 
     const payload: CreateMatchPayload = {
-      isFun: rawValue.isFun === true,
-      players: rawValue.players.map((p: any) => ({
-        userId: Number(p.userId),
-        commander: p.commander,
-        colors: p.colors
-          .join('/')
-      }))
+      isFun: this.isFun(),
+      players: seats.map(seat => ({ userId: seat.userId!, deckId: seat.deckId! })),
     };
 
     this.loading.set(true);
@@ -253,7 +342,7 @@ export class NewMatch {
     this.matchService.startMatch(payload)
       .pipe(takeUntil(this.destroy))
       .subscribe({
-        next: (data) => {
+        next: data => {
           this.loading.set(false);
 
           localStorage.setItem('matchId', String(data.matchId));
@@ -262,43 +351,42 @@ export class NewMatch {
           localStorage.setItem(STARTING_LIFE_KEY, String(this.startingLife()));
 
           this.notify.success('Partida iniciada!', {
-            description: this.startDescription(rawValue.players)
+            description: this.startDescription(seats)
           });
           this.router.navigate(['/match']);
         },
-        error: (error) => {
+        error: error => {
           this.loading.set(false);
           this.notify.apiError(error, { fallback: 'Não foi possível iniciar a partida.' });
         }
-      }
-    )
+      });
   }
 
   /** Aviso de abertura: quem começa, quando o primeiro turno é sorteado. */
-  private startDescription(players: { userId: string | number }[]): string {
-    const seats = players.length;
+  private startDescription(seats: Seat[]): string {
+    const count = seats.length;
 
-    if (this.firstTurnMode() !== 'random' || seats === 0) {
-      return `Boa sorte para os ${seats} jogadores da mesa.`;
+    if (this.firstTurnMode() !== 'random' || count === 0) {
+      return `Boa sorte para os ${count} jogadores da mesa.`;
     }
 
-    const drawn = players[Math.floor(Math.random() * seats)]!;
-    const name = this.usersList.find(u => String(u.id) === String(drawn.userId))?.name;
-    return name ? `${name} começa jogando.` : `Boa sorte para os ${seats} jogadores da mesa.`;
+    const drawn = seats[Math.floor(Math.random() * count)]!;
+    const name = this.users().find(user => user.id === drawn.userId)?.name;
+    return name ? `${name} começa jogando.` : `Boa sorte para os ${count} jogadores da mesa.`;
   }
 
   /** Devolve o nome do primeiro jogador escolhido em dois assentos, se houver. */
-  private findRepeatedPlayer(players: { userId: string | number }[]): string | null {
-    const seen = new Set<string>();
+  private findRepeatedPlayer(seats: Seat[]): string | null {
+    const seen = new Set<number>();
 
-    for (const player of players) {
-      const id = String(player.userId);
+    for (const seat of seats) {
+      if (seat.userId === null) continue;
 
-      if (seen.has(id)) {
-        return this.usersList.find(user => String(user.id) === id)?.name ?? 'Esse jogador';
+      if (seen.has(seat.userId)) {
+        return this.users().find(user => user.id === seat.userId)?.name ?? 'Esse jogador';
       }
 
-      seen.add(id);
+      seen.add(seat.userId);
     }
 
     return null;

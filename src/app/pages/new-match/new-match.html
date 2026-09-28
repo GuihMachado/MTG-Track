@@ -8,23 +8,23 @@
       <div>
         <h1 class="title-screen">Nova partida</h1>
         <p class="mt-0.5 text-[13px] text-foreground-subtle">
-          {{ playersArray.length }} de {{ maxPlayers }} lugares na mesa
+          {{ seats().length }} de {{ maxPlayers }} lugares na mesa
         </p>
       </div>
     </div>
 
-    <form [formGroup]="gameForm" (ngSubmit)="onSubmit()" class="mt-5">
-      <div formArrayName="players" class="flex flex-col gap-3">
-        @for (player of playersArray.controls; track player; let i = $index) {
-          <!-- Cartão de assento: a cor escolhida tinge a placa como luz. -->
-          <div [formGroupName]="i" class="seat-card"
+    <form (submit)="$event.preventDefault(); onSubmit()" class="mt-5">
+      <div class="flex flex-col gap-3">
+        @for (seat of seats(); track seat.key; let i = $index) {
+          <!-- Cartão de assento: a cor do deck tinge a placa como luz. -->
+          <div class="seat-card"
                [class.tinted]="seatRgb(i) !== null"
                [style.--mana-rgb]="seatRgb(i)">
             <div class="blob" aria-hidden="true"></div>
 
             <div class="relative flex items-center justify-between">
               <span class="label-caps">Assento {{ i + 1 }}</span>
-              @if (playersArray.length > 1) {
+              @if (seats().length > 1) {
                 <button type="button" class="remove" (click)="removePlayer(i)"
                         aria-label="Remover jogador">
                   <ng-icon hlm size="xs" name="lucideX" />
@@ -41,36 +41,32 @@
                 }
               </span>
 
-              <div class="min-w-0 flex-1">
-                <brn-select class="block" placeholder="Escolher jogador" formControlName="userId">
+              <div class="flex min-w-0 flex-1 flex-col gap-2">
+                <brn-select class="block" placeholder="Escolher jogador"
+                            [value]="seat.userId ?? undefined"
+                            (valueChange)="setPlayer(i, $event)">
                   <hlm-select-trigger class="w-full">
                     <hlm-select-value />
                   </hlm-select-trigger>
                   <hlm-select-content>
-                    @for (user of usersList; track user.id) {
+                    @for (user of users(); track user.id) {
                       <hlm-option [value]="user.id">{{ user.name }}</hlm-option>
                     }
                   </hlm-select-content>
                 </brn-select>
 
-                <app-card-picker class="mt-2 block"
-                                 [control]="commanderControl(i)"
-                                 placeholder="Escolher commander" />
+                <app-deck-select [triggerId]="'seat-deck-' + seat.key"
+                                 [decks]="ownDecks(i)"
+                                 [selected]="deckAt(i)"
+                                 [playerId]="seat.userId"
+                                 [playerName]="userAt(i)?.name ?? ''"
+                                 [takenBy]="takenBy()"
+                                 [canBorrow]="canBorrow(i)"
+                                 [loading]="loadingDecks()"
+                                 (picked)="pickDeck(i, $event)"
+                                 (borrow)="openSheet('lend', i)"
+                                 (create)="openSheet('new', i)" />
               </div>
-            </div>
-
-            <!-- Orbes de mana: acesa é luz, apagada é placa fria. -->
-            <div class="relative mt-3.5 flex gap-2">
-              @for (color of manaColors; track color.code) {
-                <button type="button" class="orb"
-                        [class.on]="isColorSelected(i, color.code)"
-                        [style.--mana-rgb]="color.rgb"
-                        [attr.aria-label]="color.label"
-                        [attr.aria-pressed]="isColorSelected(i, color.code)"
-                        (click)="toggleColor(i, color.code)"
-                        [innerHTML]="'{' + color.code + '}' | manaSymbol">
-                </button>
-              }
             </div>
           </div>
         }
@@ -90,8 +86,8 @@
           </p>
         </div>
         <button type="button" class="switch" role="switch"
-                [class.on]="isFunControl.value"
-                [attr.aria-checked]="isFunControl.value"
+                [class.on]="isFun()"
+                [attr.aria-checked]="isFun()"
                 aria-label="Partida 4Fun"
                 (click)="toggleFun()">
           <span class="knob"></span>
@@ -117,10 +113,23 @@
       </div>
 
       <!-- A mesma pílula da home: uma ação por tela, sempre no mesmo lugar. -->
-      <button type="submit" class="cta-pill" [disabled]="loading() || playersArray.length < minPlayers">
+      <button type="submit" class="cta-pill" [disabled]="loading() || seats().length < minPlayers">
         <ng-icon hlm size="sm" name="lucidePlay" />
         <span>{{ loading() ? 'Iniciando…' : 'Começar partida' }}</span>
       </button>
     </form>
   </div>
 </div>
+
+@if (sheet(); as open) {
+  @if (sheetPlayer(); as player) {
+    @if (open.kind === 'lend') {
+      <app-lend-sheet [decks]="table()?.decks ?? []" [playerId]="player.id"
+                      [playerName]="player.name" [takenBy]="takenBy()"
+                      (picked)="onLent($event)" (closed)="closeSheet()" />
+    } @else {
+      <app-quick-deck-sheet [player]="player" [seatNumber]="open.seat + 1"
+                            (created)="onCreated($event)" (closed)="closeSheet()" />
+    }
+  }
+}

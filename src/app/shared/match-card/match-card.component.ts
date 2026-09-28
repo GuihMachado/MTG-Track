@@ -87,6 +87,13 @@ export class MatchCardComponent {
     return commander.split(',')[0]!.trim();
   }
 
+  /** Dono do deck, quando o deck do assento era emprestado; null quando era meu. */
+  get lentBy(): string | null {
+    const me = this.myPlayer;
+    const owner = me?.deck?.owner;
+    return me && owner && owner.id !== me.user.id ? owner.name : null;
+  }
+
   get manaColors(): string {
     return colorsToManaSymbols(this.myPlayer?.colors);
   }

@@ -1,0 +1,232 @@
+/* Select de deck do assento: gatilho no mesmo vidro de campo do select de
+   jogador, e lista que abre dentro da placa. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 12px;
+  border: 1px solid var(--input);
+  background: var(--glass-field);
+  color: var(--foreground);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.trigger:hover:not(:disabled) {
+  background: var(--glass-field-hover);
+}
+
+.trigger.open {
+  border-color: var(--foreground-subtle);
+}
+
+.trigger.off {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trigger:focus-visible,
+.option:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.thumb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.thumb.sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.thumb-plain {
+  background: linear-gradient(160deg, var(--surface-plate-top), var(--surface-plate-bottom));
+  border: 1px solid var(--hairline);
+}
+
+/* Lugar vazio: tracejado, o vocabulário do app para "ainda não escolhido". */
+.thumb-empty {
+  background: repeating-linear-gradient(135deg, var(--hairline) 0 6px, transparent 6px 12px);
+  border: 1px dashed var(--hairline-strong);
+  box-shadow: none;
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.name {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sub {
+  overflow: hidden;
+  font-size: 11.5px;
+  color: var(--foreground-subtle);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sub.warn {
+  color: var(--warning);
+}
+
+.placeholder {
+  color: var(--text-faint);
+}
+
+/* Emprestado: arcano, não ouro — no app ouro é ação e arcano é estado. */
+.lent {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 92, 255, 0.45);
+  background: rgba(124, 92, 255, 0.1);
+  color: var(--color-arcane-300, #b3a3ff);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:host-context(.light) .lent {
+  color: var(--color-arcane-700, #4a2fc0);
+}
+
+.pips {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.chevron {
+  flex: none;
+  color: var(--foreground-subtle);
+  transition: rotate 150ms ease-out;
+}
+
+.chevron.up {
+  rotate: 180deg;
+}
+
+.panel {
+  margin-top: 6px;
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid var(--hairline-strong);
+  background: var(--glass-panel);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--elev-3);
+  animation: panel-in 160ms ease-out;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .panel {
+    background: var(--glass-panel-opaque);
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover:not(:disabled),
+.option.active {
+  background: var(--hairline-strong);
+}
+
+.option.taken {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.empty {
+  padding: 10px 8px 8px;
+  font-size: 12.5px;
+  color: var(--foreground-muted);
+}
+
+.actions {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hairline);
+}
+
+.action {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.action-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px dashed currentColor;
+}
+
+.action.borrow {
+  color: var(--foreground);
+}
+
+.action.borrow .action-icon {
+  color: var(--color-arcane-300, #b3a3ff);
+}
+
+:host-context(.light) .action.borrow .action-icon {
+  color: var(--color-arcane-700, #4a2fc0);
+}
+
+.action.create {
+  color: var(--accent);
+}

@@ -1,0 +1,34 @@
+<div class="veil" (click)="close()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="quick-deck-title">
+  <span class="handle" aria-hidden="true"></span>
+
+  <header class="flex items-center justify-between gap-3 px-1">
+    <h2 id="quick-deck-title" class="title-section">Novo deck</h2>
+    <button type="button" class="close" (click)="close()" aria-label="Fechar">
+      <ng-icon hlm name="lucideX" class="!size-4" />
+    </button>
+  </header>
+
+  <!-- Dono do deck, dito na folha: é a única escrita numa conta alheia. -->
+  <p class="owner mt-3">
+    <span class="owner-avatar" aria-hidden="true">
+      @if (player().avatar; as pic) {
+        <img [src]="pic" alt="" />
+      } @else {
+        {{ initial() }}
+      }
+    </span>
+    <span class="min-w-0">
+      Fica na conta de <strong>{{ player().name }}</strong> e já entra no assento {{ seatNumber() }}
+    </span>
+  </p>
+
+  <div class="body">
+    <app-deck-form [(value)]="form" idPrefix="quick-deck" />
+  </div>
+
+  <button type="button" class="create" (click)="save()" [disabled]="!canSave()">
+    {{ saving() ? 'Criando…' : 'Criar e usar no assento ' + seatNumber() }}
+  </button>
+</section>

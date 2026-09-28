@@ -21,6 +21,9 @@ export interface ScryfallCard {
   type_line?: string;
   mana_cost?: string;
   colors?: string[];
+  /** Identidade de cor (inclui custo de habilidade): é o que acende as orbes do deck. */
+  color_identity?: string[];
+  oracle_id?: string;
   image_uris?: ScryfallImageUris;
   card_faces?: ScryfallCardFace[];
 }

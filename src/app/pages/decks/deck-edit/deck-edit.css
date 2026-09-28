@@ -1,0 +1,75 @@
+/* Formulário de deck: tela de fluxo como a importação, fundo profundo e a
+   única ação levitando no rodapé. */
+:host {
+  display: block;
+}
+
+.page {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--background-deep);
+}
+
+.halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(70% 26% at 50% 0%, rgba(124, 92, 255, 0.12), transparent);
+}
+
+/* A lista opcional: tracejada quando recolhida (é um lugar vazio, como o
+   "Adicionar jogador"), placa quando aberta. */
+.list-plate {
+  border-radius: var(--radius-lg, 1.125rem);
+  border: 1px dashed var(--hairline-strong);
+  padding: 14px 14px;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.list-plate.open {
+  border-style: solid;
+  border-color: var(--hairline);
+  background-image: linear-gradient(180deg, var(--surface-plate-alt-top), var(--surface-plate-alt-bottom));
+  box-shadow: var(--elev-1);
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.list-head:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.optional {
+  flex: none;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--hairline-strong);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--foreground-subtle);
+}
+
+.chevron {
+  flex: none;
+  color: var(--foreground-subtle);
+  transition: rotate 150ms ease-out;
+}
+
+.chevron.open {
+  rotate: 180deg;
+}

@@ -1,8 +1,9 @@
 export interface CreateMatchPayload {
+  /** Cada assento é jogador + deck. O deck pode ser de outra conta (emprestado):
+   *  commander e cores saem dele no servidor. */
   players: {
     userId: number;
-    colors: string;
-    commander: string;
+    deckId: string;
   }[];
   /** Partida casual: conta no histórico, fica fora do ranking. */
   isFun?: boolean;
@@ -22,11 +23,21 @@ export interface UserSummary {
   name: string;
 }
 
+/** O deck do assento. Dono diferente do jogador = deck emprestado. */
+export interface MatchDeckDto {
+  id: string;
+  name: string;
+  owner: UserSummary;
+}
+
 export interface MatchPlayerDto {
   id: number;
+  /** Retrato do deck no dia da partida — é daqui que estatísticas e mesa leem. */
   colors: string;
   commander: string;
   user: UserSummary;
+  /** null em partida antiga, ou quando o deck foi apagado depois. */
+  deck?: MatchDeckDto | null;
 }
 
 export interface MatchDto {

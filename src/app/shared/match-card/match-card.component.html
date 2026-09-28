@@ -17,6 +17,9 @@
           <span class="flex gap-1" [innerHTML]="manaColors | manaSymbol"></span>
         }
         <span class="truncate">{{ commanderName }}</span>
+        @if (lentBy) {
+          <span class="lent">de {{ lentBy }}</span>
+        }
         @if (match.matchTime > 0) {
           <span class="shrink-0 font-data">· {{ match.matchTime }} min</span>
         }

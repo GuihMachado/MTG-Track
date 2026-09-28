@@ -1,0 +1,90 @@
+/* Folha que sobe por cima da mesa na nova partida — a mesma gramática da
+   folha de filtros da coleção: véu, placa subindo do rodapé, alça. Serve à
+   folha de empréstimo e à de deck rápido. */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: block;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 5, 11, 0.7);
+  backdrop-filter: blur(3px);
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 86dvh;
+  padding: 12px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-radius: 26px 26px 0 0;
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  background-color: var(--surface-plate-bottom);
+  background-image: linear-gradient(180deg, var(--surface-plate-top), var(--seat-plate-bottom));
+  box-shadow: 0 -26px 60px rgba(0, 0, 0, 0.85);
+  animation: sheet-up 260ms ease-out;
+}
+
+:host-context(.light) .sheet {
+  box-shadow: 0 -18px 40px rgba(23, 19, 31, 0.2);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    animation: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    left: 50%;
+    width: 520px;
+    translate: -50% 0;
+  }
+}
+
+.handle {
+  display: block;
+  width: 38px;
+  height: 4px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  background: var(--hairline-strong);
+}
+
+.close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground-subtle);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--hairline);
+  color: var(--foreground);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

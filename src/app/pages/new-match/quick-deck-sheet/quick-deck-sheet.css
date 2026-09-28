@@ -1,0 +1,82 @@
+/* Deck rápido: a folha vem de ../seat-sheet.css; aqui ficam a linha do dono
+   e o botão, que é a pílula escura do sistema em versão de folha. */
+.owner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background: var(--glass-field);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--foreground-muted);
+}
+
+.owner strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.owner-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #5a5470, #2a2438);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.owner-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.body {
+  min-height: 0;
+  flex: 1;
+  margin: 16px -6px 0;
+  padding: 0 6px 4px;
+  overflow-y: auto;
+}
+
+.create {
+  flex: none;
+  height: 52px;
+  margin-top: 16px;
+  border-radius: 999px;
+  border: 1px solid var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  box-shadow: var(--btn-primary-shadow);
+  color: var(--btn-primary-fg);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
+}
+
+.create:disabled {
+  background: var(--btn-primary-bg-off);
+  border-color: var(--btn-primary-border-off);
+  box-shadow: var(--btn-primary-shadow-off);
+  color: var(--btn-primary-fg-off);
+  cursor: not-allowed;
+}
+
+.create:active:not(:disabled) {
+  scale: 0.99;
+}
+
+.create:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { DeckDto } from '../models/collection.models';
+import { DeckDto, DeckOption, DeckPayload, TableDecks } from '../models/collection.models';
 
 /**
  * Decks da coleção — a lista de 100 cartas, não o "deck da vez" do dashboard
@@ -46,18 +46,39 @@ export class DeckService {
     return this.http.get<DeckDto>(`${this.API_URL}/${id}`);
   }
 
-  create(payload: { name?: string; commanderScryfallId?: string }): Observable<DeckDto> {
+/** Deck pelo formulário (nome, commander e cores), sem lista. */
+  create(payload: DeckPayload): Observable<DeckDto> {
     return this.http
       .post<DeckDto>(this.API_URL, payload)
       .pipe(tap(deck => this._decks.update(decks => [deck, ...decks])));
   }
 
-  rename(id: string, name: string): Observable<DeckDto> {
-    return this.http.patch<DeckDto>(`${this.API_URL}/${id}`, { name }).pipe(
+  /** Editar pelo mesmo formulário; campo ausente não muda. */
+  update(id: string, payload: DeckPayload): Observable<DeckDto> {
+    return this.http.patch<DeckDto>(`${this.API_URL}/${id}`, payload).pipe(
       tap(deck =>
         this._decks.update(decks => decks.map(item => (item.id === deck.id ? deck : item))),
       ),
     );
+  }
+
+  /**
+   * Os decks que podem ir à mesa — de todas as contas ativas, porque o assento
+   * aceita deck emprestado — e o último que cada jogador jogou.
+   */
+  table(): Observable<TableDecks> {
+    return this.http.get<TableDecks>(`${this.API_URL}/table`);
+  }
+
+  /**
+   * O "+ Novo deck" do assento: o deck nasce na conta do jogador do assento,
+   * não na de quem está com o celular. Se for a própria conta, a lista local
+   * fica velha até a próxima carga.
+   */
+  createFor(userId: number, payload: DeckPayload): Observable<DeckOption> {
+    return this.http
+      .post<DeckOption>(`${this.API_URL}/player/${userId}`, payload)
+      .pipe(tap(() => this.invalidate()));
   }
 
   remove(id: string): Observable<void> {

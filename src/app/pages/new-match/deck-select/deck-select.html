@@ -1,0 +1,87 @@
+<button type="button" class="trigger" [id]="triggerId()"
+        [class.open]="open()" [class.off]="disabled()" [disabled]="disabled()"
+        [attr.aria-expanded]="open()" aria-haspopup="listbox"
+        (click)="toggle()">
+  @if (selected(); as deck) {
+    @if (artOf(deck); as art) {
+      @if (!brokenArt().has(deck.id)) {
+        <img class="thumb" [src]="art" alt="" loading="lazy" (error)="markBroken(deck.id)" />
+      } @else {
+        <span class="thumb thumb-plain" aria-hidden="true"></span>
+      }
+    }
+    <span class="text">
+      <span class="name">{{ deck.name }}</span>
+      @if (borrowed()) {
+        <span class="lent">
+          <ng-icon hlm name="lucideArrowLeftRight" class="!size-[10px]" />
+          de {{ deck.owner.name }}
+        </span>
+      } @else if (deck.commanderName && deck.commanderName !== deck.name) {
+        <span class="sub">{{ deck.commanderName }}</span>
+      }
+    </span>
+    @if (symbolsOf(deck)) {
+      <span class="pips" [innerHTML]="symbolsOf(deck) | manaSymbol"></span>
+    }
+  } @else {
+    <span class="thumb thumb-empty" aria-hidden="true"></span>
+    <span class="text placeholder">{{ placeholder() }}</span>
+  }
+  <ng-icon hlm name="lucideChevronDown" class="chevron !size-4" [class.up]="open()" />
+</button>
+
+@if (open()) {
+  <div class="panel" role="listbox" [attr.aria-label]="'Decks de ' + playerName()">
+    @for (deck of decks(); track deck.id) {
+      @let seat = takenBy()[deck.id];
+      <button type="button" class="option" role="option"
+              [class.active]="selected()?.id === deck.id"
+              [class.taken]="seat && selected()?.id !== deck.id"
+              [disabled]="seat && selected()?.id !== deck.id"
+              [attr.aria-selected]="selected()?.id === deck.id"
+              (click)="choose(deck)">
+        @if (artOf(deck); as art) {
+          @if (!brokenArt().has(deck.id)) {
+            <img class="thumb sm" [src]="art" alt="" loading="lazy" (error)="markBroken(deck.id)" />
+          } @else {
+            <span class="thumb sm thumb-plain" aria-hidden="true"></span>
+          }
+        }
+        <span class="text">
+          <span class="name">{{ deck.name }}</span>
+          @if (seat && selected()?.id !== deck.id) {
+            <span class="sub warn">na mesa, assento {{ seat }}</span>
+          } @else if (deck.commanderName && deck.commanderName !== deck.name) {
+            <span class="sub">{{ deck.commanderName }}</span>
+          }
+        </span>
+        @if (symbolsOf(deck)) {
+          <span class="pips" [innerHTML]="symbolsOf(deck) | manaSymbol"></span>
+        }
+        @if (selected()?.id === deck.id) {
+          <ng-icon hlm name="lucideCheck" class="!size-4 flex-none" />
+        }
+      </button>
+    } @empty {
+      <p class="empty">{{ playerName() || 'Esse jogador' }} ainda não tem deck.</p>
+    }
+
+    <div class="actions">
+      @if (canBorrow()) {
+        <button type="button" class="option action borrow" (click)="askBorrow()">
+          <span class="action-icon" aria-hidden="true">
+            <ng-icon hlm name="lucideArrowLeftRight" class="!size-4" />
+          </span>
+          Emprestar deck
+        </button>
+      }
+      <button type="button" class="option action create" (click)="askCreate()">
+        <span class="action-icon" aria-hidden="true">
+          <ng-icon hlm name="lucidePlus" class="!size-4" />
+        </span>
+        Novo deck de {{ playerName() || 'jogador' }}
+      </button>
+    </div>
+  </div>
+}

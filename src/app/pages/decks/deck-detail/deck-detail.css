@@ -237,3 +237,43 @@
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+/* Deck sem lista: um lugar vazio com a ação que o preenche. Tracejado em
+   ouro porque a ação é o que interessa aqui — o deck já está pronto. */
+.empty-list {
+  text-align: center;
+  padding: 22px 12px 6px;
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: 16px;
+  border: 1px dashed var(--accent-line);
+  color: var(--accent);
+}
+
+.add-list {
+  height: 42px;
+  padding-inline: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline-strong);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.add-list:hover {
+  border-color: var(--foreground-subtle);
+}
+
+.add-list:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

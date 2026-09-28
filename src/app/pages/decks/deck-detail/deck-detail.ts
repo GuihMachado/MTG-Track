@@ -14,6 +14,7 @@ import {
   lucideChevronLeft,
   lucideCircleCheck,
   lucideCircleDashed,
+  lucideListPlus,
   lucidePencil,
   lucidePrinter,
   lucideSearch,
@@ -28,6 +29,7 @@ import { DeckCardDto, DeckDto } from '../../../models/collection.models';
 import { deckProgress } from '../../collection/deck-progress';
 import { matchesDeckCardQuery } from '../../collection/collection-filters';
 import { usd } from '../../collection/money';
+import { deckArt } from '../../../shared/deck-choice';
 
 /** Quantas faltantes aparecem antes do "+ N cartas · toque para ver todas". */
 const PREVIEW_MISSING = 4;
@@ -52,6 +54,7 @@ const PREVIEW_MISSING = 4;
       lucidePrinter,
       lucideCircleDashed,
       lucideCircleCheck,
+      lucideListPlus,
       lucideTrash2,
       lucideSearch,
       lucideX,
@@ -79,6 +82,15 @@ export class DeckDetail implements OnInit {
     const deck = this.deck();
     return deck ? deckProgress(deck) : null;
   });
+
+  /** Deck do histórico não guarda arte: cai na busca por nome da Scryfall. */
+  protected art = computed(() => {
+    const deck = this.deck();
+    return deck ? deckArt(deck) : null;
+  });
+
+  /** Deck sem lista: vai à mesa igual, só não compara com a coleção. */
+  protected withoutList = computed(() => (this.deck()?.cards ?? []).length === 0);
 
   protected symbols = computed(() =>
     (this.deck()?.colors ?? []).map(color => `{${color}}`).join(''),
@@ -187,22 +199,16 @@ export class DeckDetail implements OnInit {
     this.router.navigate(['/proxies']);
   }
 
-  protected rename(): void {
+  /** Nome, commander e cores pelo mesmo formulário da criação. */
+  protected edit(): void {
     const deck = this.deck();
-    if (!deck) return;
+    if (deck) this.router.navigate(['/decks', deck.id, 'editar']);
+  }
 
-    // `prompt` é feio, mas é o único jeito honesto de pedir um texto curto sem
-    // inventar um diálogo que o handoff não desenhou.
-    const name = window.prompt('Nome do deck', deck.name);
-    if (!name || name.trim() === deck.name) return;
-
-    this.decks.rename(deck.id, name.trim()).subscribe({
-      next: updated => {
-        this.deck.set(updated);
-        this.notify.success('Deck renomeado.');
-      },
-      error: error => this.notify.apiError(error, { fallback: 'Não foi possível renomear.' }),
-    });
+  /** A importação apontada para este deck: a lista entra aqui, não num deck novo. */
+  protected addList(): void {
+    const deck = this.deck();
+    if (deck) this.router.navigate(['/colecao/importar'], { queryParams: { deck: deck.id } });
   }
 
   protected removeDeck(): void {

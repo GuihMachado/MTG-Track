@@ -398,6 +398,11 @@ export class Collection implements OnInit {
     this.router.navigate(['/colecao/importar'], { queryParams: { destino: destination } });
   }
 
+  /** O deck nasce pelo formulário: nome, commander e cores; a lista é opcional. */
+  protected newDeck(): void {
+    this.router.navigate(['/decks/novo']);
+  }
+
   protected openDeck(id: string): void {
     this.router.navigate(['/decks', id]);
   }

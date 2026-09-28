@@ -1,0 +1,61 @@
+<div class="veil" (click)="close()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true"
+         [attr.aria-label]="'Emprestar deck para ' + playerName()">
+  <span class="handle" aria-hidden="true"></span>
+
+  <header class="flex items-center justify-between gap-3 px-1">
+    <h2 class="title-section min-w-0 truncate">Emprestar deck para {{ playerName() }}</h2>
+    <button type="button" class="close" (click)="close()" aria-label="Fechar">
+      <ng-icon hlm name="lucideX" class="!size-4" />
+    </button>
+  </header>
+
+  <label class="well mt-3">
+    <ng-icon hlm name="lucideSearch" class="field-icon !size-4" />
+    <input class="well-input" type="search" autocomplete="off" id="lend-search"
+           placeholder="Buscar deck, commander ou dono" [value]="query()"
+           (input)="query.set($any($event.target).value)"
+           aria-label="Buscar deck para emprestar" />
+  </label>
+
+  <div class="groups">
+    @for (group of groups(); track group.owner.id) {
+      <div class="group">
+        <span class="owner">{{ group.owner.name }}</span>
+        @for (deck of group.decks; track deck.id) {
+          @let seat = takenBy()[deck.id];
+          <button type="button" class="option" [class.taken]="seat" [disabled]="seat"
+                  (click)="choose(deck)">
+            @if (artOf(deck); as art) {
+              @if (!brokenArt().has(deck.id)) {
+                <img class="thumb" [src]="art" alt="" loading="lazy" (error)="markBroken(deck.id)" />
+              } @else {
+                <span class="thumb thumb-plain" aria-hidden="true"></span>
+              }
+            }
+            <span class="text">
+              <span class="name">{{ deck.name }}</span>
+              @if (seat) {
+                <span class="sub warn">na mesa, assento {{ seat }}</span>
+              } @else if (deck.commanderName && deck.commanderName !== deck.name) {
+                <span class="sub">{{ deck.commanderName }}</span>
+              }
+            </span>
+            @if (symbolsOf(deck)) {
+              <span class="pips" [innerHTML]="symbolsOf(deck) | manaSymbol"></span>
+            }
+          </button>
+        }
+      </div>
+    } @empty {
+      <p class="empty">
+        @if (query().trim()) {
+          Nenhum deck casa com “{{ query().trim() }}”.
+        } @else {
+          Ninguém mais tem deck cadastrado ainda.
+        }
+      </p>
+    }
+  </div>
+</section>

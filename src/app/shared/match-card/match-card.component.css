@@ -97,3 +97,21 @@
     transform: none;
   }
 }
+
+/* Deck emprestado: arcano, não ouro — no app ouro é ação e arcano é estado. */
+.lent {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 92, 255, 0.45);
+  color: var(--color-arcane-300, #ac9bff);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:host-context(.light) .lent {
+  color: var(--color-arcane-700, #5b3ad1);
+}

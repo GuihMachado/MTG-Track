@@ -154,6 +154,33 @@ export interface ImportItem {
   section: string;
 }
 
+/** Criar e editar deck pelo formulário. Na edição, todos opcionais. */
+export interface DeckPayload {
+  name?: string;
+  commanderScryfallId?: string;
+  colors?: string[];
+}
+
+/**
+ * Um deck como opção de assento: o bastante para desenhar a linha do select.
+ * Vem de todas as contas ativas, porque o assento aceita deck emprestado.
+ */
+export interface DeckOption {
+  id: string;
+  name: string;
+  commanderName: string | null;
+  commanderArtUrl: string | null;
+  colors: string[];
+  owner: { id: number; name: string };
+}
+
+/** Tudo o que a nova partida precisa sobre decks, numa chamada. */
+export interface TableDecks {
+  decks: DeckOption[];
+  /** Último deck que cada jogador levou à mesa (id do usuário → id do deck). */
+  lastDeckByUser: Record<string, string>;
+}
+
 export interface ImportResult {
   destination: 'collection' | 'deck';
   collection?: CollectionResponse;
