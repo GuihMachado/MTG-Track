@@ -341,6 +341,30 @@ describe('busca por efeito', () => {
     expect(matchesText(solRing, 'connive')).toBe(false);
   });
 
+  it('"connives" também acha o texto no plural ("… you control connive")', () => {
+    const raffine = entry({
+      id: 'raffine',
+      oracleText:
+        'Flying, ward {1}\nWhenever you attack, target attacking creature connives X, where X is the number of attacking creatures.',
+      keywords: [],
+    });
+    const plural = entry({
+      id: 'plural',
+      oracleText: 'When this enters, up to two target creatures you control each connive.',
+      keywords: [],
+    });
+
+    expect(matchesText(raffine, 'connives')).toBe(true);
+    expect(matchesText(plural, 'connives')).toBe(true);
+    // Termo de até 4 letras não perde o "s": "wars" viraria "war" e casaria "Warlord".
+    expect(matchesText(entry({ oracleText: 'Warlord', keywords: [] }), 'wars')).toBe(false);
+  });
+
+  it('casa pela palavra-chave quando o texto não tem o termo', () => {
+    const keywordOnly = entry({ id: 'kw', oracleText: '', keywords: ['Connive'] });
+    expect(matchesText(keywordOnly, 'connive')).toBe(true);
+  });
+
   it('a busca é em inglês: o termo em português não acha', () => {
     // A tradução oficial de "connive" é "acobertar", mas o texto gravado é o
     // oracle_text — que a Scryfall só publica em inglês.

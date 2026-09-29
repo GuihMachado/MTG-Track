@@ -177,24 +177,43 @@ export class Collection implements OnInit {
 
   protected readonly sortOptions: CollectionSort[] = ['name', 'price', 'quantity', 'recent'];
 
+  private byName = computed(() =>
+    applyCollectionView(this.entries(), this.query(), 'name', this.filters(), this.sort()),
+  );
+
+  /** Quantas cartas o termo acha no texto de regras, dentro dos filtros ligados. */
+  protected textMatches = computed(() =>
+    countTextMatches(this.entries(), this.query(), this.filters()),
+  );
+
+  /**
+   * O alvo que vale de fato. Nome é o padrão, mas nome sem nenhum resultado e
+   * texto com resultado passa para o texto sozinho: "connives" não é nome de
+   * carta, e a tela mostrava "Nenhuma carta com esse nome" logo abaixo da
+   * sugestão — quem não tocava na sugestão lia que a busca não funcionava.
+   */
+  protected autoText = computed(
+    () =>
+      this.mode() === 'name' &&
+      this.query().trim().length >= TEXT_HINT_FROM &&
+      this.byName().length === 0 &&
+      this.textMatches() > 0,
+  );
+
+  protected effectiveMode = computed<SearchMode>(() =>
+    this.mode() === 'text' || this.autoText() ? 'text' : 'name',
+  );
+
   protected visible = computed(() =>
-    applyCollectionView(this.entries(), this.query(), this.mode(), this.filters(), this.sort()),
+    this.effectiveMode() === 'text'
+      ? applyCollectionView(this.entries(), this.query(), 'text', this.filters(), this.sort())
+      : this.byName(),
   );
 
   protected activeFilters = computed(() => activeFilterCount(this.filters()));
 
   /** As habilidades da estante, para os chips do modal. */
   protected facets = computed(() => keywordFacets(this.entries()));
-
-  /**
-   * Quantas cartas a busca acharia no texto de regras. É o número da linha de
-   * sugestão, e ele só é calculado no modo nome: já no texto, quem responde
-   * quantas casaram é a própria lista.
-   */
-  protected textMatches = computed(() => {
-    if (this.mode() === 'text') return this.visible().length;
-    return countTextMatches(this.entries(), this.query(), this.filters());
-  });
 
   /**
    * A linha de sugestão aparece quando há termo suficiente e há o que oferecer.
@@ -248,7 +267,7 @@ export class Collection implements OnInit {
     if (this.entries().length === 0) return 'none';
     // Vazio buscando efeito não se resolve na Scryfall: o termo pode estar
     // errado, ou você simplesmente não tem carta que faça aquilo.
-    if (this.query().trim().length > 0) return this.mode() === 'text' ? 'text' : 'query';
+    if (this.query().trim().length > 0) return this.effectiveMode() === 'text' ? 'text' : 'query';
     if (this.activeFilters() > 0) return 'filters';
     return 'none';
   });

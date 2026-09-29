@@ -113,10 +113,23 @@ export function matchesQuery(entry: CollectionEntryDto, query: string): boolean 
  * "acoberta".
  */
 export function matchesText(entry: CollectionEntryDto, query: string): boolean {
-  const needle = fold(query);
-  if (!needle) return true;
+  const needles = textNeedles(query);
+  if (needles.length === 0) return true;
 
-  return foldedOracle(entry).includes(needle);
+  const haystack = foldedOracle(entry);
+  return needles.some(needle => haystack.includes(needle));
+}
+
+/**
+ * O termo e, se ele terminar em "s", o termo sem o "s". O texto de regras
+ * conjuga: "Body Launderer connives" mas "target creatures you control
+ * connive" — quem digita "connives" também quer a segunda. O contrário já
+ * funcionava sozinho ("connive" está dentro de "connives").
+ */
+function textNeedles(query: string): string[] {
+  const needle = fold(query);
+  if (!needle) return [];
+  return needle.length > 4 && needle.endsWith('s') ? [needle, needle.slice(0, -1)] : [needle];
 }
 
 /**
@@ -134,7 +147,9 @@ function foldedOracle(entry: CollectionEntryDto): string {
   const cached = oracleCache.get(entry);
   if (cached !== undefined) return cached;
 
-  const folded = fold(entry.oracleText ?? '');
+  // As palavras-chave entram junto: habilidade que o texto só cita pelo nome
+  // do lembrete ainda casa pelo keyword ("Connive").
+  const folded = fold(`${entry.oracleText ?? ''}\n${(entry.keywords ?? []).join(' ')}`);
   oracleCache.set(entry, folded);
   return folded;
 }

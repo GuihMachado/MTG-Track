@@ -117,7 +117,7 @@
           <input class="well-input" type="search" autocomplete="off"
                  placeholder="Buscar na coleção" [value]="query()"
                  (input)="onQueryInput($any($event.target).value)"
-                 [attr.aria-label]="mode() === 'text'
+                 [attr.aria-label]="effectiveMode() === 'text'
                     ? 'Buscar no texto das cartas'
                     : 'Buscar na coleção'" />
           @if (query()) {
@@ -152,7 +152,7 @@
            estar no texto de alguma carta sua, e a mesma linha passa a dizer o
            que está sendo mostrado — a lista troca no lugar, sem virar chip. -->
       @if (showTextHint()) {
-        @if (mode() === 'text') {
+        @if (effectiveMode() === 'text') {
           <div class="mt-2 flex flex-none items-center gap-2 text-hint on">
             <ng-icon hlm name="lucideScrollText" class="!size-[14px]" />
             <span class="min-w-0 flex-1 truncate">
@@ -160,9 +160,13 @@
               {{ textMatches() === 1 ? 'carta' : 'cartas' }} com
               “{{ query().trim() }}” no texto
             </span>
-            <button type="button" class="hint-action" (click)="searchInName()">
-              buscar por nome
-            </button>
+            <!-- Na troca automática (nome sem resultado) voltar para o nome só
+                 devolveria o vazio: o botão aparece quando o texto foi escolhido. -->
+            @if (!autoText()) {
+              <button type="button" class="hint-action" (click)="searchInName()">
+                buscar por nome
+              </button>
+            }
           </div>
         } @else {
           <button type="button" class="mt-2 flex flex-none items-center gap-2 text-hint"
