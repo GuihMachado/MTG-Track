@@ -19,7 +19,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const session = inject(SessionService);
   const token = localStorage.getItem('auth-token');
 
-  const request = token
+  // Requisição que já traz o próprio Bearer (o token curto de criar PIN) segue
+  // com ele: trocar pelo da sessão mandaria a credencial errada.
+  const request = token && !req.headers.has('Authorization')
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 

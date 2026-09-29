@@ -1,0 +1,34 @@
+<brn-input-otp
+  #otp
+  class="pin"
+  [maxLength]="length"
+  [formControl]="control()"
+  [transformPaste]="digitsOnly"
+  (completed)="completed.emit($event)">
+  @for (slot of otp.context(); track $index) {
+    <span class="cell" [class.active]="slot.isActive" aria-hidden="true">
+      @if (slot.char !== null) {
+        @if (shown() || !revealable()) {
+          {{ slot.char }}
+        } @else {
+          <span class="dot"></span>
+        }
+      }
+      @if (slot.hasFakeCaret) {
+        <span class="caret"></span>
+      }
+    </span>
+  }
+</brn-input-otp>
+
+@if (revealable()) {
+  <button
+    type="button"
+    class="reveal"
+    [attr.aria-pressed]="shown()"
+    [attr.aria-controls]="inputId()"
+    (click)="toggleShown()">
+    <ng-icon hlm size="14px" [name]="shown() ? 'lucideEyeOff' : 'lucideEye'" aria-hidden="true" />
+    {{ shown() ? 'Ocultar' : 'Mostrar' }}
+  </button>
+}

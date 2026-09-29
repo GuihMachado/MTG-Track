@@ -75,9 +75,27 @@
         </div>
       </div>
 
+      <!-- O PIN troca pela folha, não pelo formulário: tem regra própria
+           (PIN atual, novo, confirmação) e não espera o "Salvar perfil". -->
+      <div class="plate flex items-center gap-4 rounded-lg p-4">
+        <div class="min-w-0 flex-1">
+          <p class="label-caps">PIN de acesso</p>
+          <p class="mt-1 text-[13px] text-foreground-muted">Os 6 números com que você entra.</p>
+        </div>
+        <button type="button" class="btn-primary inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium"
+                (click)="pinSheetOpen.set(true)">
+          <ng-icon hlm size="sm" name="lucideKeyRound" />
+          Trocar PIN
+        </button>
+      </div>
+
       <button type="submit" class="cta-pill" [disabled]="saving() || !dirty">
         <span>{{ saving() ? 'Salvando…' : 'Salvar perfil' }}</span>
       </button>
     </form>
   }
 </div>
+
+@if (pinSheetOpen()) {
+  <app-change-pin-sheet (closed)="pinSheetOpen.set(false)" (forgot)="forgotPin()" />
+}

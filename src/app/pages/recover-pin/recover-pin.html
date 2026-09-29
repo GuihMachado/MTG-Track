@@ -1,0 +1,87 @@
+<div class="auth-entry">
+  <div class="auth-halo" aria-hidden="true"></div>
+
+  <div class="relative flex h-[58px] items-center px-4">
+    <app-back-button fallbackRoute="/" label="Voltar para o login" />
+  </div>
+
+  <header class="relative px-6 pt-3.5">
+    <span class="label-caps">Recuperar acesso</span>
+    <h1 class="mt-1.5 text-[26px] leading-[1.1] font-bold tracking-[-0.02em]">Esqueci meu PIN</h1>
+    <p class="mt-[7px] text-[13.5px] leading-[1.5] text-pretty text-foreground-muted">
+      Mandamos um PIN temporário para o seu email. Com ele você entra e cria um novo.
+      Quem tinha senha começa por aqui.
+    </p>
+  </header>
+
+  <!-- Controle solto, sem [formGroup]: o submit é o nativo (ngSubmit só existe
+       com FormGroupDirective/NgForm). -->
+  <form class="relative flex flex-1 flex-col" novalidate (submit)="$event.preventDefault(); send()">
+    <div class="flex flex-col gap-3.5 px-6 pt-[30px]">
+      <div>
+        <label class="label-caps mb-[7px] block" for="recover-email">E-mail</label>
+        <div class="field-well" [class.invalid]="!!emailError()">
+          <ng-icon hlm size="17px" class="field-icon" name="lucideMail" aria-hidden="true" />
+          <input
+            class="field-input"
+            id="recover-email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="voce@exemplo.com"
+            [formControl]="email"
+            [attr.aria-invalid]="!!emailError()"
+            [attr.aria-describedby]="emailError() ? 'recover-email-error' : null" />
+        </div>
+        @if (emailError(); as message) {
+          <p id="recover-email-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+            {{ message }}
+          </p>
+        }
+      </div>
+
+      @if (sentTo(); as to) {
+        <div class="auth-notice" role="status">
+          <ng-icon hlm size="16px" class="notice-icon" name="lucideCheck" aria-hidden="true" />
+          <span>
+            Se houver uma conta com <b>{{ to }}</b>, o PIN chega em instantes. Ele vale 24 horas,
+            e o seu PIN atual continua valendo até você trocar.
+          </span>
+        </div>
+      }
+    </div>
+
+    <footer class="mt-auto flex flex-col gap-4 px-6 pt-10 pb-[26px]">
+      @if (sentTo()) {
+        <button
+          class="btn-primary flex h-[54px] items-center justify-center gap-2.5 rounded-full text-base font-semibold"
+          type="button"
+          (click)="goToLogin()">
+          Ir para o login
+        </button>
+        <button
+          class="py-2 text-center text-[13.5px] font-semibold text-primary-text disabled:font-medium disabled:text-foreground-subtle"
+          type="submit"
+          [disabled]="secondsLeft() > 0 || loading()">
+          @if (secondsLeft() > 0) {
+            Reenviar em {{ countdown() }}
+          } @else {
+            Reenviar PIN
+          }
+        </button>
+      } @else {
+        <button
+          class="btn-primary flex h-[54px] items-center justify-center gap-2.5 rounded-full text-base font-semibold"
+          type="submit"
+          [disabled]="loading()">
+          @if (loading()) {
+            <hlm-spinner class="text-[18px] motion-reduce:hidden" aria-label="Enviando" />
+            Enviando…
+          } @else {
+            Enviar PIN
+          }
+        </button>
+      }
+    </footer>
+  </form>
+</div>

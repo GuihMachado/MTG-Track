@@ -7,8 +7,10 @@ import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmLabelImports } from '@spartan-ng/helm/label';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
-import { lucideCamera, lucideTrash2, lucideUser } from '@ng-icons/lucide';
+import { lucideCamera, lucideKeyRound, lucideTrash2, lucideUser } from '@ng-icons/lucide';
+import { Router } from '@angular/router';
 import { BackButton } from '../../shared/back-button/back-button';
+import { ChangePinSheet } from './change-pin-sheet/change-pin-sheet';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ProfileService } from '../../shared/profile/profile.service';
 import { UserService } from '../../services/user-service';
@@ -28,9 +30,10 @@ export const AVATAR_SIZE = 256;
     HlmInputImports,
     HlmLabelImports,
     HlmSkeletonImports,
-    BackButton
+    BackButton,
+    ChangePinSheet
   ],
-  providers: [provideIcons({ lucideCamera, lucideTrash2, lucideUser })],
+  providers: [provideIcons({ lucideCamera, lucideKeyRound, lucideTrash2, lucideUser })],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -45,6 +48,9 @@ export class Profile implements OnInit {
   protected saving = signal(false);
   /** Ícone em edição — só vai para a API quando o formulário é salvo. */
   protected avatar = signal<string | null>(null);
+  /** Folha de trocar PIN. */
+  protected pinSheetOpen = signal(false);
+  private router = inject(Router);
   private savedAvatar: string | null = null;
 
   protected initial = computed(() => {
@@ -101,6 +107,12 @@ export class Profile implements OnInit {
         description: 'Use um arquivo PNG, JPEG ou WebP.',
       });
     }
+  }
+
+  /** "Esqueci o PIN atual": o mesmo fluxo do login, com o email da conta. */
+  protected forgotPin(): void {
+    this.pinSheetOpen.set(false);
+    this.router.navigate(['/recuperar-pin'], { state: { email: String(this.form.get('email')?.value ?? '') } });
   }
 
   protected removeImage(): void {

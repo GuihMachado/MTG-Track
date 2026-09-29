@@ -9,9 +9,12 @@
       src="icons/icon-192x192.png"
       alt="" />
     <h1 class="mt-[22px] text-[30px] leading-[1.1] font-bold tracking-[-0.02em]">MTG Track</h1>
-    <p class="mt-2 text-center text-[14.5px] leading-[1.55] text-pretty text-foreground-muted">
-      A mesa de Commander do seu grupo — vidas, partidas e ranking num lugar só.
-    </p>
+    <!-- Com o aviso do PIN a tela precisa do espaço: a frase de marca sai. -->
+    @if (!arrival()) {
+      <p class="mt-2 text-center text-[14.5px] leading-[1.55] text-pretty text-foreground-muted">
+        A mesa de Commander do seu grupo — vidas, partidas e ranking num lugar só.
+      </p>
+    }
   </header>
 
   <!-- ── Campos: o poço afunda, o botão levita ──────────────────── -->
@@ -21,6 +24,17 @@
     class="relative flex flex-col gap-3.5 px-6 pt-[34px]"
     [formGroup]="mainForm"
     (ngSubmit)="login()">
+    @if (arrival(); as info) {
+      <div class="auth-notice" role="status">
+        <ng-icon hlm size="16px" class="notice-icon" name="lucideMail" aria-hidden="true" />
+        @if (info.notice === 'sent') {
+          <span>Enviamos um PIN para <b>{{ info.email }}</b>. Ele vale 24 horas. Olhe também o spam.</span>
+        } @else {
+          <span>Se houver uma conta com <b>{{ info.email }}</b>, o PIN chega em instantes. Ele vale 24 horas.</span>
+        }
+      </div>
+    }
+
     <div>
       <label class="label-caps mb-[7px] block" for="email">E-mail</label>
       <div class="field-well" [class.invalid]="!!emailError()">
@@ -44,32 +58,19 @@
     </div>
 
     <div>
-      <label class="label-caps mb-[7px] block" for="password">Senha</label>
-      <div class="field-well" [class.invalid]="!!passwordError()">
-        <ng-icon hlm size="17px" class="field-icon" name="lucideLock" aria-hidden="true" />
-        <input
-          class="field-input"
-          id="password"
-          [type]="showPassword() ? 'text' : 'password'"
-          autocomplete="current-password"
-          formControlName="password"
-          [attr.aria-invalid]="!!passwordError()"
-          [attr.aria-describedby]="passwordError() ? 'password-error' : null" />
-        <button
-          class="field-eye"
-          type="button"
-          [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-          [attr.aria-pressed]="showPassword()"
-          (click)="togglePassword()">
-          <ng-icon
-            hlm
-            size="18px"
-            [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'"
-            aria-hidden="true" />
-        </button>
+      <div class="mb-[7px] flex items-baseline justify-between gap-3">
+        <label class="label-caps block" for="pin">PIN</label>
+        <button type="button" class="forgot" (click)="forgotPin()">Esqueci meu PIN</button>
       </div>
-      @if (passwordError(); as message) {
-        <p id="password-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
+      <app-pin-field
+        [control]="mainForm.controls.pin"
+        inputId="pin"
+        [invalid]="!!pinError()"
+        [describedBy]="pinError() ? 'pin-error' : null"
+        [autofocus]="!!arrival()"
+        (completed)="onPinCompleted()" />
+      @if (pinError(); as message) {
+        <p id="pin-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger">
           {{ message }}
         </p>
       }
@@ -92,16 +93,22 @@
 
   <!-- ── Rodapé: uma tela, um botão — o resto é link ─────────────── -->
   <footer class="relative mt-auto flex flex-col items-center gap-[18px] px-6 pt-10 pb-[26px]">
-    <div class="flex w-full items-center gap-3">
-      <span class="h-px flex-1 bg-hairline"></span>
-      <span class="label-caps divider-label">Primeira vez?</span>
-      <span class="h-px flex-1 bg-hairline"></span>
-    </div>
-    <a
-      class="px-1 py-2 text-[15.5px] font-semibold text-primary-text"
-      [routerLink]="['', 'register']">
-      Criar conta
-    </a>
+    @if (arrival()) {
+      <button type="button" class="px-1 py-2 text-[15px] font-semibold text-primary-text" (click)="forgotPin()">
+        Não chegou? Reenviar PIN
+      </button>
+    } @else {
+      <div class="flex w-full items-center gap-3">
+        <span class="h-px flex-1 bg-hairline"></span>
+        <span class="label-caps divider-label">Primeira vez?</span>
+        <span class="h-px flex-1 bg-hairline"></span>
+      </div>
+      <a
+        class="px-1 py-2 text-[15.5px] font-semibold text-primary-text"
+        [routerLink]="['', 'register']">
+        Criar conta
+      </a>
+    }
     <span class="signature font-data text-[10px]">uso pessoal · sem anúncios</span>
   </footer>
 </div>

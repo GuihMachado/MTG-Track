@@ -1,0 +1,22 @@
+/* Criar PIN — a caixa e o halo vêm de .auth-entry/.auth-halo (styles.css). O
+   filete de passos é ouro: é o progresso de quem está entrando. */
+:host {
+  display: block;
+}
+
+.stepper {
+  display: flex;
+  gap: 6px;
+}
+
+.stepper i {
+  flex: 1;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--hairline-strong);
+  transition: background-color 200ms ease-out;
+}
+
+.stepper i.on {
+  background: var(--primary-text);
+}

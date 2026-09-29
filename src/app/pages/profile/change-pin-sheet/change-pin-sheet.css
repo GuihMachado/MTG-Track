@@ -1,0 +1,19 @@
+/* Folha de trocar PIN: véu, placa e alça vêm de seat-sheet.css (nova partida).
+   Aqui só o filete de passos, em ouro como no "Criar PIN". */
+.stepper {
+  display: flex;
+  gap: 6px;
+  padding-inline: 4px;
+}
+
+.stepper i {
+  flex: 1;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--hairline-strong);
+  transition: background-color 200ms ease-out;
+}
+
+.stepper i.on {
+  background: var(--primary-text);
+}

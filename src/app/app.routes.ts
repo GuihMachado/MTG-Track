@@ -17,6 +17,7 @@ import { SetBinder } from './pages/collection/set-binder/set-binder';
 import { Stats } from './pages/stats/stats';
 import { DeckStatsPage } from './pages/stats/deck-stats/deck-stats';
 import { Matchups } from './pages/stats/matchups/matchups';
+import { SessionService } from './shared/session/session.service';
 
 const authGuard: CanActivateFn = () => {
     const router = inject(Router);
@@ -31,6 +32,16 @@ const authGuard: CanActivateFn = () => {
         return false;
     }
     return true; 
+};
+
+/**
+ * Criar PIN só com o passe do login pelo PIN do email (sessionStorage). Sem ele
+ * a tela não tem o que gravar: volta para o login.
+ */
+const pinSetupGuard: CanActivateFn = () => {
+    if (!isPlatformBrowser(inject(PLATFORM_ID))) return true;
+    if (inject(SessionService).pinSetup()) return true;
+    return inject(Router).createUrlTree(['/']);
 };
 
 const matchGuard: CanActivateFn = () => {
@@ -69,6 +80,16 @@ export const routes: Routes = [
     {
         path: 'register',
         component: Register
+    },
+    {
+        path: 'recuperar-pin',
+        // Sob demanda: telas de uso raro fora do bundle inicial, que está no limite.
+        loadComponent: () => import('./pages/recover-pin/recover-pin').then(m => m.RecoverPin)
+    },
+    {
+        path: 'criar-pin',
+        loadComponent: () => import('./pages/set-pin/set-pin').then(m => m.SetPin),
+        canActivate: [pinSetupGuard]
     },
     { 
         path: 'dashboard', 

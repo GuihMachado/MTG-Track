@@ -28,14 +28,17 @@ export class App {
   // O header e o assento da nova partida leem o perfil daqui.
   private profile = inject(ProfileService);
   
-  // Telas que desenham o próprio cabeçalho: login, cadastro, mesa e nova
-  // partida (botão voltar, título e contador de lugares na própria tela).
+  // Telas que desenham o próprio cabeçalho: login, cadastro, recuperar e criar
+  // PIN, mesa e nova partida (botão voltar, título e contador de lugares na
+  // própria tela).
   // A coleção fica de fora de propósito: ela tem voltar e título próprios,
   // mas o menu e o avatar do header valem lá também. Os filhos dela
   // (importar, fichário) continuam em tela cheia.
   private hiddenRoutes = [
     '/',
     '/register',
+    '/recuperar-pin',
+    '/criar-pin',
     '/match',
     '/play',
     '/colecao/importar',

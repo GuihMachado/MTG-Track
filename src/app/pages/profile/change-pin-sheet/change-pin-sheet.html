@@ -1,0 +1,62 @@
+<div class="veil" (click)="close()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="change-pin-title">
+  <span class="handle" aria-hidden="true"></span>
+
+  <div class="stepper" aria-hidden="true">
+    <i class="on"></i>
+    <i [class.on]="info().index >= 2"></i>
+    <i [class.on]="info().index >= 3"></i>
+  </div>
+
+  <header class="mt-4 flex items-start justify-between gap-3 px-1">
+    <div class="min-w-0">
+      <span class="label-caps">Passo {{ info().index }} de 3</span>
+      <h2 id="change-pin-title" class="title-section mt-1">{{ info().title }}</h2>
+      <p class="mt-1 text-[13px] leading-[1.45] text-foreground-muted">{{ info().hint }}</p>
+    </div>
+    <button type="button" class="close" (click)="close()" aria-label="Fechar">
+      <ng-icon hlm name="lucideX" class="!size-4" />
+    </button>
+  </header>
+
+  <form class="mt-5 flex flex-col px-1" novalidate (submit)="$event.preventDefault(); advance()">
+    <!-- Um campo por passo: o @for recria o PinField ao trocar, com foco novo. -->
+    @for (s of [step()]; track s) {
+      <label class="label-caps mb-[7px] block" [for]="'change-pin-' + s">{{ info().label }}</label>
+      <app-pin-field
+        [control]="controlFor(s)"
+        [inputId]="'change-pin-' + s"
+        [invalid]="!!error()"
+        [describedBy]="error() ? 'change-pin-error' : null"
+        [autofocus]="true"
+        (completed)="advance()" />
+    }
+
+    @if (error(); as message) {
+      <p id="change-pin-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger" role="alert">
+        {{ message }}
+      </p>
+    }
+
+    <button
+      class="btn-primary mt-6 flex h-[52px] items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold"
+      type="submit"
+      [disabled]="saving()">
+      @if (saving()) {
+        <hlm-spinner class="text-[18px] motion-reduce:hidden" aria-label="Trocando PIN" />
+        Trocando…
+      } @else if (step() === 'confirm') {
+        Trocar PIN
+      } @else {
+        Continuar
+      }
+    </button>
+
+    @if (step() === 'current') {
+      <button type="button" class="mt-2 py-2 text-[13.5px] font-semibold text-primary-text" (click)="forgot.emit()">
+        Esqueci o PIN atual
+      </button>
+    }
+  </form>
+</section>

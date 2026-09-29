@@ -69,6 +69,25 @@
   color: color-mix(in oklab, var(--text-faint) 78%, transparent);
 }
 
+/* "Esqueci meu PIN" na linha do rótulo: ouro de link, alvo de 44px sem mexer
+   na altura da linha (o padding sai para fora). */
+.forgot {
+  margin: -12px -8px -12px 0;
+  padding: 12px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.forgot:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -4px;
+  border-radius: 10px;
+}
+
 .signature {
   color: color-mix(in oklab, var(--text-faint) 58%, transparent);
   letter-spacing: 0.02em;

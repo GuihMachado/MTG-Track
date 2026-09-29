@@ -1,17 +1,20 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, RegisterPayload } from '../../services/auth-service';
 import { Subject, takeUntil } from 'rxjs';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideEyeOff, lucideLock, lucideMail, lucideUser } from '@ng-icons/lucide';
+import { lucideMail, lucideUser } from '@ng-icons/lucide';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 import { BackButton } from '../../shared/back-button/back-button';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { FieldName, fieldMessage } from '../../shared/forms/validation-messages';
-import { MIN_PASSWORD_LENGTH, passwordStrength } from './password-strength';
+import type { LoginArrival } from '../login/login';
+
+/** O backend exige 3 letras no nome (`User.alterarNome`); aqui só adianta o aviso. */
+const MIN_NAME_LENGTH = 3;
 
 @Component({
   selector: 'app-register',
@@ -23,39 +26,27 @@ import { MIN_PASSWORD_LENGTH, passwordStrength } from './password-strength';
     ReactiveFormsModule,
     BackButton
   ],
-  providers: [provideIcons({ lucideUser, lucideMail, lucideLock, lucideEye, lucideEyeOff })],
+  providers: [provideIcons({ lucideUser, lucideMail })],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
 export class Register {
-  // Tipado e nonNullable porque a régua de senha lê o valor do controle como
-  // signal: sem isso o `string | null` vaza para dentro do medidor.
+  // Sem senha: o PIN do primeiro acesso chega por email.
   protected readonly mainForm = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(MIN_NAME_LENGTH)],
+    }),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)],
     }),
   });
 
   // Zoneless: mutado dentro do subscribe, precisa ser signal para a view reagir.
   protected loading = signal(false);
-  /** Olho de mostrar/ocultar senha. */
-  protected showPassword = signal(false);
-
-  /** Os três segmentos da régua, para o @for do template. */
-  protected readonly METER_SEGMENTS = [1, 2, 3] as const;
-
-  private readonly passwordValue = toSignal(this.mainForm.controls.password.valueChanges, {
-    initialValue: '',
-  });
-
-  /** Espelha o minLength(6) do formulário — não valida nada por conta própria. */
-  protected readonly strength = computed(() => passwordStrength(this.passwordValue()));
+  /** Email que a API disse já ter conta — o erro fica no campo, com o atalho. */
+  protected takenEmail = signal<string | null>(null);
 
   private authService = inject(AuthService);
   private notify = inject(NotificationService);
@@ -67,10 +58,6 @@ export class Register {
     this.destroy.complete();
   }
 
-  protected togglePassword() {
-    this.showPassword.update((shown) => !shown);
-  }
-
   protected nameError(): string | null {
     return this.errorOf('name');
   }
@@ -79,11 +66,19 @@ export class Register {
     return this.errorOf('email');
   }
 
-  protected passwordError(): string | null {
-    return this.errorOf('password');
+  /** O aviso de "já tem conta" só vale enquanto o email for o mesmo. */
+  protected emailTaken(): boolean {
+    const taken = this.takenEmail();
+    return !!taken && taken === this.mainForm.controls.email.value.trim().toLowerCase();
+  }
+
+  protected forgotPin(): void {
+    this.router.navigate(['/recuperar-pin'], { state: { email: this.mainForm.controls.email.value.trim() } });
   }
 
   protected signUp() {
+    if (this.loading()) return;
+
     if (this.mainForm.invalid) {
       // Sem toast: o erro de validação é resolvido no campo, e as duas camadas
       // de erro não competem. O toast fica para a resposta da API.
@@ -92,21 +87,26 @@ export class Register {
     }
 
     this.loading.set(true);
+    const payload = this.bodybuilder();
 
-    this.authService.register(this.bodybuilder())
+    this.authService.register(payload)
       .pipe(takeUntil(this.destroy))
       .subscribe({
       next: () => {
         this.loading.set(false);
-        this.notify.success('Cadastro realizado!', { description: 'Faça login para começar a registrar suas partidas.' });
-        this.router.navigate(['/']);
+        // O login mostra "enviamos um PIN para…" com o email já preenchido.
+        const arrival: LoginArrival = { email: payload.email, notice: 'sent' };
+        this.router.navigate(['/'], { state: arrival });
       },
       error: (error) => {
         this.loading.set(false);
-        this.notify.apiError(error, {
-          fallback: 'Não foi possível concluir o cadastro.',
-          byStatus: { 409: 'Esse e-mail já está cadastrado. Tente fazer login.' }
-        });
+
+        if (error instanceof HttpErrorResponse && error.status === 409) {
+          this.takenEmail.set(payload.email.toLowerCase());
+          return;
+        }
+
+        this.notify.apiError(error, { fallback: 'Não foi possível concluir o cadastro.' });
       }
     });
   }
@@ -126,8 +126,8 @@ export class Register {
   }
 
   private bodybuilder(): RegisterPayload {
-    const { name, email, password } = this.mainForm.getRawValue();
+    const { name, email } = this.mainForm.getRawValue();
 
-    return { name: name.trim(), email: email.trim(), password };
+    return { name: name.trim(), email: email.trim() };
   }
 }

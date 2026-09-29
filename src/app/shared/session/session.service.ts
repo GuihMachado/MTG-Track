@@ -1,7 +1,7 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { LoginResponse } from '../../services/auth-service';
+import { LoginResponse, PinSetupResponse } from '../../services/auth-service';
 import { NotificationService } from '../notification/notification.service';
 import { ProfileService } from '../profile/profile.service';
 
@@ -26,6 +26,13 @@ const MATCH_KEYS = [
 ] as const;
 
 /**
+ * Passe de criar PIN (login com o PIN temporário do email). Fica no
+ * sessionStorage e NUNCA em `auth-token`: com ele o authGuard deixaria entrar
+ * quem ainda não criou o PIN, e a API recusaria todas as chamadas com 401.
+ */
+const PIN_SETUP_KEYS = { token: 'pin-setup-token', name: 'pin-setup-name' } as const;
+
+/**
  * Dono da sessão no navegador. Existe para a lista de chaves morar num lugar só:
  * antes o login escrevia três chaves e o interceptor apagava cinco, e qualquer
  * chave nova nascia esquecida em um dos dois lados.
@@ -48,7 +55,28 @@ export class SessionService {
     localStorage.setItem('auth-token', response.token);
     localStorage.setItem('user-name', response.user.name);
     localStorage.setItem('user-id', String(response.user.id));
+    this.clearPinSetup();
     this.profile.load();
+  }
+
+  /** Guarda o passe de criar PIN até a pessoa terminar (ou fechar a aba). */
+  startPinSetup(response: PinSetupResponse): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    sessionStorage.setItem(PIN_SETUP_KEYS.token, response.setupToken);
+    sessionStorage.setItem(PIN_SETUP_KEYS.name, response.user.name);
+  }
+
+  /** Passe de criar PIN desta aba, se houver. */
+  pinSetup(): { token: string; name: string } | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    const token = sessionStorage.getItem(PIN_SETUP_KEYS.token);
+    return token ? { token, name: sessionStorage.getItem(PIN_SETUP_KEYS.name) ?? '' } : null;
+  }
+
+  clearPinSetup(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    sessionStorage.removeItem(PIN_SETUP_KEYS.token);
+    sessionStorage.removeItem(PIN_SETUP_KEYS.name);
   }
 
   /** Apaga a sessão sem navegar nem avisar — para quem já tem o próprio aviso. */
@@ -60,6 +88,7 @@ export class SessionService {
     for (const key of [...SESSION_KEYS, ...MATCH_KEYS]) {
       localStorage.removeItem(key);
     }
+    this.clearPinSetup();
   }
 
   /** Saída pedida pelo usuário: apaga, avisa e volta para o login. */

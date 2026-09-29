@@ -1,0 +1,80 @@
+<div class="auth-entry">
+  <div class="auth-halo" aria-hidden="true"></div>
+
+  <!-- Sem voltar: esta tela só fecha com o PIN criado. -->
+  <header class="relative px-6 pt-[46px]">
+    <div class="stepper" aria-hidden="true">
+      <i class="on"></i>
+      <i [class.on]="step() === 2"></i>
+    </div>
+    <span class="label-caps mt-[22px] block">Passo {{ step() }} de 2</span>
+    @if (step() === 1) {
+      <h1 class="mt-1.5 text-[26px] leading-[1.1] font-bold tracking-[-0.02em]">Crie o seu PIN</h1>
+      <p class="mt-[7px] text-[13.5px] leading-[1.5] text-pretty text-foreground-muted">
+        Ele passa a ser a sua senha. Seis números que você lembre e os outros não chutem.
+      </p>
+    } @else {
+      <h1 class="mt-1.5 text-[26px] leading-[1.1] font-bold tracking-[-0.02em]">Confirme o PIN</h1>
+      <p class="mt-[7px] text-[13.5px] leading-[1.5] text-pretty text-foreground-muted">
+        Digite de novo, para ter certeza.
+      </p>
+    }
+  </header>
+
+  <form class="relative flex flex-1 flex-col" novalidate (submit)="$event.preventDefault(); next()">
+    <div class="px-6 pt-[30px]">
+      @if (step() === 1) {
+        <label class="label-caps mb-[7px] block" for="new-pin">Novo PIN</label>
+        <app-pin-field
+          [control]="pin"
+          inputId="new-pin"
+          [invalid]="!!error()"
+          [describedBy]="error() ? 'set-pin-error' : 'set-pin-help'"
+          [autofocus]="true"
+          (completed)="choose()" />
+      } @else {
+        <label class="label-caps mb-[7px] block" for="confirm-pin">Confirmar PIN</label>
+        <app-pin-field
+          [control]="confirm"
+          inputId="confirm-pin"
+          [invalid]="!!error()"
+          [describedBy]="error() ? 'set-pin-error' : null"
+          [autofocus]="true"
+          (completed)="save()" />
+      }
+
+      @if (error(); as message) {
+        <p id="set-pin-error" class="mx-0.5 mt-[7px] text-[12.5px] leading-[1.45] text-danger" role="alert">
+          {{ message }}
+        </p>
+      } @else if (step() === 1) {
+        <p id="set-pin-help" class="mx-0.5 mt-[7px] text-[12px] leading-[1.45] text-faint">
+          Evite números repetidos ou em sequência, como 000000 ou 123456.
+        </p>
+      }
+    </div>
+
+    <footer class="mt-auto flex flex-col items-center gap-3 px-6 pt-10 pb-[26px]">
+      <button
+        class="btn-primary flex h-[54px] w-full items-center justify-center gap-2.5 rounded-full text-base font-semibold"
+        type="submit"
+        [disabled]="saving()">
+        @if (saving()) {
+          <hlm-spinner class="text-[18px] motion-reduce:hidden" aria-label="Criando PIN" />
+          Criando PIN…
+        } @else if (step() === 1) {
+          Continuar
+        } @else {
+          Criar PIN e entrar
+        }
+      </button>
+      @if (step() === 2) {
+        <button type="button" class="py-2 text-[13.5px] font-medium text-foreground-subtle" (click)="back()">
+          Voltar e escolher outro
+        </button>
+      } @else if (name) {
+        <span class="font-data text-[10.5px] text-faint">Olá, {{ name }}</span>
+      }
+    </footer>
+  </form>
+</div>

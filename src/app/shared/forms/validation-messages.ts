@@ -1,20 +1,20 @@
 /**
  * Mensagem de validação por campo, no texto que o usuário lê embaixo do poço.
  *
- * Módulo puro porque é a mesma frase em duas telas (login e cadastro) e porque
- * o handoff pede a mensagem *no campo culpado*, não num toast genérico: quem
- * decide o texto é o erro do controle, não a página.
+ * Módulo puro porque é a mesma frase em várias telas (entrar, criar conta,
+ * recuperar e criar PIN) e porque o handoff pede a mensagem *no campo culpado*,
+ * não num toast genérico: quem decide o texto é o erro do controle, não a página.
  *
  * O toast continua existindo, mas só para resposta da API — as duas camadas não
  * competem.
  */
 import type { ValidationErrors } from '@angular/forms';
 
-export type FieldName = 'name' | 'email' | 'password';
+export type FieldName = 'name' | 'email' | 'pin';
 
 /**
- * Entrar e criar conta pedem a mesma senha por motivos diferentes: num caso ela
- * já existe, no outro ela está sendo inventada. É o único texto que muda.
+ * Entrar e criar pedem o PIN por motivos diferentes: num caso ele já existe, no
+ * outro ele está sendo inventado. É o único texto que muda.
  */
 export type FormKind = 'login' | 'signup';
 
@@ -27,16 +27,18 @@ const REQUIRED: Record<FieldName, Record<FormKind, string>> = {
     login: 'Informe o seu e-mail.',
     signup: 'Informe o seu e-mail.',
   },
-  password: {
-    login: 'Informe a sua senha.',
-    signup: 'Crie uma senha para continuar.',
+  pin: {
+    login: 'Digite o seu PIN.',
+    signup: 'Crie um PIN de 6 números.',
   },
 };
+
+export const PIN_MISMATCH_MESSAGE = 'Os PINs não conferem. Digite o PIN de novo.';
 
 /**
  * Primeira mensagem que cabe nos erros de um controle, ou `null` quando o
  * controle está válido. A ordem importa: `required` vem antes de tudo, porque um
- * campo vazio também dispara `email` e `minlength` em alguns navegadores.
+ * campo vazio também dispara `email` em alguns navegadores.
  */
 export function fieldMessage(
   field: FieldName,
@@ -57,7 +59,19 @@ export function fieldMessage(
 
   if (errors['minlength']) {
     const min = Number(errors['minlength']?.requiredLength) || 0;
-    return `A senha precisa ter ao menos ${min} caracteres.`;
+    return `Use ao menos ${min} letras.`;
+  }
+
+  if (errors['pinLength']) {
+    return 'O PIN tem 6 números.';
+  }
+
+  if (errors['pinWeak']) {
+    return 'Esse PIN é fácil demais de adivinhar. Evite números repetidos ou em sequência.';
+  }
+
+  if (errors['pinMismatch']) {
+    return PIN_MISMATCH_MESSAGE;
   }
 
   // Erro que não sabemos nomear ainda vale um aviso: campo em vermelho sem
