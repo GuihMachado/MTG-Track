@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, OnDestroy, output,
 import { NgClass } from '@angular/common';
 import { SeatColorCode, SeatPaint, paintSeats, seatPaint } from '../seat-colors';
 import { SeatSlot, TapZone, gridRows, lifeFontSize, seatSlots } from './grid-layout';
+import { TableHub } from './table-hub/table-hub';
 import { CounterMap, CounterType } from '../counters';
 import { MTG_ICON_PATHS, MTG_ICON_VIEWBOX } from '../../../shared/icons/mtg-icons';
 import { commanderArtUrl } from '../../../shared/match-utils';
@@ -83,7 +84,7 @@ interface SwipeStart {
 @Component({
   selector: 'app-life-grid',
   standalone: true,
-  imports: [NgClass],
+  imports: [NgClass, TableHub],
   templateUrl: './life-grid.html',
   styleUrl: './life-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

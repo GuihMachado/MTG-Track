@@ -5,10 +5,11 @@
      [style.--amb-2]="ambient().second"
      aria-hidden="true"></div>
 
-<div class="table" [style.grid-template-rows]="rowsTemplate()">
+<div class="table" [style.grid-template-rows]="rowsTemplate()" [style.--life]="lifeSize() + 'vmin'">
   @for (seat of seats(); track seat.player.id) {
     <div class="seat rise-stagger"
          [class.wide]="seat.slot.wide"
+         [class.turned]="seat.quarterTurn"
          [class.low]="seat.low"
          [class.out]="seat.out"
          [class.picked]="pickedId() === seat.player.id"
@@ -68,8 +69,7 @@
         <span class="life-wrap">
           <span class="life"
                 [class.out-life]="seat.out && seat.lifeMode"
-                [class.lethal]="seat.lethal"
-                [style.font-size.vmin]="lifeSize()">{{ seat.value }}</span>
+                [class.lethal]="seat.lethal">{{ seat.value }}</span>
 
           @for (f of floatsFor(seat.player.id); track f.key) {
             <span class="delta-float" aria-hidden="true"
@@ -117,7 +117,4 @@
   }
 </div>
 
-<button type="button" class="hub" (click)="menu.emit()" aria-label="Abrir menu da partida">
-  <span class="hub-halo" aria-hidden="true"></span>
-  <img class="hub-icon" src="mtg-icon.png" alt="" width="24" height="24" />
-</button>
+<app-table-hub (open)="menu.emit()" />

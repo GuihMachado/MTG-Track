@@ -78,7 +78,9 @@ export function seatSlots(count: number): SeatSlot[] {
 
 /** Corpo do numeral em vmin — encolhe conforme a mesa enche. */
 export function lifeFontSize(count: number): number {
-  const sizes: Record<number, number> = { 1: 30, 2: 26, 3: 20, 4: 20, 5: 15, 6: 15 };
+  // Medido a 432×916 (celular comum): com 4 assentos o numeral girado ocupa
+  // ~60% da largura da célula, e nome + chips ainda cabem ao lado.
+  const sizes: Record<number, number> = { 1: 36, 2: 32, 3: 28, 4: 28, 5: 20, 6: 20 };
   return sizes[clampCount(count)] ?? 15;
 }
 
