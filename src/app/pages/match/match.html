@@ -14,17 +14,46 @@
       (lifeChange)="onLifeChange($event)"
       (counterChange)="onCounterChange($event)"
       (pick)="onSeatPick($event)"
-      (menu)="radialOpen.set(true)" />
-
-    <app-radial-menu
-      [open]="radialOpen()"
-      [items]="radialItems()"
-      [result]="diceResult()"
-      (action)="onRadialAction($event, endDialog)"
-      (closed)="closeRadial()"
-      (resultDismissed)="diceResult.set(null)" />
+      (menu)="menuOpen.set(true)" />
   }
 </div>
+
+@if (menuOpen()) {
+  <app-table-menu
+    [seats]="menuSeats()"
+    [startedAt]="startedAt()"
+    [startingLife]="startingLifeValue()"
+    [save]="saveStatus()"
+    [diceResult]="diceResult()"
+    (command)="onCommand($event, endDialog)"
+    (closed)="closeMenu()" />
+}
+
+<!-- As duas mesas divergem: a salva no servidor e a deste celular. Mostra as
+     duas lado a lado, com a hora de cada uma, e deixa a mesa escolher. -->
+@if (restoreChoice(); as choice) {
+  <div class="restore-veil" aria-hidden="true"></div>
+  <section class="restore plate-high" role="alertdialog" aria-modal="true"
+           aria-labelledby="restore-title" aria-describedby="restore-desc">
+    <h2 id="restore-title" class="text-[17px] font-semibold">Esta mesa foi salva em outro celular</h2>
+    <p id="restore-desc" class="mt-1.5 text-[13px] leading-snug text-foreground-muted">
+      A mesa salva e a deste celular são diferentes. Qual continua?
+    </p>
+    <p class="mt-2 text-[12.5px] leading-snug"><span class="text-foreground-subtle">Muda:</span> {{ choice.diff }}</p>
+    <div class="restore-grid">
+      <div class="restore-side pick">
+        <span class="label-caps">Salva · {{ timeOf(choice.serverAt) }}</span>
+        <span class="restore-lifes">{{ lifeOf(choice.server) }}</span>
+      </div>
+      <div class="restore-side">
+        <span class="label-caps">Este celular{{ choice.localAt ? ' · ' + timeOf(choice.localAt) : '' }}</span>
+        <span class="restore-lifes">{{ lifeOf(choice.local) }}</span>
+      </div>
+    </div>
+    <button type="button" class="restore-btn primary" (click)="resolveRestore(true)">Usar a mesa salva</button>
+    <button type="button" class="restore-btn" (click)="resolveRestore(false)">Manter a deste celular</button>
+  </section>
+}
 
 @if (arranging()) {
   <div class="fixed inset-x-3 top-3 z-50 flex items-center justify-between gap-3 rounded-lg plate px-4 py-3 backdrop-blur-[12px]">

@@ -1,6 +1,8 @@
 <!-- Linha de partida: o resultado é palavra e trilho de cor, não a letra V/D.
      O fundo puxa a identidade do deck usado, esmaecendo para a direita. -->
-<div class="row" [class.open]="result === 'E'" [style.--deck-rgb]="deckRgb">
+<div class="row" [class.open]="result === 'E'" [style.--deck-rgb]="deckRgb"
+     role="link" tabindex="0" [attr.aria-label]="title + ' — ver detalhe da partida'"
+     (click)="openDetail()" (keydown.enter)="openDetail()">
   <span class="rail" [class]="railClass" aria-hidden="true"></span>
 
   <div class="min-w-0 flex-1">
@@ -29,9 +31,9 @@
 
   @if (result === 'E') {
     @if (showFinish) {
-      <button type="button" class="ghost-action" (click)="openEndDialog(endDialog)">Encerrar</button>
+      <button type="button" class="ghost-action" (click)="$event.stopPropagation(); openEndDialog(endDialog)">Encerrar</button>
     } @else {
-      <button type="button" class="ghost-action" (click)="resume()">Voltar</button>
+      <button type="button" class="ghost-action" (click)="$event.stopPropagation(); resume()">Voltar</button>
     }
   } @else if (match.isFun) {
     <span class="badge-fun">4Fun</span>

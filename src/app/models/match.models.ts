@@ -16,6 +16,23 @@ export interface StartMatchResponse {
 export interface FinishMatchPayload {
   winnerId: number;
   matchTimeInMinutes: number;
+  /** A mesa no encerramento: é a vida final que o detalhe da partida mostra. */
+  table?: TableState;
+}
+
+/** Um assento como a mesa salva no servidor. */
+export interface TableSeat {
+  userId: number;
+  seatColor: string;
+  life: number;
+  poison: number;
+  counters: Record<string, number>;
+}
+
+/** Assentos em ordem de mesa: a posição no array é o lugar. */
+export interface TableState {
+  startingLife: number;
+  seats: TableSeat[];
 }
 
 export interface UserSummary {
@@ -47,6 +64,9 @@ export interface MatchDto {
   isFun: boolean;
   winner: UserSummary | null;
   playersConnection: MatchPlayerDto[];
+  /** Mesa salva no servidor (botão Salvar, automático ou encerramento). */
+  tableState?: TableState | null;
+  tableSavedAt?: string | null;
 }
 
 export interface UserStats {

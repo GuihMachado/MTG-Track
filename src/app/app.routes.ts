@@ -1,11 +1,10 @@
-import { CanActivateFn, Router, Routes } from '@angular/router';
+import { CanActivateFn, CanDeactivateFn, Router, Routes } from '@angular/router';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { inject, PLATFORM_ID } from '@angular/core'; // <--- Importe PLATFORM_ID
 import { isPlatformBrowser } from '@angular/common'; // <--- Importe isPlatformBrowser
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Cards } from './pages/cards/cards';
-import { Match } from './pages/match/match';
 import { Matches } from './pages/matches/matches';
 import { Ranking } from './pages/ranking/ranking';
 import { Proxies } from './pages/proxies/proxies';
@@ -49,6 +48,19 @@ const matchGuard: CanActivateFn = () => {
     return true; 
 };
 
+/**
+ * A mesa só se deixa quando a partida fecha. Toda saída legítima (encerrar,
+ * partida inválida, sessão expirada) apaga o `matchId` antes de navegar; o que
+ * chega aqui com a partida ainda aberta é o gesto de voltar do sistema — um
+ * deslize lateral sem querer no meio do jogo. A navegação é recusada e o
+ * `canceledNavigationResolution: 'computed'` (app.config) devolve o histórico
+ * para onde estava.
+ */
+const stayAtTable: CanDeactivateFn<unknown> = () => {
+    if (!isPlatformBrowser(inject(PLATFORM_ID))) return true;
+    return !localStorage.getItem('matchId');
+};
+
 export const routes: Routes = [
     {
         path: '',
@@ -72,12 +84,21 @@ export const routes: Routes = [
     },
     {
         path: 'match',
-        component: Match,
-        canActivate: [authGuard, matchGuard]
+        // Sob demanda: a mesa (grade, folha de comandos, diálogos) só pesa
+        // para quem abre uma partida.
+        loadComponent: () => import('./pages/match/match').then(m => m.Match),
+        canActivate: [authGuard, matchGuard],
+        canDeactivate: [stayAtTable]
     },
     {
         path: 'matchs',
         component: Matches,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'matchs/:id',
+        loadComponent: () =>
+            import('./pages/matches/match-detail/match-detail').then(m => m.MatchDetail),
         canActivate: [authGuard]
     },
     {

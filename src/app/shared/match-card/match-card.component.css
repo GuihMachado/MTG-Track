@@ -115,3 +115,13 @@
 :host-context(.light) .lent {
   color: var(--color-arcane-700, #5b3ad1);
 }
+
+/* A linha abre o detalhe da partida. */
+.row {
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

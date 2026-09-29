@@ -47,7 +47,7 @@ export class App {
   // só os detalhes (deck e confrontos) desenham o próprio cabeçalho com
   // voltar. Lista separada porque aqui o pai mostra e SÓ os filhos escondem —
   // em hiddenRoutes o pai esconderia junto.
-  private hiddenChildRoutes = ['/estatisticas'];
+  private hiddenChildRoutes = ['/estatisticas', '/matchs'];
 
   showHeader = signal(true);
   /** Só na home o header fica sobre a arte do commander, sem barra. */

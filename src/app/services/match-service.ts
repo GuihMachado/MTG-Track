@@ -8,6 +8,7 @@ import {
     RankingEntry,
     RecentDeck,
     StartMatchResponse,
+    TableState,
     UserStats
 } from '../models/match.models';
 import { environment } from '../../environments/environment';
@@ -23,6 +24,11 @@ export class MatchService {
 
     finishMatch(matchId: number, payload: FinishMatchPayload): Observable<{ message: string }> {
         return this.http.patch<{ message: string }>(`${this.API_URL}/finish/${matchId}`, payload);
+    }
+
+    /** Grava a mesa no servidor: é o que outro celular usa para continuar. */
+    saveTable(matchId: number, table: TableState): Observable<{ savedAt: string }> {
+        return this.http.put<{ savedAt: string }>(`${this.API_URL}/${matchId}/table`, table);
     }
 
     getMatchById(matchId: number): Observable<MatchDto> {

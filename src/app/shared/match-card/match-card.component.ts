@@ -107,6 +107,11 @@ export class MatchCardComponent {
     return this.getElapsedMinutes();
   }
 
+  /** A linha inteira abre o detalhe; Encerrar e Voltar param o clique antes. */
+  protected openDetail(): void {
+    this.router.navigate(['/matchs', this.match.id]);
+  }
+
   /** Volta para a mesa desta partida — inclusive se não for a última aberta. */
   protected resume(): void {
     localStorage.setItem('matchId', String(this.match.id));

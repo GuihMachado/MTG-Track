@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, PLATFORM_ID, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { BrnSheetImports } from '@spartan-ng/brain/sheet';
@@ -12,24 +12,26 @@ import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
 import { LifeGrid, SeatPlayer } from './life-grid/life-grid';
 import { SEAT_COLOR_ORDER, SEAT_COLORS, SeatColorCode } from './seat-colors';
 import { CounterMap, CounterType, emptyCounters, normalizeCounters } from './counters';
-import { RadialItem, RadialMenu } from './radial-menu/radial-menu';
+import { TableCommand, TableMenu } from './table-menu/table-menu';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmIcon } from '@spartan-ng/helm/icon';
 import { MTG_ICONS } from '../../shared/icons/mtg-icons';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { MatchService } from '../../services/match-service';
-import { MatchDto } from '../../models/match.models';
+import { MatchDto, TableState } from '../../models/match.models';
+import { AUTOSAVE_MS, clockTime, describeDiff, lifeLine, sameTable, toTableState } from './table-state';
 
 const SEATS_KEY = 'match-seats';
 /** Vida escolhida na tela de nova partida; ausente cai no padrão de Commander. */
 const STARTING_LIFE_KEY = 'match-starting-life';
 const STARTING_LIFE = 40;
-/** Vidas iniciais oferecidas no submenu da rosca. */
-const LIFE_PRESETS = [20, 30, 40, 50] as const;
 
 /** Estado da mesa (ordem, cor, vida, veneno e contadores), preso à partida que o gerou. */
 interface StoredSeats {
   matchId: number;
+  /** Quando esta mesa mudou pela última vez neste celular (ms) — a pergunta
+   *  "qual mesa usar" mostra a hora das duas. Ausente em saves antigos. */
+  updatedAt?: number;
   // `counters` é opcional na leitura: saves gravados antes da feature não têm o campo.
   seats: {
     userId: number;
@@ -47,12 +49,22 @@ interface MatchSeat extends SeatPlayer {
   counters: CounterMap;
 }
 
+/** A mesa salva no servidor diverge da deste celular: quem continua? */
+interface RestoreChoice {
+  server: TableState;
+  serverAt: Date;
+  local: TableState;
+  localAt: Date | null;
+  /** "cor de Ana, vida de Bruno": o motivo da pergunta. */
+  diff: string;
+}
+
 @Component({
   selector: 'app-match',
   standalone: true,
   imports: [
     LifeGrid,
-    RadialMenu,
+    TableMenu,
     BrnDialogImports,
     HlmDialogImports,
     HlmRadioGroupImports,
@@ -65,7 +77,7 @@ interface MatchSeat extends SeatPlayer {
   templateUrl: './match.html',
   styleUrls: ['./match.css'],
 })
-export class Match implements OnInit {
+export class Match implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private notify = inject(NotificationService);
@@ -78,59 +90,38 @@ export class Match implements OnInit {
   /** Modo de trocar assentos de lugar. */
   protected arranging = signal(false);
   protected pickedSeatId = signal<number | null>(null);
-  /** Menu em rosca aberto pelo hub central da mesa. */
-  protected radialOpen = signal(false);
-  /** Resultado de dado/sorteio mostrado no centro da rosca. */
+  /** Comandos da mesa, abertos pelo hub central. */
+  protected menuOpen = signal(false);
+  /** Resultado do último sorteio, mostrado na vista de Dado. */
   protected diceResult = signal<string | null>(null);
+  /** Salvamento no servidor, para o cartão Salvar dizer a verdade. */
+  protected saveStatus = signal<{ saving: boolean; failed: boolean; savedAt: Date | null }>({
+    saving: false,
+    failed: false,
+    savedAt: null,
+  });
+  /** Pergunta de qual mesa usar quando a salva e a local divergem. */
+  protected restoreChoice = signal<RestoreChoice | null>(null);
+  /** Início da partida (ms), para o cronômetro dos comandos. */
+  protected startedAt = signal(Date.now());
   private matchId: number | null = null;
+  /** Mudou algo desde o último salvamento no servidor? O automático só sai se sim. */
+  private dirty = false;
+  private autosave: ReturnType<typeof setInterval> | null = null;
+
+  protected menuSeats = computed(() =>
+    this.players().map(p => ({ id: p.id, name: p.name, seatColor: p.seatColor })),
+  );
+
+  protected lifeOf = lifeLine;
+  protected timeOf = clockTime;
+  /** Vida inicial da mesa (a de "Voltar todo mundo para 40"). */
+  protected startingLifeValue = signal(STARTING_LIFE);
 
 
   protected playersByLife = computed(() =>
     [...this.players()].sort((a, b) => b.life - a.life)
   );
-
-  /** Árvore do menu em rosca; "Cores" tem uma fatia por jogador da mesa. */
-  protected radialItems = computed<RadialItem[]>(() => [
-    {
-      id: 'life',
-      icon: 'life',
-      label: 'Vidas',
-      children: LIFE_PRESETS.map(value => ({
-        id: `life-${value}`,
-        icon: null,
-        label: String(value),
-      })),
-    },
-    { id: 'seats', icon: 'swap', label: 'Assentos' },
-    {
-      id: 'colors',
-      icon: 'colors',
-      label: 'Cores',
-      children: this.players().map(player => ({
-        id: `color-${player.id}`,
-        icon: null,
-        label: player.name,
-        // Lei 2: na fatia a cor de mana entra como tinta fraca, não como fill
-        // chapado — é o que mantém o rótulo branco legível em qualquer cor.
-        fill: `rgb(var(${SEAT_COLORS[player.seatColor].rgbVarName}) / 0.22)`,
-        labelColor: '#EDEAF5',
-        // A fatia do assento levita na cor dele, como o próprio assento na mesa.
-        glowRgb: `var(${SEAT_COLORS[player.seatColor].rgbVarName})`,
-      })),
-    },
-    {
-      id: 'dice',
-      icon: 'dice',
-      label: 'Dado',
-      children: [
-        { id: 'dice-d20', icon: null, label: 'd20' },
-        { id: 'dice-d6', icon: null, label: 'd6' },
-        { id: 'dice-coin', icon: null, label: 'Moeda' },
-        { id: 'dice-first', icon: null, label: 'Quem começa' },
-      ],
-    },
-    { id: 'finish', icon: 'finish', label: 'Encerrar', danger: true },
-  ]);
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -155,8 +146,9 @@ export class Match implements OnInit {
           return;
         }
 
-        this.players.set(this.buildSeats(match, this.getStoredSeats(matchId)));
+        this.restoreTable(match, matchId);
         this.loading.set(false);
+        this.autosave = setInterval(() => this.saveTable(false), AUTOSAVE_MS);
       },
       error: (error) => {
         this.notify.apiError(error, { fallback: 'Não foi possível carregar a partida.' });
@@ -197,6 +189,116 @@ export class Match implements OnInit {
     });
   }
 
+  /**
+   * Qual mesa abre. Sem nada neste celular, vale a salva no servidor (é o caso
+   * de continuar em outro aparelho). As duas existindo e diferentes, a mesa
+   * abre com a local e pergunta — escolher sem mostrar seria arriscar apagar
+   * a vida de alguém. Iguais, nada a perguntar.
+   */
+  private restoreTable(match: MatchDto, matchId: number): void {
+    const local = this.getStoredSeats(matchId);
+    const server = match.tableState ?? null;
+    const serverAt = match.tableSavedAt ? new Date(match.tableSavedAt) : null;
+
+    if (server && !local) {
+      this.applyServerTable(match, server);
+    } else {
+      this.players.set(this.buildSeats(match, local));
+      if (server && local) {
+        const localTable = toTableState(this.players(), this.startingLife());
+        if (!sameTable(server, localTable)) {
+          this.restoreChoice.set({
+            server,
+            serverAt: serverAt ?? new Date(),
+            local: localTable,
+            localAt: local.updatedAt ? new Date(local.updatedAt) : null,
+            diff: describeDiff(server, localTable, new Map(this.players().map(p => [p.userId, p.name]))),
+          });
+        }
+      }
+    }
+
+    this.startingLifeValue.set(this.startingLife());
+    const start = Number(localStorage.getItem('match-start'));
+    this.startedAt.set(start > 0 ? start : new Date(match.matchDate).getTime() || Date.now());
+    this.saveStatus.set({ saving: false, failed: false, savedAt: serverAt });
+    // Servidor e tela iguais: nada a salvar. Sem mesa no servidor, ou com a
+    // pergunta aberta, o próximo automático tem o que gravar.
+    this.dirty = this.restoreChoice() !== null || !server;
+  }
+
+  private applyServerTable(match: MatchDto, server: TableState): void {
+    if (this.matchId === null) return;
+    localStorage.setItem(STARTING_LIFE_KEY, String(server.startingLife));
+    const stored: StoredSeats = {
+      matchId: this.matchId,
+      seats: server.seats.map(seat => ({
+        userId: seat.userId,
+        seatColor: seat.seatColor as SeatColorCode,
+        life: seat.life,
+        poison: seat.poison,
+        counters: normalizeCounters(seat.counters),
+      })),
+    };
+    this.players.set(this.buildSeats(match, stored));
+    this.persistSeats(false);
+  }
+
+  /** Resposta da pergunta: continuar da mesa salva ou manter a deste celular. */
+  protected resolveRestore(useServer: boolean): void {
+    const choice = this.restoreChoice();
+    if (!choice || this.matchId === null) return;
+
+    if (useServer) {
+      this.matchService.getMatchById(this.matchId).subscribe({
+        next: match => {
+          this.applyServerTable(match, choice.server);
+          this.startingLifeValue.set(choice.server.startingLife);
+          this.dirty = false;
+          this.restoreChoice.set(null);
+          this.notify.success('Mesa salva carregada.');
+        },
+        error: error => this.notify.apiError(error, { fallback: 'Não consegui carregar a mesa salva.' }),
+      });
+      return;
+    }
+
+    // Manter a local: ela passa a ser a salva no próximo salvamento.
+    this.dirty = true;
+    this.restoreChoice.set(null);
+  }
+
+  /**
+   * Grava a mesa no servidor. O automático (a cada 10 min) só sai se algo
+   * mudou e fica calado; o do botão sempre sai e confirma na tela.
+   */
+  protected saveTable(manual: boolean): void {
+    if (this.matchId === null || this.saveStatus().saving) return;
+    if (!manual && !this.dirty) return;
+    // Com a pergunta aberta, salvar escolheria por quem não respondeu.
+    if (this.restoreChoice()) return;
+
+    const table = toTableState(this.players(), this.startingLife());
+    this.saveStatus.update(status => ({ ...status, saving: true, failed: false }));
+    this.dirty = false;
+
+    this.matchService.saveTable(this.matchId, table).subscribe({
+      next: ({ savedAt }) => {
+        this.saveStatus.set({ saving: false, failed: false, savedAt: new Date(savedAt) });
+        if (manual) this.notify.success('Mesa salva.', { description: 'Outro celular já continua daqui.' });
+      },
+      error: error => {
+        this.dirty = true;
+        this.saveStatus.update(status => ({ ...status, saving: false, failed: true }));
+        if (manual) this.notify.apiError(error, { fallback: 'Não consegui salvar a mesa.' });
+      },
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.autosave) clearInterval(this.autosave);
+  }
+
   /** Vida inicial da mesa: o que a tela de nova partida escolheu, ou 40. */
   private startingLife(): number {
     if (!isPlatformBrowser(this.platformId)) return STARTING_LIFE;
@@ -217,10 +319,13 @@ export class Match implements OnInit {
     }
   }
 
-  private persistSeats(): void {
+  /** Guarda a mesa neste celular. `changed` marca que o servidor ficou para trás. */
+  private persistSeats(changed = true): void {
     if (!isPlatformBrowser(this.platformId) || this.matchId === null) return;
+    if (changed) this.dirty = true;
     const payload: StoredSeats = {
       matchId: this.matchId,
+      updatedAt: Date.now(),
       seats: this.players().map(p => ({
         userId: p.userId,
         seatColor: p.seatColor,
@@ -317,7 +422,7 @@ export class Match implements OnInit {
     this.persistSeats();
   }
 
-  /** Reinicia a mesa no valor escolhido na rosca, zerando veneno e contadores. */
+  /** Reinicia a mesa na vida inicial, zerando veneno e contadores. */
   protected setAllLife(value: number): void {
     this.players.update(players =>
       players.map(p => ({ ...p, life: value, poison: 0, counters: emptyCounters() })),
@@ -326,51 +431,48 @@ export class Match implements OnInit {
     this.notify.info(`Vidas reiniciadas em ${value}, veneno e contadores zerados.`);
   }
 
-  /** Despacha a fatia escolhida na rosca. */
-  protected onRadialAction(id: string, dialog: HlmDialog): void {
-    if (id.startsWith('life-')) {
-      this.setAllLife(Number(id.slice('life-'.length)));
-      this.closeRadial();
-      return;
-    }
-
-    if (id.startsWith('color-')) {
-      // Fica no submenu: dá para ciclar a cor de vários jogadores em sequência.
-      this.cycleSeatColor(Number(id.slice('color-'.length)));
-      return;
-    }
-
-    if (id.startsWith('dice-')) {
-      this.diceResult.set(this.roll(id));
-      return;
-    }
-
-    if (id === 'seats') {
-      this.closeRadial();
-      this.startArranging();
-      return;
-    }
-
-    if (id === 'finish') {
-      this.closeRadial();
-      this.openEndDialog(dialog);
+  /** Despacha o comando escolhido na folha da mesa. */
+  protected onCommand(command: TableCommand, dialog: HlmDialog): void {
+    switch (command.kind) {
+      case 'reset-life':
+        this.setAllLife(this.startingLife());
+        this.closeMenu();
+        return;
+      case 'cycle-color':
+        // Fica na vista de Cores: dá para trocar vários assentos em sequência.
+        this.cycleSeatColor(command.seatId);
+        return;
+      case 'roll':
+        this.diceResult.set(this.roll(command.die));
+        return;
+      case 'arrange':
+        this.closeMenu();
+        this.startArranging();
+        return;
+      case 'finish':
+        this.closeMenu();
+        this.openEndDialog(dialog);
+        return;
+      case 'save':
+        this.saveTable(true);
+        return;
     }
   }
 
-  protected closeRadial(): void {
-    this.radialOpen.set(false);
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
     this.diceResult.set(null);
   }
 
   private roll(id: string): string {
     switch (id) {
-      case 'dice-d20':
+      case 'd20':
         return String(1 + Math.floor(Math.random() * 20));
-      case 'dice-d6':
+      case 'd6':
         return String(1 + Math.floor(Math.random() * 6));
-      case 'dice-coin':
+      case 'coin':
         return Math.random() < 0.5 ? 'Cara' : 'Coroa';
-      case 'dice-first': {
+      case 'first': {
         const seats = this.players();
         if (seats.length === 0) return '—';
         return seats[Math.floor(Math.random() * seats.length)]!.name;
@@ -400,7 +502,8 @@ export class Match implements OnInit {
 
     this.matchService.finishMatch(this.matchId, {
       winnerId,
-      matchTimeInMinutes: this.getElapsedMinutes()
+      matchTimeInMinutes: this.getElapsedMinutes(),
+      table: toTableState(this.players(), this.startingLife()),
     }).subscribe({
       next: () => {
         this.notify.success('Partida encerrada!', {

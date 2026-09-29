@@ -1,0 +1,103 @@
+<div class="page">
+  <div class="container-page relative pb-32 pt-3">
+    <header class="flex items-center gap-3">
+      <app-back-button fallbackRoute="/matchs" />
+      <div class="min-w-0 flex-1">
+        <h1 class="title-screen">Partida</h1>
+        @if (dateLine()) {
+          <p class="mt-0.5 text-[13px] text-foreground-subtle first-letter:uppercase">{{ dateLine() }}</p>
+        }
+      </div>
+    </header>
+
+    @if (view(); as view) {
+      <div class="result rise-in">
+        <span class="word" [class.win]="view.result === 'win'" [class.open]="view.result === 'open'">
+          {{ resultWord() }}
+        </span>
+        @if (view.opponents) {
+          <span class="vs">vs. {{ view.opponents }}</span>
+        }
+      </div>
+
+      <div class="facts">
+        <div class="fact">
+          <span class="label-caps">Duração</span>
+          <span class="fact-value">{{ view.minutes }} <small>min</small></span>
+        </div>
+        <div class="fact">
+          <span class="label-caps">Mesa</span>
+          <span class="fact-value">{{ view.seats }} <small>jog.</small></span>
+        </div>
+        <div class="fact">
+          <span class="label-caps">Tipo</span>
+          <span class="fact-value text" [class.fun]="view.typeLabel === '4Fun'">{{ view.typeLabel }}</span>
+        </div>
+      </div>
+
+      <h2 class="label-caps mt-6">Jogadores</h2>
+      <ul class="players">
+        @for (row of view.rows; track row.userId) {
+          <li class="player rise-stagger" [class.winner]="row.isWinner">
+            @if (row.artUrl && !brokenArt().has(row.userId)) {
+              <img class="art" [src]="row.artUrl" alt="" loading="lazy" (error)="markBroken(row.userId)" />
+            } @else {
+              <span class="art art-plain" aria-hidden="true"></span>
+            }
+
+            <div class="min-w-0 flex-1">
+              <p class="name">
+                <span class="truncate">{{ row.name }}</span>
+                @if (row.isWinner) {
+                  <span class="crown">venceu</span>
+                }
+              </p>
+              <p class="deck">
+                <span class="truncate">{{ row.deckName }}</span>
+                @if (row.symbols) {
+                  <span class="pips" [innerHTML]="row.symbols | manaSymbol"></span>
+                }
+              </p>
+              @if (row.lentBy) {
+                <span class="lent">
+                  <ng-icon hlm name="lucideArrowLeftRight" class="!size-[10px]" />
+                  de {{ row.lentBy }}
+                </span>
+              }
+            </div>
+
+            @if (view.hasFinal) {
+              <div class="final">
+                @if (row.final; as final) {
+                  <span class="final-life" [class.out]="final.out">{{ final.life }}</span>
+                  <span class="final-label">
+                    {{ final.out ? (final.poison >= 10 ? 'fora · veneno' : 'fora') : 'vida final' }}
+                  </span>
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (!view.hasFinal && view.result !== 'open') {
+        <p class="note">A vida final aparece nas partidas em que a mesa foi salva.</p>
+      }
+    } @else if (loading()) {
+      <div class="mt-5 flex flex-col gap-3">
+        <div class="skeleton h-[40px] w-[60%] rounded-[12px]"></div>
+        <div class="skeleton h-[70px] rounded-[14px]"></div>
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton h-[72px] rounded-[16px]"></div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (view()?.result === 'open') {
+    <button type="button" class="cta-pill" (click)="resume()">
+      <ng-icon hlm name="lucidePlay" class="!size-[18px]" />
+      Voltar para a mesa
+    </button>
+  }
+</div>

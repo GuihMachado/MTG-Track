@@ -1,0 +1,123 @@
+<div class="veil" (click)="closed.emit()" aria-hidden="true"></div>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="table-menu-title">
+  <span class="handle" aria-hidden="true"></span>
+
+  <header class="head">
+    @if (view() !== 'root') {
+      <button type="button" class="square" (click)="view.set('root')" aria-label="Voltar aos comandos">
+        <ng-icon hlm name="lucideChevronLeft" class="!size-[18px]" />
+      </button>
+    }
+    <div class="min-w-0 flex-1">
+      <span class="label-caps">Comandos da mesa</span>
+      <h2 id="table-menu-title" class="title">
+        @switch (view()) {
+          @case ('reset') { Vidas }
+          @case ('colors') { Cores }
+          @case ('dice') { Dado }
+          @default { Partida · <span class="clock">{{ clock() }}</span> }
+        }
+      </h2>
+    </div>
+    <button type="button" class="square" (click)="closed.emit()" aria-label="Fechar comandos">
+      <ng-icon hlm name="lucideX" class="!size-[18px]" />
+    </button>
+  </header>
+
+  @switch (view()) {
+    @case ('reset') {
+      <div class="confirm rise-in">
+        <p class="confirm-title">Voltar todo mundo para {{ startingLife() }}?</p>
+        <p class="confirm-sub">Vida volta a {{ startingLife() }}, veneno e contadores zeram. Não tem desfazer.</p>
+        <button type="button" class="pill danger" (click)="run({ kind: 'reset-life' })">
+          Voltar para {{ startingLife() }}
+        </button>
+        <button type="button" class="pill ghost" (click)="view.set('root')">Cancelar</button>
+      </div>
+    }
+
+    @case ('colors') {
+      <p class="hint">Toque num jogador para trocar a cor do assento.</p>
+      <div class="rows">
+        @for (seat of seats(); track seat.id) {
+          <button type="button" class="row" [style.--c-rgb]="rgbOf(seat.seatColor)"
+                  (click)="run({ kind: 'cycle-color', seatId: seat.id })">
+            <span class="swatch" aria-hidden="true"></span>
+            <span class="min-w-0 flex-1 truncate text-left">{{ seat.name }}</span>
+            <span class="code">{{ seat.seatColor }}</span>
+          </button>
+        }
+      </div>
+    }
+
+    @case ('dice') {
+      <div class="result" aria-live="polite">
+        @if (diceResult(); as result) {
+          <span class="result-value">{{ result }}</span>
+        } @else {
+          <span class="result-empty">Escolha o que sortear</span>
+        }
+      </div>
+      <div class="dice">
+        @for (item of dice; track item.die) {
+          <button type="button" class="die" [class.wide]="item.die === 'first'"
+                  (click)="run({ kind: 'roll', die: item.die })">
+            {{ item.label }}
+          </button>
+        }
+      </div>
+    }
+
+    @default {
+      <div class="grid-cards">
+        <button type="button" class="card wide life rise-stagger" (click)="view.set('reset')">
+          <span class="tile" aria-hidden="true">
+            <svg [attr.viewBox]="viewBox" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="icon('life')" /></svg>
+          </span>
+          <span class="text">
+            <span class="card-title">Vidas</span>
+            <span class="card-sub">Voltar todo mundo para {{ startingLife() }} e zerar veneno</span>
+          </span>
+        </button>
+
+        <button type="button" class="card seats rise-stagger" (click)="run({ kind: 'arrange' })">
+          <svg class="ico" [attr.viewBox]="viewBox" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="icon('swap')" /></svg>
+          <span class="card-title">Assentos</span>
+          <span class="card-sub">Trocar lugares</span>
+        </button>
+
+        <button type="button" class="card colors rise-stagger" (click)="view.set('colors')">
+          <svg class="ico" [attr.viewBox]="viewBox" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="icon('colors')" /></svg>
+          <span class="card-title">Cores</span>
+          <span class="card-sub">Cor de cada assento</span>
+        </button>
+
+        <button type="button" class="card dice-card rise-stagger" (click)="view.set('dice')">
+          <svg class="ico" [attr.viewBox]="viewBox" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="icon('dice')" /></svg>
+          <span class="card-title">Dado</span>
+          <span class="card-sub">Sortear quem começa</span>
+        </button>
+
+        <button type="button" class="card finish rise-stagger" (click)="run({ kind: 'finish' })">
+          <svg class="ico" [attr.viewBox]="viewBox" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="icon('finish')" /></svg>
+          <span class="card-title">Encerrar</span>
+          <span class="card-sub">Escolher o vencedor</span>
+        </button>
+
+        <!-- Salvar: a mesa no servidor, para outro celular continuar. A linha
+             de baixo diz quando foi a última vez — o automático é silencioso. -->
+        <button type="button" class="card wide save rise-stagger" [class.failed]="save().failed"
+                [disabled]="save().saving" (click)="run({ kind: 'save' })">
+          <span class="tile" aria-hidden="true">
+            <ng-icon hlm [name]="save().failed ? 'lucideCloudOff' : 'lucideCloudUpload'" class="!size-[22px]" />
+          </span>
+          <span class="text">
+            <span class="card-title">{{ save().saving ? 'Salvando…' : 'Salvar mesa' }}</span>
+            <span class="card-sub">{{ saveLine() }}</span>
+          </span>
+        </button>
+      </div>
+    }
+  }
+</section>
